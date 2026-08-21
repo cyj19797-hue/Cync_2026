@@ -12,14 +12,25 @@ import lombok.*;
 public class User {
 
     @Id
-    private String studentId;  // 학번을 기본키로 사용
+    private String studentId;
 
     private String name;
 
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Column(unique = true)
+    private String nickname;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private ProfileColor profileColor = ProfileColor.GRAY;
+
     public enum Role {
         USER, ADMIN
+    }
+
+    public enum ProfileColor {
+        RED, ORANGE, YELLOW, GREEN, MINT, BLUE, PURPLE, PINK, GRAY
     }
 }

@@ -2,8 +2,10 @@ package com.sejong.sjc_app.controller;
 
 import com.sejong.sjc_app.domain.Post;
 import com.sejong.sjc_app.domain.PostLike;
+import com.sejong.sjc_app.domain.User;
 import com.sejong.sjc_app.repository.PostLikeRepository;
 import com.sejong.sjc_app.repository.PostRepository;
+import com.sejong.sjc_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,7 @@ public class PostController {
 
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
+    private final UserRepository userRepository;
 
     // 목록 조회 (누구나)
     @GetMapping
@@ -53,16 +56,25 @@ public class PostController {
     public Post createPost(Authentication authentication,
                            @RequestParam String title,
                            @RequestParam String content,
-                           @RequestParam String authorName,
+                           @RequestParam(required = false) String nickname,
+                           @RequestParam(required = false) User.ProfileColor color,
                            @RequestParam(defaultValue = "false") boolean isAnonymous) {
 
-        String studentId = authentication.getName(); // 토큰에서 꺼낸 학번
+        String studentId = authentication.getName();
+
+        User user = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        String finalNickname = (nickname != null) ? nickname : user.getNickname();
+        User.ProfileColor finalColor = (color != null) ? color : user.getProfileColor();
 
         Post post = Post.builder()
                 .title(title)
                 .content(content)
                 .authorId(studentId)
-                .authorName(authorName)
+                .authorName(user.getName())
+                .authorNickname(finalNickname)
+                .authorColor(finalColor)
                 .isAnonymous(isAnonymous)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())

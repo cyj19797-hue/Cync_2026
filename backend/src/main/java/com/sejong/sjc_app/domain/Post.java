@@ -22,10 +22,15 @@ public class Post {
     @Column(length = 5000)
     private String content;
 
-    private String authorId;      // 실제 학번 (항상 저장)
-    private String authorName;    // 실제 이름 (항상 저장)
+    private String authorId;      // 실제 학번 (익명이어도 항상 저장)
+    private String authorName;    // 실제 이름
 
-    private boolean isAnonymous;  // 익명 여부
+    private String authorNickname;
+
+    @Enumerated(EnumType.STRING)
+    private User.ProfileColor authorColor;
+
+    private boolean isAnonymous;  // JSON에서는 "anonymous"로 나감
 
     @Builder.Default
     private Integer viewCount = 0;
