@@ -42,6 +42,8 @@ public class CommentController {
         User user = userRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
+        checkNotBanned(user);
+
         if (parentCommentId != null) {
             Comment parent = commentRepository.findById(parentCommentId)
                     .orElseThrow(() -> new RuntimeException("답글 대상 댓글을 찾을 수 없습니다."));
@@ -75,13 +77,19 @@ public class CommentController {
         return saved;
     }
 
-    // 댓글 삭제 (본인 or ADMIN) — 소프트 삭제
+    // 댓글 삭제 (본인 or ADMIN)
     @DeleteMapping("/api/comments/{id}")
     public String deleteComment(Authentication authentication, @PathVariable Long id) {
+        String studentId = authentication.getName();
+
+        User user = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        checkNotBanned(user);
+
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
 
-        String studentId = authentication.getName();
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
@@ -118,6 +126,8 @@ public class CommentController {
                 .content(post.getContent())
                 .authorId(post.getAuthorId())
                 .authorName(post.getAuthorName())
+                .authorNickname(post.getAuthorNickname())
+                .authorColor(post.getAuthorColor())
                 .isAnonymous(post.isAnonymous())
                 .viewCount(post.getViewCount())
                 .likeCount(post.getLikeCount())
@@ -127,5 +137,14 @@ public class CommentController {
                 .build();
 
         postRepository.save(updated);
+    }
+
+    private void checkNotBanned(User user) {
+        if (user.isCurrentlyBanned()) {
+            String message = (user.getBanExpiresAt() == null)
+                    ? "커뮤니티 이용이 영구 정지되었습니다. 사유: " + user.getBanReason()
+                    : "커뮤니티 이용이 정지되었습니다. (" + user.getBanExpiresAt() + "까지) 사유: " + user.getBanReason();
+            throw new RuntimeException(message);
+        }
     }
 }

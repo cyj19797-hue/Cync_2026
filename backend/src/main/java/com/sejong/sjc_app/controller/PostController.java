@@ -40,6 +40,8 @@ public class PostController {
                 .content(post.getContent())
                 .authorId(post.getAuthorId())
                 .authorName(post.getAuthorName())
+                .authorNickname(post.getAuthorNickname())
+                .authorColor(post.getAuthorColor())
                 .isAnonymous(post.isAnonymous())
                 .viewCount(post.getViewCount() + 1)
                 .likeCount(post.getLikeCount())
@@ -64,6 +66,8 @@ public class PostController {
 
         User user = userRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        checkNotBanned(user);
 
         String finalNickname = (nickname != null) ? nickname : user.getNickname();
         User.ProfileColor finalColor = (color != null) ? color : user.getProfileColor();
@@ -90,10 +94,16 @@ public class PostController {
                            @RequestParam String title,
                            @RequestParam String content) {
 
+        String studentId = authentication.getName();
+
+        User user = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        checkNotBanned(user);
+
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
 
-        String studentId = authentication.getName();
         if (!post.getAuthorId().equals(studentId)) {
             throw new RuntimeException("본인 게시글만 수정할 수 있습니다.");
         }
@@ -104,6 +114,8 @@ public class PostController {
                 .content(content)
                 .authorId(post.getAuthorId())
                 .authorName(post.getAuthorName())
+                .authorNickname(post.getAuthorNickname())
+                .authorColor(post.getAuthorColor())
                 .isAnonymous(post.isAnonymous())
                 .viewCount(post.getViewCount())
                 .likeCount(post.getLikeCount())
@@ -118,10 +130,16 @@ public class PostController {
     // 삭제 (본인 or ADMIN)
     @DeleteMapping("/{id}")
     public String deletePost(Authentication authentication, @PathVariable Long id) {
+        String studentId = authentication.getName();
+
+        User user = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        checkNotBanned(user);
+
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
 
-        String studentId = authentication.getName();
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
@@ -138,18 +156,21 @@ public class PostController {
     public String toggleLike(Authentication authentication, @PathVariable Long id) {
         String studentId = authentication.getName();
 
+        User user = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        checkNotBanned(user);
+
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
 
         var existingLike = postLikeRepository.findByPostIdAndStudentId(id, studentId);
 
         if (existingLike.isPresent()) {
-            // 이미 눌렀으면 취소
             postLikeRepository.delete(existingLike.get());
             savePostWithLikeCount(post, post.getLikeCount() - 1);
             return "좋아요 취소";
         } else {
-            // 안 눌렀으면 추가
             postLikeRepository.save(PostLike.builder()
                     .postId(id)
                     .studentId(studentId)
@@ -166,6 +187,8 @@ public class PostController {
                 .content(post.getContent())
                 .authorId(post.getAuthorId())
                 .authorName(post.getAuthorName())
+                .authorNickname(post.getAuthorNickname())
+                .authorColor(post.getAuthorColor())
                 .isAnonymous(post.isAnonymous())
                 .viewCount(post.getViewCount())
                 .likeCount(newLikeCount)
@@ -174,5 +197,14 @@ public class PostController {
                 .updatedAt(post.getUpdatedAt())
                 .build();
         postRepository.save(updated);
+    }
+
+    private void checkNotBanned(User user) {
+        if (user.isCurrentlyBanned()) {
+            String message = (user.getBanExpiresAt() == null)
+                    ? "커뮤니티 이용이 영구 정지되었습니다. 사유: " + user.getBanReason()
+                    : "커뮤니티 이용이 정지되었습니다. (" + user.getBanExpiresAt() + "까지) 사유: " + user.getBanReason();
+            throw new RuntimeException(message);
+        }
     }
 }
