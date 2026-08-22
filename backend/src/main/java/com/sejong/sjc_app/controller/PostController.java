@@ -3,12 +3,14 @@ package com.sejong.sjc_app.controller;
 import com.sejong.sjc_app.domain.Post;
 import com.sejong.sjc_app.domain.PostLike;
 import com.sejong.sjc_app.domain.User;
+import com.sejong.sjc_app.repository.CommentRepository;
 import com.sejong.sjc_app.repository.PostLikeRepository;
 import com.sejong.sjc_app.repository.PostRepository;
 import com.sejong.sjc_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,6 +23,7 @@ public class PostController {
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
     private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
 
     // 목록 조회 (누구나)
     @GetMapping
@@ -129,6 +132,7 @@ public class PostController {
 
     // 삭제 (본인 or ADMIN)
     @DeleteMapping("/{id}")
+    @Transactional
     public String deletePost(Authentication authentication, @PathVariable Long id) {
         String studentId = authentication.getName();
 
@@ -147,7 +151,10 @@ public class PostController {
             throw new RuntimeException("본인 게시글만 삭제할 수 있습니다.");
         }
 
+        commentRepository.deleteAll(commentRepository.findByPostId(id));
+        postLikeRepository.deleteByPostId(id);
         postRepository.deleteById(id);
+
         return "삭제 완료";
     }
 
