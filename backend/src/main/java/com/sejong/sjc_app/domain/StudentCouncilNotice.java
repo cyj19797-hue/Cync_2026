@@ -22,11 +22,10 @@ public class StudentCouncilNotice {
     @Column(length = 5000)
     private String content;
 
+    private String imageUrl;
+
     private String authorId;
-
     private String authorName;
-
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
 }
