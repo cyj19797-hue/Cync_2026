@@ -33,9 +33,7 @@ public class Locker {
 
     private LocalDateTime assignedAt;
 
-    private LocalDateTime dueDate;
-
     public enum Status {
-        AVAILABLE, IN_USE, BROKEN
+        AVAILABLE, PENDING, IN_USE, BROKEN
     }
 }

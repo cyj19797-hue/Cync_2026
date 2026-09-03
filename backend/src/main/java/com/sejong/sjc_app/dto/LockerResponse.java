@@ -15,7 +15,6 @@ public class LockerResponse {
     private Locker.Status status;
     private String currentUserId;
     private LocalDateTime assignedAt;
-    private LocalDateTime dueDate;
     private String password;
 
     public static LockerResponse from(Locker locker, boolean includePassword) {
@@ -26,7 +25,6 @@ public class LockerResponse {
                 .status(locker.getStatus())
                 .currentUserId(locker.getCurrentUserId())
                 .assignedAt(locker.getAssignedAt())
-                .dueDate(locker.getDueDate())
                 .password(includePassword ? locker.getPassword() : null)
                 .build();
     }
