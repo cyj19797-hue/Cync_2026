@@ -44,6 +44,12 @@ struct CalendarEvent: Identifiable, Hashable {
     /// Local-only — the API has no per-user bookmark endpoint (see the gap
     /// table), so this never persists and resets on every reload.
     var isBookmarked: Bool = false
+    /// Set only on events synthesized from `BookmarkStore` (see
+    /// `init(bookmarkedNotice:)`) — the source notice's own id, so
+    /// `CalendarViewModel.toggleBookmark` can un-bookmark it there instead
+    /// of just flipping a flag that resets on reload. `nil` for events that
+    /// came straight from `GET /api/academic-schedule`.
+    var sourceNoticeId: Int?
 
     /// Whether this schedule covers `date` — multi-day entries (school
     /// breaks, exam periods) span more than just `startDate`.
@@ -67,6 +73,29 @@ extension CalendarEvent {
             title: schedule.title,
             startDate: start,
             endDate: end
+        )
+    }
+}
+
+extension CalendarEvent {
+    /// Offsets a bookmarked notice's id clear of `AcademicSchedule`'s id
+    /// space — the two are unrelated servers/tables and could otherwise
+    /// collide (both number their rows from 1).
+    private static let bookmarkedNoticeIDOffset = 100_000_000
+
+    /// Maps a bookmarked notice (from `BookmarkStore`) onto a same-day
+    /// calendar event, so bookmarking a notice on "공지사항" also surfaces
+    /// it on "캘린더" — see `BookmarkStore`'s header comment.
+    init(bookmarkedNotice notice: Notice) {
+        self.init(
+            id: notice.id + Self.bookmarkedNoticeIDOffset,
+            category: notice.category,
+            title: notice.title,
+            startDate: notice.date,
+            endDate: notice.date,
+            deadlineDays: notice.deadlineDays,
+            isBookmarked: true,
+            sourceNoticeId: notice.id
         )
     }
 }

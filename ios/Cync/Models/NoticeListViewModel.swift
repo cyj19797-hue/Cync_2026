@@ -7,6 +7,9 @@
 //  (`docs/API.md` §3 / §7) calls, merged into one list — see
 //  `Notice.init(councilNotice:)` / `Notice.init(schoolNotice:)`.
 //
+//  Bookmarking reads/writes `BookmarkStore` — see its header comment —
+//  which is what surfaces bookmarked notices on "캘린더" too.
+//
 
 import Combine
 import Foundation
@@ -24,7 +27,13 @@ final class NoticeListViewModel: ObservableObject {
             async let school = CyncAPI.fetchSchoolNotices()
             let councilNotices = try await council
             let schoolNotices = try await school
-            notices = (councilNotices.map(Notice.init(councilNotice:)) + schoolNotices.map(Notice.init(schoolNotice:)))
+            let merged = councilNotices.map(Notice.init(councilNotice:)) + schoolNotices.map(Notice.init(schoolNotice:))
+            notices = merged
+                .map { notice in
+                    var notice = notice
+                    notice.isBookmarked = BookmarkStore.shared.isBookmarked(notice.id)
+                    return notice
+                }
                 .sorted { $0.date > $1.date }
         } catch {
             errorMessage = error.localizedDescription
@@ -41,7 +50,7 @@ final class NoticeListViewModel: ObservableObject {
 
     func toggleBookmark(for notice: Notice) {
         guard let index = notices.firstIndex(where: { $0.id == notice.id }) else { return }
-        notices[index].isBookmarked.toggle()
+        notices[index].isBookmarked = BookmarkStore.shared.toggle(notices[index])
     }
 
     /// The notice shown before/after `notice` in the currently filtered,

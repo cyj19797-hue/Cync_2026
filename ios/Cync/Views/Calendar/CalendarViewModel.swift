@@ -3,7 +3,8 @@
 //  Cync
 //
 //  Backs CalendarView with the real `GET /api/academic-schedule` call
-//  (`docs/API.md` §6).
+//  (`docs/API.md` §6), plus whatever notices are bookmarked in
+//  `BookmarkStore` — see `CalendarEvent.init(bookmarkedNotice:)`.
 //
 
 import Combine
@@ -40,7 +41,9 @@ final class CalendarViewModel: ObservableObject {
     func load() async {
         do {
             let schedules = try await CyncAPI.fetchAcademicSchedules()
-            events = schedules.compactMap(CalendarEvent.init(schedule:))
+            let scheduleEvents = schedules.compactMap(CalendarEvent.init(schedule:))
+            let bookmarkEvents = BookmarkStore.shared.bookmarkedNotices.map(CalendarEvent.init(bookmarkedNotice:))
+            events = scheduleEvents + bookmarkEvents
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -115,8 +118,17 @@ final class CalendarViewModel: ObservableObject {
         displayedMonth = calendar.date(byAdding: .month, value: 1, to: displayedMonth) ?? displayedMonth
     }
 
+    /// Events synthesized from `BookmarkStore` (`sourceNoticeId != nil`)
+    /// un-bookmark for real — removed from the store and the list. Events
+    /// straight from the schedule API have no bookmark backing store, so
+    /// their flag just flips locally (existing behavior, resets on reload).
     func toggleBookmark(for event: CalendarEvent) {
         guard let index = events.firstIndex(where: { $0.id == event.id }) else { return }
-        events[index].isBookmarked.toggle()
+        if let sourceNoticeId = events[index].sourceNoticeId {
+            BookmarkStore.shared.remove(noticeId: sourceNoticeId)
+            events.remove(at: index)
+        } else {
+            events[index].isBookmarked.toggle()
+        }
     }
 }

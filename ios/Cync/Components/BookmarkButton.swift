@@ -8,6 +8,11 @@
 //  Material 3 `Bookmark` component with no literal SwiftUI snippet, so it is
 //  reproduced here with the matching SF Symbol (`bookmark` / `bookmark.fill`).
 //
+//  Removing a bookmark asks for confirmation first (`.confirmationDialog`,
+//  same pattern as SettingsView's 로그아웃/회원탈퇴) — `action` only fires
+//  once that's confirmed. Adding one (`isBookmarked == false`) fires
+//  `action` immediately, no confirmation needed.
+//
 
 import SwiftUI
 
@@ -15,13 +20,24 @@ struct BookmarkButton: View {
     let isBookmarked: Bool
     let action: () -> Void
 
+    @State private var isConfirmingRemoval = false
+
     var body: some View {
-        Button(action: action) {
+        Button {
+            if isBookmarked {
+                isConfirmingRemoval = true
+            } else {
+                action()
+            }
+        } label: {
             Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
         }
         .buttonStyle(.plain)
         .foregroundStyle(isBookmarked ? Color.accentRed : Color.textPrimary)
         .accessibilityLabel(isBookmarked ? "북마크 해제" : "북마크")
+        .confirmationDialog("북마크를 취소하시겠습니까?", isPresented: $isConfirmingRemoval, titleVisibility: .visible) {
+            Button("북마크 취소", role: .destructive, action: action)
+        }
     }
 }
 
