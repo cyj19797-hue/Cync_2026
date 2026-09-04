@@ -62,6 +62,10 @@ public class SchoolNoticeCrawlerService {
             String viewCountStr = row.select(".b-hit-box .b-hit").text().trim();
             Integer viewCount = viewCountStr.isEmpty() ? 0 : Integer.parseInt(viewCountStr);
 
+            if (!isFromYearOrLater(postedDate, 2026)) {
+                continue;
+            }
+
             String href = titleLink.attr("href");
             String sourceUrl = NOTICE_URL + href;
 
@@ -84,6 +88,17 @@ public class SchoolNoticeCrawlerService {
         }
 
         return savedCount;
+    }
+
+    // postedDate("2026.05.19" 형식)의 연도가 기준 연도 이상인지 확인
+    private boolean isFromYearOrLater(String postedDate, int minYear) {
+        try {
+            String yearStr = postedDate.split("\\.")[0].trim();
+            int year = Integer.parseInt(yearStr);
+            return year >= minYear;
+        } catch (Exception e) {
+            return true; // 형식 파싱 실패 시 일단 저장 (방어적으로)
+        }
     }
 
     public int backfillContent() throws Exception {
