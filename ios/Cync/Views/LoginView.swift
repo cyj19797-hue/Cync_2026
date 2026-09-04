@@ -5,9 +5,10 @@
 //  Figma: "26 2 창학" file, frame `219:2565` ("1-5 로그인").
 //
 //  No nav bar / back chevron in the design — this is an onboarding screen
-//  (after language selection), not yet wired into `RootTabView`'s post-login
-//  app, since there's still no login endpoint to call (see
-//  `LoginCredentials`'s header comment).
+//  (after language selection). `CyncApp` shows this whenever
+//  `SessionStore.isLoggedIn` is false (always true on a fresh launch); a
+//  successful `viewModel.submit()` calls `sessionStore.logIn()` to switch
+//  to `RootTabView`.
 //
 //  No UIKit anywhere on this screen — a plain `VStack` plus the app's
 //  existing `TextField`/`SecureField`-based components covers the whole
@@ -18,6 +19,7 @@ import SwiftUI
 
 struct LoginView: View {
     @StateObject private var viewModel = LoginViewModel()
+    @EnvironmentObject private var sessionStore: SessionStore
 
     var body: some View {
         VStack(spacing: 0) {
@@ -75,7 +77,11 @@ struct LoginView: View {
                 tint: .eventAccent,
                 font: .loginButtonLabel
             ) {
-                Task { await viewModel.submit() }
+                Task {
+                    if await viewModel.submit() {
+                        sessionStore.logIn()
+                    }
+                }
             }
             .padding(.vertical, Spacing.xxs)
         }
@@ -112,6 +118,7 @@ struct LoginView: View {
                         .font(.loginCaption)
                         .foregroundStyle(Color.textSecondary)
                 }
+                
             }
             LabeledInputField(placeholder: "비밀번호를 입력해주세요", text: $viewModel.password, isSecure: true)
         }
@@ -120,4 +127,5 @@ struct LoginView: View {
 
 #Preview {
     LoginView()
+        .environmentObject(SessionStore())
 }

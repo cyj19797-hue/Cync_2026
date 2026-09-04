@@ -2,8 +2,10 @@
 //  NoticeListViewModel.swift
 //  test
 //
-//  Backs NoticeListView with the real `GET /api/notices/council` call
-//  (`docs/API.md` §3) — see `Notice.init(councilNotice:)` for the mapping.
+//  Backs NoticeListView with the real `GET /api/notices/council` (mostly
+//  empty — no one's posted there yet) and `GET /api/notices/school`
+//  (`docs/API.md` §3 / §7) calls, merged into one list — see
+//  `Notice.init(councilNotice:)` / `Notice.init(schoolNotice:)`.
 //
 
 import Combine
@@ -18,8 +20,12 @@ final class NoticeListViewModel: ObservableObject {
 
     func load() async {
         do {
-            let councilNotices = try await CyncAPI.fetchCouncilNotices()
-            notices = councilNotices.map(Notice.init(councilNotice:)).sorted { $0.date > $1.date }
+            async let council = CyncAPI.fetchCouncilNotices()
+            async let school = CyncAPI.fetchSchoolNotices()
+            let councilNotices = try await council
+            let schoolNotices = try await school
+            notices = (councilNotices.map(Notice.init(councilNotice:)) + schoolNotices.map(Notice.init(schoolNotice:)))
+                .sorted { $0.date > $1.date }
         } catch {
             errorMessage = error.localizedDescription
         }

@@ -37,4 +37,17 @@ enum SpringDate {
     static func parseDay(_ string: String) -> Date? {
         dayFormatter.date(from: string)
     }
+
+    /// `SchoolNotice.postedDate` — `"yyyy.MM.dd"` (dot-separated, from the
+    /// department-notice crawler).
+    private static let dottedDayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy.MM.dd"
+        return formatter
+    }()
+
+    static func parseDottedDay(_ string: String) -> Date? {
+        dottedDayFormatter.date(from: string)
+    }
 }

@@ -21,6 +21,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
+    @EnvironmentObject private var sessionStore: SessionStore
     @State private var isSearchPresented = false
     @State private var isEditingProfile = false
     @State private var isLanguagePickerPresented = false
@@ -137,7 +138,7 @@ struct SettingsView: View {
             }
             .confirmationDialog("로그아웃 하시겠습니까?", isPresented: $isLogoutConfirmPresented, titleVisibility: .visible) {
                 Button("로그아웃", role: .destructive) {
-                    // TODO: 실제 로그아웃(세션/토큰 삭제) 연동 필요
+                    sessionStore.logOut()
                 }
             }
             .confirmationDialog("정말 탈퇴하시겠습니까?", isPresented: $isWithdrawConfirmPresented, titleVisibility: .visible) {
@@ -151,4 +152,5 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
+        .environmentObject(SessionStore())
 }

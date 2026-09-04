@@ -2,10 +2,9 @@
 //  LoginViewModel.swift
 //  Cync
 //
-//  Backs LoginView ("1-5 로그인"). There is no `/api/auth/login` endpoint in
-//  `docs/API.md` yet, so `submit()` mocks a successful login instead of
-//  calling the real backend — see `LoginCredentials`'s header comment for
-//  the same gap.
+//  Backs LoginView ("1-5 로그인"). `submit()` calls `CyncAPI.login`, which
+//  hits the real `POST /api/auth/login` (see that method's header comment —
+//  it's not in `docs/API.md` yet, but it's live on the backend).
 //
 //  "학번 기억하기" persists only the student id (never the password) to
 //  `UserDefaults` so the field can be prefilled on next launch — this is
@@ -34,19 +33,28 @@ final class LoginViewModel: ObservableObject {
         !studentId.trimmingCharacters(in: .whitespaces).isEmpty && !password.isEmpty
     }
 
-    /// Mock login — see the type header comment for why this doesn't call
-    /// the real backend yet.
-    func submit() async {
+    /// Returns whether login succeeded, so callers know when to flip
+    /// `SessionStore.isLoggedIn`.
+    @discardableResult
+    func submit() async -> Bool {
         isSubmitting = true
         errorMessage = nil
         defer { isSubmitting = false }
 
-        try? await Task.sleep(for: .seconds(0.5))
+        do {
+            _ = try await CyncAPI.login(studentId: studentId, password: password)
+        } catch {
+            errorMessage = (error as? CyncAPIError)?.errorDescription
+                ?? "로그인에 실패했습니다. 학번/비밀번호를 확인해주세요."
+            return false
+        }
 
         if rememberStudentId {
             UserDefaults.standard.set(studentId, forKey: Self.rememberedStudentIdKey)
         } else {
             UserDefaults.standard.removeObject(forKey: Self.rememberedStudentIdKey)
         }
+
+        return true
     }
 }
