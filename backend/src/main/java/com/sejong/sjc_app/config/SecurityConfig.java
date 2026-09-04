@@ -32,6 +32,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/notices/school/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/notices/council/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/app-notices/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(

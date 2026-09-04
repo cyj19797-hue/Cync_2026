@@ -22,15 +22,13 @@ public class SchoolNotice {
 
     private String title;
 
+    @Column(length = 5000)
+    private String content;
+
     private String category;
-
     private boolean isNotice;
-
     private String postedDate;
-
     private Integer viewCount;
-
     private String sourceUrl;
-
     private LocalDateTime crawledAt;
 }
