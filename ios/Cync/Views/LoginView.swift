@@ -1,0 +1,123 @@
+//
+//  LoginView.swift
+//  Cync
+//
+//  Figma: "26 2 창학" file, frame `219:2565` ("1-5 로그인").
+//
+//  No nav bar / back chevron in the design — this is an onboarding screen
+//  (after language selection), not yet wired into `RootTabView`'s post-login
+//  app, since there's still no login endpoint to call (see
+//  `LoginCredentials`'s header comment).
+//
+//  No UIKit anywhere on this screen — a plain `VStack` plus the app's
+//  existing `TextField`/`SecureField`-based components covers the whole
+//  layout, so nothing here needed it.
+//
+
+import SwiftUI
+
+struct LoginView: View {
+    @StateObject private var viewModel = LoginViewModel()
+
+    var body: some View {
+        VStack(spacing: 0) {
+            logo
+            loginCard
+        }
+        .padding(Spacing.md)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .alert(
+            "오류",
+            isPresented: Binding(
+                get: { viewModel.errorMessage != nil },
+                set: { isPresented in if !isPresented { viewModel.errorMessage = nil } }
+            )
+        ) {
+            Button("확인", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
+    }
+
+    private var logo: some View {
+        Image("CyncWordmark")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 144, height: 144)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var loginCard: some View {
+        VStack(alignment: .leading, spacing: Spacing.xxs) {
+            Text("로그인")
+                .font(.loginTitle)
+                .foregroundStyle(Color.eventAccent)
+
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                studentIdField
+                passwordField
+            }
+            .padding(.vertical, Spacing.md)
+
+            CheckboxToggle(
+                isChecked: $viewModel.rememberStudentId,
+                titleKey: "학번 기억하기",
+                checkedFill: .eventAccent,
+                checkedBorderColor: .eventAccentDark,
+                checkmarkColor: .white
+            )
+            .padding(.vertical, Spacing.xxs)
+
+            PrimaryActionButton(
+                titleKey: "로그인",
+                isEnabled: viewModel.canSubmit && !viewModel.isSubmitting,
+                tint: .eventAccent,
+                font: .loginButtonLabel
+            ) {
+                Task { await viewModel.submit() }
+            }
+            .padding(.vertical, Spacing.xxs)
+        }
+        .padding(Spacing.cardInset)
+        .background(Color.gray50)
+        .overlay {
+            UnevenRoundedRectangle(topLeadingRadius: Radius.card, topTrailingRadius: Radius.card)
+                .strokeBorder(Color.gray200)
+        }
+        .clipShape(UnevenRoundedRectangle(topLeadingRadius: Radius.card, topTrailingRadius: Radius.card))
+    }
+
+    private var studentIdField: some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            Text("학번")
+                .font(.loginFieldLabel)
+                .foregroundStyle(Color.textPrimary)
+            LabeledInputField(placeholder: "학번을 입력해주세요", text: $viewModel.studentId, keyboardType: .numberPad)
+        }
+    }
+
+    private var passwordField: some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            HStack(spacing: Spacing.xxs) {
+                Text("비밀번호")
+                    .font(.loginFieldLabel)
+                    .foregroundStyle(Color.textPrimary)
+
+                HStack(spacing: Spacing.xxs) {
+                    Image(systemName: "exclamationmark.circle")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.textSecondary)
+                    Text("비밀번호는 서버에 저장되지 않아요!")
+                        .font(.loginCaption)
+                        .foregroundStyle(Color.textSecondary)
+                }
+            }
+            LabeledInputField(placeholder: "비밀번호를 입력해주세요", text: $viewModel.password, isSecure: true)
+        }
+    }
+}
+
+#Preview {
+    LoginView()
+}
