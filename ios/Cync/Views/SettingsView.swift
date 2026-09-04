@@ -153,4 +153,5 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
         .environmentObject(SessionStore())
+        .environmentObject(TabBarVisibility())
 }

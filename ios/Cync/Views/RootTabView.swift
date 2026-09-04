@@ -56,14 +56,19 @@ private enum RootTab: CaseIterable, Hashable {
 
 struct RootTabView: View {
     @State private var selectedTab: RootTab = .notices
+    @StateObject private var tabBarVisibility = TabBarVisibility()
 
     var body: some View {
         VStack(spacing: 0) {
             selectedContent
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .environmentObject(tabBarVisibility)
 
-            tabBar
+            if !tabBarVisibility.isHidden {
+                tabBar
+            }
         }
+        .animation(.default, value: tabBarVisibility.isHidden)
     }
 
     @ViewBuilder

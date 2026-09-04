@@ -7,6 +7,12 @@
 //  The bottom tab bar (`30:577`) is not built here — it's the app-wide
 //  `TabView` in RootTabView.swift, this view is just its "공지사항" tab content.
 //
+//  Figma's "2-1 공지글" is a full-screen dialog with no tab bar behind it —
+//  `tabBarVisibility` hides `RootTabView`'s bottom tab bar while it's open
+//  (see `TabBarVisibility`'s header comment for why a plain
+//  `.toolbar(_:for: .tabBar)` can't do this against a hand-rolled tab bar),
+//  so the card gets the extra room instead of sharing the screen with it.
+//
 
 import SwiftUI
 
@@ -14,14 +20,11 @@ struct NoticeListView: View {
     @StateObject private var viewModel = NoticeListViewModel()
     @State private var isSearchPresented = false
     @State private var selectedNotice: Notice?
+    @EnvironmentObject private var tabBarVisibility: TabBarVisibility
 
     var body: some View {
         ZStack {
             content
-                // Figma's "2-1 공지글" is a full-screen dialog with no tab
-                // bar behind it — hide the tab bar while it's open instead
-                // of reaching for a system presentation (see NoticeDetailView).
-                .toolbar(selectedNotice == nil ? .visible : .hidden, for: .tabBar)
 
             if let notice = selectedNotice {
                 NoticeDetailView(
@@ -43,6 +46,12 @@ struct NoticeListView: View {
             }
         }
         .animation(.default, value: selectedNotice?.id)
+        .onChange(of: selectedNotice?.id) { _, newValue in
+            tabBarVisibility.isHidden = newValue != nil
+        }
+        .onDisappear {
+            tabBarVisibility.isHidden = false
+        }
     }
 
     private var content: some View {
@@ -106,4 +115,5 @@ struct NoticeListView: View {
 
 #Preview {
     NoticeListView()
+        .environmentObject(TabBarVisibility())
 }
