@@ -126,7 +126,23 @@ public class SchoolNoticeCrawlerService {
                 return null;
             }
 
-            return contentBox.text().trim();
+            Elements paragraphs = contentBox.select("> p, > div, > li");
+
+            if (paragraphs.isEmpty()) {
+                return contentBox.text().trim();
+            }
+
+            StringBuilder result = new StringBuilder();
+            for (Element paragraph : paragraphs) {
+                String line = paragraph.text().trim();
+                if (!line.isEmpty()) {
+                    result.append(line).append("\n");
+                } else {
+                    result.append("\n");
+                }
+            }
+
+            return result.toString().trim();
         } catch (Exception e) {
             return null;
         }
