@@ -9,6 +9,7 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,9 @@ public class SchoolNoticeCrawlerService {
     private final SejongPortalAuthService authService;
 
     private static final String NOTICE_URL = "https://dept.sejong.ac.kr/cedpt/board/notice.do";
+
+    private static final List<String> BLOCK_TAGS =
+            List.of("p", "div", "li", "h1", "h2", "h3", "h4", "h5", "h6");
 
     public int crawlAndSave() throws Exception {
         CloseableHttpClient client = authService.buildClient();
@@ -48,7 +52,7 @@ public class SchoolNoticeCrawlerService {
             Long articleNo = Long.parseLong(articleNoStr);
 
             if (schoolNoticeRepository.findByArticleNo(articleNo).isPresent()) {
-                continue;   // 중복 스킵
+                continue;
             }
 
             String title = titleLink.select("span").text().trim();
@@ -61,7 +65,7 @@ public class SchoolNoticeCrawlerService {
             String href = titleLink.attr("href");
             String sourceUrl = NOTICE_URL + href;
 
-            String content = fetchContent(client, sourceUrl);
+            String content = extractContent(client, sourceUrl);
 
             SchoolNotice notice = SchoolNotice.builder()
                     .articleNo(articleNo)
@@ -82,7 +86,6 @@ public class SchoolNoticeCrawlerService {
         return savedCount;
     }
 
-    // 이미 저장된 글 중 본문이 비어있는 것들을 찾아 채워 넣음
     public int backfillContent() throws Exception {
         CloseableHttpClient client = authService.buildClient();
 
@@ -90,7 +93,7 @@ public class SchoolNoticeCrawlerService {
         int updatedCount = 0;
 
         for (SchoolNotice notice : notices) {
-            String content = fetchContent(client, notice.getSourceUrl());
+            String content = extractContent(client, notice.getSourceUrl());
 
             SchoolNotice updated = SchoolNotice.builder()
                     .id(notice.getId())
@@ -112,7 +115,7 @@ public class SchoolNoticeCrawlerService {
         return updatedCount;
     }
 
-    private String fetchContent(CloseableHttpClient client, String detailUrl) {
+    private String extractContent(CloseableHttpClient client, String detailUrl) {
         try {
             HttpGet detailRequest = new HttpGet(detailUrl);
             String detailHtml = client.execute(detailRequest, response ->
@@ -126,29 +129,49 @@ public class SchoolNoticeCrawlerService {
                 return null;
             }
 
-            Elements paragraphs = contentBox.select("> p, > div, > li");
-
-            if (paragraphs.isEmpty()) {
-                return contentBox.text().trim();
+            for (Element br : contentBox.select("br")) {
+                br.replaceWith(new TextNode(" @@BR@@ "));
             }
 
             StringBuilder result = new StringBuilder();
-            for (Element paragraph : paragraphs) {
-                String line = paragraph.text().trim();
-                if (!line.isEmpty()) {
-                    result.append(line).append("\n");
-                } else {
-                    result.append("\n");
-                }
-            }
+            appendBlockText(contentBox, result);
 
-            return result.toString().trim();
+            String finalContent = result.toString();
+            finalContent = finalContent.replace("@@BR@@", "\n");
+            finalContent = finalContent.replaceAll("[ \\t]*\n[ \\t]*", "\n");
+            finalContent = finalContent.replaceAll("\n{3,}", "\n\n");
+
+            return finalContent.trim();
+
         } catch (Exception e) {
             return null;
         }
     }
 
-    @Scheduled(fixedRate = 10800000) // 3시간마다
+    // 블록 태그를 만나면 그 텍스트만 추출하고 더 깊이 안 들어감 (자손 중복 방지)
+    // 블록 태그가 아니거나, 안에 또 블록 태그가 있으면 자식으로 계속 내려감
+    private void appendBlockText(Element element, StringBuilder result) {
+        boolean isBlockTag = BLOCK_TAGS.contains(element.tagName());
+
+        boolean hasBlockChild = element.children().stream()
+                .anyMatch(child -> BLOCK_TAGS.contains(child.tagName()));
+
+        if (isBlockTag && !hasBlockChild) {
+            String line = element.text().trim();
+            if (!line.isEmpty()) {
+                result.append(line).append("\n");
+            } else {
+                result.append("\n");
+            }
+            return;
+        }
+
+        for (Element child : element.children()) {
+            appendBlockText(child, result);
+        }
+    }
+
+    @Scheduled(fixedRate = 10800000)
     public void scheduledCrawl() {
         try {
             int count = crawlAndSave();
