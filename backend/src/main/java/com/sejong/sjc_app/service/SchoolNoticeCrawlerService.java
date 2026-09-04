@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,17 +25,7 @@ public class SchoolNoticeCrawlerService {
 
     private static final String NOTICE_URL = "https://dept.sejong.ac.kr/cedpt/board/notice.do";
 
-    @Scheduled(fixedRate = 10800000) //3시간마다
-    public void scheduledCrawl() {
-        try {
-            int count = crawlAndSave();
-            System.out.println("===== 자동 크롤링 완료: 새 공지 " + count + "개 =====");
-        } catch (Exception e) {
-            System.out.println("===== 자동 크롤링 실패: " + e.getMessage() + " =====");
-        }
-    }
     public int crawlAndSave() throws Exception {
-        // 우리가 만든 SSL 우회 HttpClient 재사용
         CloseableHttpClient client = authService.buildClient();
 
         HttpGet request = new HttpGet(NOTICE_URL);
@@ -42,9 +33,7 @@ public class SchoolNoticeCrawlerService {
                 EntityUtils.toString(response.getEntity())
         );
 
-        // 받아온 HTML을 JSoup으로 파싱
         Document doc = Jsoup.parse(html, NOTICE_URL);
-
         Elements rows = doc.select("tbody tr");
 
         int savedCount = 0;
@@ -59,7 +48,7 @@ public class SchoolNoticeCrawlerService {
             Long articleNo = Long.parseLong(articleNoStr);
 
             if (schoolNoticeRepository.findByArticleNo(articleNo).isPresent()) {
-                continue;
+                continue;   // 중복 스킵
             }
 
             String title = titleLink.select("span").text().trim();
@@ -72,9 +61,12 @@ public class SchoolNoticeCrawlerService {
             String href = titleLink.attr("href");
             String sourceUrl = NOTICE_URL + href;
 
+            String content = fetchContent(client, sourceUrl);
+
             SchoolNotice notice = SchoolNotice.builder()
                     .articleNo(articleNo)
                     .title(title)
+                    .content(content)
                     .category(category)
                     .isNotice(isNotice)
                     .postedDate(postedDate)
@@ -88,5 +80,65 @@ public class SchoolNoticeCrawlerService {
         }
 
         return savedCount;
+    }
+
+    // 이미 저장된 글 중 본문이 비어있는 것들을 찾아 채워 넣음
+    public int backfillContent() throws Exception {
+        CloseableHttpClient client = authService.buildClient();
+
+        List<SchoolNotice> notices = schoolNoticeRepository.findAll();
+        int updatedCount = 0;
+
+        for (SchoolNotice notice : notices) {
+            String content = fetchContent(client, notice.getSourceUrl());
+
+            SchoolNotice updated = SchoolNotice.builder()
+                    .id(notice.getId())
+                    .articleNo(notice.getArticleNo())
+                    .title(notice.getTitle())
+                    .content(content)
+                    .category(notice.getCategory())
+                    .isNotice(notice.isNotice())
+                    .postedDate(notice.getPostedDate())
+                    .viewCount(notice.getViewCount())
+                    .sourceUrl(notice.getSourceUrl())
+                    .crawledAt(notice.getCrawledAt())
+                    .build();
+
+            schoolNoticeRepository.save(updated);
+            updatedCount++;
+        }
+
+        return updatedCount;
+    }
+
+    private String fetchContent(CloseableHttpClient client, String detailUrl) {
+        try {
+            HttpGet detailRequest = new HttpGet(detailUrl);
+            String detailHtml = client.execute(detailRequest, response ->
+                    EntityUtils.toString(response.getEntity())
+            );
+
+            Document detailDoc = Jsoup.parse(detailHtml, detailUrl);
+            Element contentBox = detailDoc.selectFirst(".b-content-box .fr-view");
+
+            if (contentBox == null) {
+                return null;
+            }
+
+            return contentBox.text().trim();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    @Scheduled(fixedRate = 10800000) // 3시간마다
+    public void scheduledCrawl() {
+        try {
+            int count = crawlAndSave();
+            System.out.println("===== 자동 크롤링 완료: 새 공지 " + count + "개 =====");
+        } catch (Exception e) {
+            System.out.println("===== 자동 크롤링 실패: " + e.getMessage() + " =====");
+        }
     }
 }
