@@ -93,6 +93,14 @@ struct RootTabView: View {
                 tabButton(tab)
             }
         }
+        // Left/right breathing room from the screen's curved corners — a
+        // plain SwiftUI view already insets from any actual safe area
+        // (notch/Dynamic Island cutouts, home-indicator bezel), but the
+        // rounded corner radius itself isn't part of that safe area, so the
+        // outermost tab icons (공지사항/설정) would otherwise sit flush
+        // against it. A fixed design-token value (not measured against one
+        // specific device) keeps every tab readable on any iPhone size.
+        .padding(.horizontal, Spacing.xs)
         .padding(.top, Spacing.xs)
         .padding(.bottom, Spacing.xxs)
         .overlay(alignment: .top) {

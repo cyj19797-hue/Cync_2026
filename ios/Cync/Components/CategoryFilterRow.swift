@@ -26,7 +26,8 @@ struct CategoryFilterRow: View {
                     }
                 }
             }
-            .padding(Spacing.xs)
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.xs)
         }
     }
 }

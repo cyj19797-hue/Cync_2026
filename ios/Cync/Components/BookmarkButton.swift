@@ -38,7 +38,7 @@ struct BookmarkButton: View {
             Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 22, height: 22)
+                .frame(width: 16, height: 16)
         }
         .buttonStyle(.plain)
         .foregroundStyle(isBookmarked ? Color.accentRed : Color.textPrimary)

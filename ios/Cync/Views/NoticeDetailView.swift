@@ -142,7 +142,7 @@ struct NoticeDetailView: View {
     }
 
     private var topSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             topBar
             Divider()
                 .overlay(Color.borderLight)

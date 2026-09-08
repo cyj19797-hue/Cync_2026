@@ -31,7 +31,7 @@ struct NoticeRow: View {
         Button {
             onSelect?()
         } label: {
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
                 HStack(spacing: Spacing.xs) {
                     HStack(spacing: Spacing.xs) {
                         NoticeCategoryBadge(category: notice.category)

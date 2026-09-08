@@ -48,8 +48,16 @@ extension Font {
     /// "공지사항" nav title, e.g. `I41:816;41:779` — Pretendard Bold 16.
     static let noticeNavTitle = Font.pretendard(.bold, size: 20, relativeTo: .headline)
 
-    /// Category filter chip label ("전체", "학사", …) — Pretendard Medium 16.
+    /// Shared button/field label size — Pretendard Medium 16. Also the base
+    /// this file used for the "전체"/"학사"/… filter chip label until it was
+    /// split out below (`.categoryFilterChipLabel`) at a smaller size.
     static let categoryChip = Font.pretendard(.medium, size: 16, relativeTo: .body)
+
+    /// Category filter chip label ("전체", "학사", …) on "2 공지사항" /
+    /// "3 캘린더" — Pretendard Regular 14. Deliberately smaller/lighter than
+    /// `.noticeTitle` so the filter row doesn't visually compete with notice
+    /// titles below it.
+    static let categoryFilterChipLabel = Font.pretendard(.regular, size: 14, relativeTo: .subheadline)
 
     /// Small pink category badge inside a notice row — Pretendard Medium 14.
     static let categoryBadge = Font.pretendard(.medium, size: 14, relativeTo: .subheadline)

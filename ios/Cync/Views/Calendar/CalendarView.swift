@@ -62,16 +62,25 @@ struct CalendarView: View {
                         if isSearchPresented {
                             // UIKit UISearchBar — see Components/SearchBar.swift for why.
                             SearchBar(text: $viewModel.searchText, isActive: $isSearchPresented)
+                                .padding(.horizontal, Spacing.xs)
                                 .transition(.move(edge: .top).combined(with: .opacity))
                         } else {
+                            // `CategoryFilterRow` already carries its own
+                            // `Spacing.md` horizontal padding (matching
+                            // NoticeListView's), so it sits outside the
+                            // `.padding(.horizontal, Spacing.md)` below —
+                            // stacking both would double the row's left/right
+                            // margin against `calendarCard`/`scheduleCard`.
                             CategoryFilterRow(selectedCategory: $viewModel.selectedCategory)
                                 .transition(.opacity)
                         }
 
-                        calendarCard
-                        scheduleCard
+                        VStack(spacing: Spacing.xs) {
+                            calendarCard
+                            scheduleCard
+                        }
+                        .padding(.horizontal, Spacing.md)
                     }
-                    .padding(.horizontal, Spacing.md)
                     .animation(.default, value: isSearchPresented)
                 }
                 .background(Color.appBackground)

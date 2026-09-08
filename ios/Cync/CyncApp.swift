@@ -7,7 +7,7 @@ struct CyncApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if sessionStore.isLoggedIn {
+                if true {
                     RootTabView()
                 } else {
                     LoginView()

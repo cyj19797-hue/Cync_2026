@@ -73,9 +73,11 @@ struct NoticeListView: View {
                 if isSearchPresented {
                     SearchBar(text: $viewModel.searchText, isActive: $isSearchPresented)
                         .padding(.horizontal, Spacing.xs)
+                        .padding(.top, Spacing.xs)
                         .transition(.move(edge: .top).combined(with: .opacity))
                 } else {
                     CategoryFilterRow(selectedCategory: $viewModel.selectedCategory)
+                        .padding(.top, Spacing.xs)
                         .transition(.opacity)
                 }
 

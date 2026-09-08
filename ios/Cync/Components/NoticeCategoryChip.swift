@@ -19,7 +19,7 @@ struct NoticeCategoryChip: View {
     var body: some View {
         Button(action: action) {
             Text(category.localizedKey)
-                .font(.categoryChip)
+                .font(.categoryFilterChipLabel)
                 .foregroundStyle(Color.textPrimary)
                 .padding(Spacing.xs)
                 .background {

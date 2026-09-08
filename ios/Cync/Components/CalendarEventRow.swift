@@ -21,7 +21,7 @@ struct CalendarEventRow: View {
                 .fill(Color.eventAccent)
                 .frame(width: 4)
 
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
                 HStack(spacing: Spacing.xs) {
                     Text(event.title)
                         .font(.noticeTitle)
