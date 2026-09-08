@@ -87,7 +87,7 @@ struct NoticeListView: View {
                             onSelect: { selectedNotice = notice }
                         )
                         .listRowSeparatorTint(Color.borderLight)
-                        .listRowInsets(EdgeInsets(top: Spacing.xxs, leading: Spacing.md, bottom: Spacing.xxs, trailing: Spacing.md))
+                        .listRowInsets(EdgeInsets(top: Spacing.xs, leading: Spacing.md, bottom: Spacing.xs, trailing: Spacing.md))
                     }
                 }
                 .listStyle(.plain)

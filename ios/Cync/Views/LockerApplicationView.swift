@@ -3,8 +3,8 @@
 //  test
 //
 //  Figma: "26 2 창학" file, frame `240:4063` ("4-1 사물함 신청").
-//  Back-chevron + centered title nav (standard NavigationStack chrome, same
-//  pattern as CalendarEventListView) + a 6-column grid (`361:4254`) reusing
+//  Back-chevron + centered title nav (`ScreenNavigationBar`, same pattern
+//  as CalendarEventListView) + a 6-column grid (`361:4254`) reusing
 //  `LockerCellView` from the "4 사물함" screen. Pushed from LockerView's
 //  "사물함 신청하기" prompt (shown when the user has no locker yet).
 //
@@ -22,10 +22,65 @@ import SwiftUI
 
 private let lockerApplicationGridColumns = Array(repeating: GridItem(.flexible(), spacing: Spacing.xxs), count: 6)
 
-/// Which popup (if any) is currently shown over the grid.
-private enum LockerApplicationDialogStage {
+/// Which popup (if any) is currently shown over a locker grid — shared
+/// with `LockerApplicationMapView`, the map-based apply entry.
+enum LockerApplicationDialogStage {
     case confirm(Locker)
     case accountInfo(Locker)
+}
+
+extension View {
+    /// The "신청" confirm → 계좌 안내 popup flow, as a dimmed overlay driven
+    /// by `stage`. Shared by `LockerApplicationView` (6×6 mock grid) and
+    /// `LockerApplicationMapView` (physical map) so the two entry points
+    /// can't drift apart on how applying actually behaves.
+    func lockerApplyDialogOverlay(
+        stage: Binding<LockerApplicationDialogStage?>,
+        location: String,
+        apply: @escaping (Locker) async throws -> Locker,
+        onError: @escaping (String) -> Void,
+        onComplete: @escaping (Locker) -> Void
+    ) -> some View {
+        overlay {
+            if let currentStage = stage.wrappedValue {
+                ZStack {
+                    Color.black.opacity(0.6)
+                        .ignoresSafeArea()
+
+                    switch currentStage {
+                    case .confirm(let locker):
+                        LockerApplicationConfirmDialog(
+                            locker: locker,
+                            location: location,
+                            onCancel: { stage.wrappedValue = nil },
+                            onConfirm: {
+                                Task {
+                                    do {
+                                        // Commits the application now — the
+                                        // account-info dialog that follows just
+                                        // relays the password/due date the
+                                        // server just assigned.
+                                        let applied = try await apply(locker)
+                                        stage.wrappedValue = .accountInfo(applied)
+                                    } catch {
+                                        stage.wrappedValue = nil
+                                        onError(error.localizedDescription)
+                                    }
+                                }
+                            }
+                        )
+                        .padding(.horizontal, Spacing.md)
+                    case .accountInfo(let locker):
+                        LockerApplicationAccountDialog {
+                            stage.wrappedValue = nil
+                            onComplete(locker)
+                        }
+                        .padding(.horizontal, Spacing.md)
+                    }
+                }
+            }
+        }
+    }
 }
 
 struct LockerApplicationView: View {
@@ -40,40 +95,49 @@ struct LockerApplicationView: View {
     var onApplicationComplete: (Locker) -> Void = { _ in }
 
     var body: some View {
-        ScrollView {
-            LazyVGrid(columns: lockerApplicationGridColumns, spacing: Spacing.xxs) {
-                ForEach(viewModel.lockers) { locker in
-                    let isSelectable = locker.status == .available
-                    Button {
-                        viewModel.selectLocker(locker)
-                    } label: {
-                        LockerCellView(
-                            locker: locker,
-                            maskOccupiedNumbers: false,
-                            zeroPadded: true,
-                            isSelected: viewModel.selectedLockerID == locker.id
-                        )
+        VStack(spacing: 0) {
+            ScreenNavigationBar(titleKey: "사물함 신청", onBack: { dismiss() })
+
+            ScrollView {
+                LazyVGrid(columns: lockerApplicationGridColumns, spacing: Spacing.xxs) {
+                    ForEach(viewModel.lockers) { locker in
+                        let isSelectable = locker.status == .available
+                        Button {
+                            viewModel.selectLocker(locker)
+                        } label: {
+                            LockerCellView(
+                                locker: locker,
+                                maskOccupiedNumbers: false,
+                                zeroPadded: true,
+                                isSelected: viewModel.selectedLockerID == locker.id
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!isSelectable)
                     }
-                    .buttonStyle(.plain)
-                    .disabled(!isSelectable)
+                }
+                .padding(Spacing.md)
+            }
+            .background(Color.appBackground)
+            .safeAreaInset(edge: .bottom) {
+                if let selected = viewModel.selectedLocker {
+                    applyButton(for: selected)
                 }
             }
-            .padding(Spacing.md)
         }
         .background(Color.appBackground)
-        .safeAreaInset(edge: .bottom) {
-            if let selected = viewModel.selectedLocker {
-                applyButton(for: selected)
+        .lockerApplyDialogOverlay(
+            stage: $dialogStage,
+            location: viewModel.location,
+            apply: viewModel.apply,
+            onError: { applyErrorMessage = $0 },
+            onComplete: { locker in
+                onApplicationComplete(locker)
+                dismiss()
             }
-        }
-        .overlay {
-            if let dialogStage {
-                dialogOverlay(for: dialogStage)
-            }
-        }
+        )
         .animation(.default, value: viewModel.selectedLockerID)
-        .navigationTitle("사물함 신청")
-        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
         .task {
             await viewModel.load()
         }
@@ -104,44 +168,6 @@ struct LockerApplicationView: View {
         .background(.bar)
     }
 
-    @ViewBuilder
-    private func dialogOverlay(for stage: LockerApplicationDialogStage) -> some View {
-        ZStack {
-            Color.black.opacity(0.6)
-                .ignoresSafeArea()
-
-            switch stage {
-            case .confirm(let locker):
-                LockerApplicationConfirmDialog(
-                    locker: locker,
-                    location: viewModel.location,
-                    onCancel: { dialogStage = nil },
-                    onConfirm: {
-                        Task {
-                            do {
-                                // Commits the application now — the account-info
-                                // dialog that follows just relays the password/
-                                // due date the server just assigned.
-                                let applied = try await viewModel.apply(locker)
-                                dialogStage = .accountInfo(applied)
-                            } catch {
-                                dialogStage = nil
-                                applyErrorMessage = error.localizedDescription
-                            }
-                        }
-                    }
-                )
-                .padding(.horizontal, Spacing.md)
-            case .accountInfo(let locker):
-                LockerApplicationAccountDialog {
-                    dialogStage = nil
-                    onApplicationComplete(locker)
-                    dismiss()
-                }
-                .padding(.horizontal, Spacing.md)
-            }
-        }
-    }
 }
 
 #Preview {

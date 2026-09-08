@@ -44,34 +44,10 @@ struct CalendarView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: Spacing.xs) {
-                    if isSearchPresented {
-                        // UIKit UISearchBar — see Components/SearchBar.swift for why.
-                        SearchBar(text: $viewModel.searchText, isActive: $isSearchPresented)
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                    } else {
-                        CategoryFilterRow(selectedCategory: $viewModel.selectedCategory)
-                            .transition(.opacity)
-                    }
-
-                    calendarCard
-                    scheduleCard
-                }
-                .padding(.horizontal, Spacing.md)
-                .animation(.default, value: isSearchPresented)
-            }
-            .background(Color.appBackground)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    HStack(spacing: Spacing.xs) {
-                        Image(systemName: "calendar")
-                        Text("캘린더")
-                            .font(.noticeNavTitle)
-                    }
-                    .foregroundStyle(Color.textPrimary)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
+            VStack(spacing: 0) {
+                AppTopBar(title: "캘린더") {
+                    Image(systemName: "calendar")
+                } trailing: {
                     Button {
                         isSearchPresented = true
                     } label: {
@@ -80,8 +56,27 @@ struct CalendarView: View {
                     }
                     .accessibilityLabel("검색")
                 }
+
+                ScrollView {
+                    VStack(spacing: Spacing.xs) {
+                        if isSearchPresented {
+                            // UIKit UISearchBar — see Components/SearchBar.swift for why.
+                            SearchBar(text: $viewModel.searchText, isActive: $isSearchPresented)
+                                .transition(.move(edge: .top).combined(with: .opacity))
+                        } else {
+                            CategoryFilterRow(selectedCategory: $viewModel.selectedCategory)
+                                .transition(.opacity)
+                        }
+
+                        calendarCard
+                        scheduleCard
+                    }
+                    .padding(.horizontal, Spacing.md)
+                    .animation(.default, value: isSearchPresented)
+                }
+                .background(Color.appBackground)
             }
-            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
             .task {
                 await viewModel.load()
             }

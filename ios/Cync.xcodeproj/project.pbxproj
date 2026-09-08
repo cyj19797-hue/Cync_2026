@@ -12,6 +12,7 @@
 		A10000000000000000000003 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* HomeViewModel.swift */; };
 		A10000000000000000000004 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* APIClient.swift */; };
 		A10000000000000000000005 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* Assets.xcassets */; };
+		BD36FA01304BE187005D534D /* SwiftUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD36FA00304BE187005D534D /* SwiftUIView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,6 +22,7 @@
 		A20000000000000000000004 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		A20000000000000000000005 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A20000000000000000000006 /* Cync.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Cync.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BD36FA00304BE187005D534D /* SwiftUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUIView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -61,6 +63,7 @@
 				A20000000000000000000003 /* HomeViewModel.swift */,
 				A20000000000000000000004 /* APIClient.swift */,
 				A20000000000000000000005 /* Assets.xcassets */,
+				BD36FA00304BE187005D534D /* SwiftUIView.swift */,
 			);
 			path = Cync;
 			sourceTree = "<group>";
@@ -150,6 +153,7 @@
 			files = (
 				A10000000000000000000001 /* CyncApp.swift in Sources */,
 				A10000000000000000000002 /* ContentView.swift in Sources */,
+				BD36FA01304BE187005D534D /* SwiftUIView.swift in Sources */,
 				A10000000000000000000003 /* HomeViewModel.swift in Sources */,
 				A10000000000000000000004 /* APIClient.swift in Sources */,
 			);

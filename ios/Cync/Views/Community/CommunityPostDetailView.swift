@@ -3,18 +3,24 @@
 //  test
 //
 //  Figma: "26 2 창학" file, frame `228:1790` ("5-1 게시글").
-//  Post header (`228:1994`: author, title, body, reactions, kebab menu) +
-//  "댓글 섹션" (`299:2001`): a `calendarSurface` panel listing
-//  `CommentRow`s via `CommentListView`. Pushed from CommunityView via
-//  NavigationLink, so the back chevron comes from NavigationStack for free
-//  — Figma's nav bar here has no title text, so no `.navigationTitle` is
-//  set either. The kebab opens "커뮤니티 - 액션메뉴" the same way
-//  CommunityView's row does — see Components/CommunityPostActionMenu.swift.
+//  Post header (`228:1994`: author, title, body, reactions, kebab) +
+//  "댓글 섹션" (`299:2001`): a `calendarSurface` panel listing `CommentRow`s
+//  via `CommentListView`. Pushed from CommunityView via NavigationLink; the
+//  back chevron comes from `ScreenNavigationBar` (system nav bar hidden),
+//  passed an empty title since Figma's nav bar here has no title text.
 //
-//  Comment/reply composing has no Figma frame yet, so
-//  Components/CommentComposeView.swift reuses this screen's existing
-//  bottom-sheet and button styles (see that file's header comment) rather
-//  than inventing new ones.
+//  Only this screen has the kebab — CommunityView's row list doesn't. Its
+//  popup (`isActionMenuPresented`) is placeholder/demo content only (see
+//  the TODO on it below); the real 공유/저장/신고 flow this used to open
+//  (`.communityPostActionMenu(target:)`) was removed, and isn't what's
+//  wired up here — replace the demo actions with whatever this menu should
+//  actually do.
+//
+//  Comment/reply composing (`composeTarget`) presents
+//  Components/CommentComposeView.swift — a centered, dimmed-backdrop popup
+//  (`composeOverlay`), not a system `.sheet` — this project's UI rule
+//  (CLAUDE.md) reserves `.sheet` for cases explicitly asked to use the
+//  native look, and this is a custom-cornered card, not a bottom sheet.
 //
 //  No UIKit anywhere on this screen.
 //
@@ -23,8 +29,10 @@ import SwiftUI
 
 struct CommunityPostDetailView: View {
     @StateObject private var viewModel: CommunityPostDetailViewModel
-    @State private var actionMenuTarget: CommunityPost?
+    @StateObject private var keyboard = KeyboardObserver()
     @State private var composeTarget: ComposeTarget?
+    @State private var isActionMenuPresented = false
+    @Environment(\.dismiss) private var dismiss
 
     init(post: CommunityPost, previewComments: [Comment] = []) {
         let viewModel = CommunityPostDetailViewModel(post: post)
@@ -33,34 +41,89 @@ struct CommunityPostDetailView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                postHeader
-                commentsSection
+        VStack(spacing: 0) {
+            ScreenNavigationBar(titleKey: "", onBack: { dismiss() })
+
+            ZStack {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        postHeader
+                        commentsSection
+                    }
+                }
+                .background(Color.appBackground)
+                // TODO: demo placeholder — swap these actions/labels for
+                // whatever this menu should actually do.
+                .confirmationDialog(
+                    "더보기",
+                    isPresented: $isActionMenuPresented,
+                    titleVisibility: .hidden
+                ) {
+                    Button("데모 메뉴 1") {}
+                    Button("데모 메뉴 2") {}
+                    Button("데모 메뉴 3", role: .destructive) {}
+                }
+                .task {
+                    await viewModel.loadComments()
+                }
+                .alert(
+                    "오류",
+                    isPresented: Binding(
+                        get: { viewModel.errorMessage != nil },
+                        set: { isPresented in if !isPresented { viewModel.errorMessage = nil } }
+                    )
+                ) {
+                    Button("확인", role: .cancel) {}
+                } message: {
+                    Text(viewModel.errorMessage ?? "")
+                }
+
+                if let composeTarget {
+                    composeOverlay(for: composeTarget)
+                }
             }
+            .animation(.easeOut(duration: 0.25), value: composeTarget?.id)
         }
         .background(Color.appBackground)
-        .communityPostActionMenu(target: $actionMenuTarget)
-        .sheet(item: $composeTarget) { target in
-            CommentComposeView(replyingToAuthor: target.replyingToAuthor) { text in
-                Task { await viewModel.addComment(content: text, parentCommentId: target.parentCommentId) }
+        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    /// Centered `CommentComposeView` over a tap-to-dismiss dim backdrop —
+    /// this project's custom-modal pattern (see this file's header
+    /// comment), not `.sheet`. `keyboard.height > 0` switches the card's
+    /// frame alignment from `.center` to `.bottom` once the comment field
+    /// is focused — this container is already inset by the system's own
+    /// keyboard-avoidance (confirmed empirically: adding a second,
+    /// manual keyboard-height inset on top of it overshoots and shoves the
+    /// card off the top of the screen), so only a small fixed
+    /// `Spacing.sm` gap is added, not `keyboard.height` itself.
+    private func composeOverlay(for target: ComposeTarget) -> some View {
+        ZStack {
+            Color.black.opacity(0.6)
+                .ignoresSafeArea()
+                .onTapGesture { composeTarget = nil }
+                .transition(.opacity)
+
+            CommentComposeView(replyingToAuthor: target.replyingToAuthor) { text, isAnonymous in
+                composeTarget = nil
+                Task {
+                    await viewModel.addComment(
+                        content: text,
+                        parentCommentId: target.parentCommentId,
+                        isAnonymous: isAnonymous
+                    )
+                }
             }
-        }
-        .task {
-            await viewModel.loadComments()
-        }
-        .alert(
-            "오류",
-            isPresented: Binding(
-                get: { viewModel.errorMessage != nil },
-                set: { isPresented in if !isPresented { viewModel.errorMessage = nil } }
+            .padding(.horizontal, Spacing.md)
+            .frame(
+                maxWidth: .infinity,
+                maxHeight: .infinity,
+                alignment: keyboard.height > 0 ? .bottom : .center
             )
-        ) {
-            Button("확인", role: .cancel) {}
-        } message: {
-            Text(viewModel.errorMessage ?? "")
+            .padding(.bottom, keyboard.height > 0 ? Spacing.sm : 0)
+            .animation(.easeOut(duration: 0.25), value: keyboard.height)
+            .transition(.scale(scale: 0.92).combined(with: .opacity))
         }
-        .navigationBarTitleDisplayMode(.inline)
     }
 
     private var postHeader: some View {
@@ -70,9 +133,10 @@ struct CommunityPostDetailView: View {
 
                 Spacer(minLength: 0)
 
-                // Figma: "더보기(케밥) 버튼" — opens "커뮤니티 - 액션메뉴".
+                // Figma: "더보기(케밥) 버튼" — opens a demo placeholder popup
+                // (see `isActionMenuPresented`'s `.confirmationDialog` above).
                 Button {
-                    actionMenuTarget = viewModel.post
+                    isActionMenuPresented = true
                 } label: {
                     Image(systemName: "ellipsis")
                         .rotationEffect(.degrees(90))

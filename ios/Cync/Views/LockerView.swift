@@ -9,10 +9,13 @@
 //  built here — it's RootTabView's `TabView`, this is just its "사물함" tab
 //  content.
 //
-//  No UIKit anywhere on this screen — the location dropdown is a plain
-//  SwiftUI `Menu`, which already renders as the native iOS pull-down/pop-up
-//  control Figma's `ChevronDown` affordance implies; nothing here needed a
-//  UIKit escape hatch.
+//  The location dropdown is a plain SwiftUI `Menu`, which already renders
+//  as the native iOS pull-down/pop-up control Figma's `ChevronDown`
+//  affordance implies. Tapping the "전체 사물함" grid itself (not a chevron)
+//  and the "사물함 신청" prompt both push `LockerApplicationMapView` (the
+//  physical map + apply flow, UIKit under the hood via `LockerMapScreenView`);
+//  while the student has no locker, `lockerApplicationPreview` also embeds
+//  the bare map (no apply flow, browsing only) inline below the grid.
 //
 
 import SwiftUI
@@ -45,6 +48,10 @@ struct LockerView: View {
                         }
 
                         allLockersSection
+
+                        if viewModel.myLocker == nil {
+                            lockerApplicationPreview
+                        }
                     }
                     .padding(Spacing.md)
                 }
@@ -74,13 +81,15 @@ struct LockerView: View {
     }
 
     /// Shown instead of `MyLockerCard` when the user has no locker yet —
-    /// links to "4-1 사물함 신청" (not part of the "4 사물함" Figma frame
-    /// itself, but the natural entry point into it).
+    /// opens `LockerApplicationMapView` (physical map + legend, tap an
+    /// empty cell to apply) instead of "4-1 사물함 신청"'s 6×6 mock grid
+    /// (`LockerApplicationView`) — that screen's code is unchanged but is
+    /// currently unreachable from the app's UI.
     private var applyPrompt: some View {
         NavigationLink {
-            LockerApplicationView { locker in
-                // 신청 완료: 서버가 배정한 실제 사물함(비밀번호/반납기한 포함)을
-                // "나의 사물함"으로 승격.
+            LockerApplicationMapView { locker in
+                // 신청 완료: 서버가 배정한 실제 사물함(비밀번호 포함)을 "나의
+                // 사물함"으로 승격.
                 viewModel.myLocker = locker
             }
         } label: {
@@ -138,12 +147,36 @@ struct LockerView: View {
                 }
             }
 
-            LazyVGrid(columns: lockerGridColumns, spacing: Spacing.xxs) {
-                ForEach(viewModel.lockersAtSelectedLocation) { locker in
-                    LockerCellView(locker: locker, isMine: locker.id == viewModel.myLocker?.id)
+            NavigationLink {
+                LockerApplicationMapView { locker in
+                    viewModel.myLocker = locker
+                }
+            } label: {
+                LazyVGrid(columns: lockerGridColumns, spacing: Spacing.xxs) {
+                    ForEach(viewModel.lockersAtSelectedLocation) { locker in
+                        LockerCellView(locker: locker, isMine: locker.id == viewModel.myLocker?.id)
+                    }
                 }
             }
+            .buttonStyle(.plain)
         }
+    }
+
+    /// Shown below `allLockersSection` only while the student has no
+    /// locker — an always-visible, embedded preview of the physical map
+    /// with the same color legend, so a locker's status is visible without
+    /// a tap. Deliberately the bare `LockerMapScreenView`, not
+    /// `LockerApplicationMapView` — no apply flow here; tapping a cell does
+    /// nothing. Applying still works from tapping the grid above or from
+    /// the "사물함 신청" prompt.
+    private var lockerApplicationPreview: some View {
+        LockerMapScreenView(initialZoomFit: .fitHeight(padding: Spacing.sm), showsLegend: true)
+            .frame(height: 520)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.scheduleCard))
+            .overlay {
+                RoundedRectangle(cornerRadius: Radius.scheduleCard)
+                    .strokeBorder(Color.gray300)
+            }
     }
 }
 

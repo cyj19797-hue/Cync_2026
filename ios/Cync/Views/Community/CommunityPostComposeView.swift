@@ -30,6 +30,10 @@ struct CommunityPostComposeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            ScreenNavigationBar(titleKey: "글쓰기", onBack: { dismiss() }) {
+                submitButton
+            }
+
             titleRow
 
             Divider()
@@ -45,13 +49,7 @@ struct CommunityPostComposeView: View {
             .padding(.horizontal, Spacing.sm)
         }
         .background(Color.appBackground)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                submitButton
-            }
-        }
-        .navigationTitle("글쓰기")
-        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
         .alert(
             "오류",
             isPresented: Binding(

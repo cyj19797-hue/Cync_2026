@@ -104,7 +104,7 @@ struct NoticeDetailView: View {
                 }
             }
         }
-        .padding(Spacing.xl)
+        .padding(Spacing.sm)
         .background(Color.appBackground)
         .clipShape(RoundedRectangle(cornerRadius: Radius.card))
         .background(

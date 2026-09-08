@@ -17,7 +17,8 @@ struct NoticeCategoryBadge: View {
         Text(category.localizedKey)
             .font(.categoryBadge)
             .foregroundStyle(Color.textPrimary)
-            .padding(Spacing.xs)
+            .padding(.horizontal, Spacing.xxs)
+            .padding(.vertical, Spacing.xxs)
             .background {
                 RoundedRectangle(cornerRadius: Radius.chipDefault)
                     .fill(Color.categoryBadgeBackground)

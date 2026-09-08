@@ -3,63 +3,51 @@
 //  test
 //
 //  Figma node `139:1657` ("게시글") — one post row: title + 1-line body
-//  preview, an optional like/comment reaction row, and a trailing "더보기"
-//  (kebab) button. Figma only fully populated the reaction row on one of its
-//  6 mock instances — `CommunityPostRow` shows it whenever a post actually
-//  has likes/comments and hides it otherwise, rather than hard-coding which
-//  rows have it.
+//  preview, and independent like/comment reaction badges. Each badge is
+//  shown only when its own count is at least 1 — a post with comments but
+//  no likes (or vice versa) shows just that one badge, not a "0" alongside
+//  it, and a post with neither shows no reaction row at all.
 //
-//  The kebab used to open its own edit/delete/report `Menu` here, invented
-//  before "커뮤니티 - 액션메뉴" specified the real behavior (공유하기/저장하기/
-//  신고하기 via a `.confirmationDialog` owned by the parent screen — see
-//  Components/CommunityPostActionMenu.swift) — it now just reports the tap
-//  up via `onTapMore`.
+//  The trailing "더보기" (kebab) button and its 공유하기/저장하기/신고하기
+//  action menu (formerly `.communityPostActionMenu(target:)`,
+//  Components/CommunityPostActionMenu.swift) have been removed from this
+//  screen entirely — this row has no trailing button anymore.
 //
 
 import SwiftUI
 
 struct CommunityPostRow: View {
     let post: CommunityPost
-    let onTapMore: () -> Void
     /// Opens "5-1 게시글". `nil` keeps the row static (used by the
     /// standalone preview below).
     var onSelect: (() -> Void)?
 
     var body: some View {
-        HStack(alignment: .top, spacing: Spacing.xs) {
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text(post.title)
-                    .font(.communityPostTitle)
-                    .foregroundStyle(Color.textPrimary)
-                    .lineLimit(1)
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            Text(post.title)
+                .font(.communityPostTitle)
+                .foregroundStyle(Color.textPrimary)
+                .lineLimit(1)
 
-                Text(post.content)
-                    .font(.communityPostBody)
-                    .foregroundStyle(Color.textPrimary)
-                    .lineLimit(1)
+            Text(post.content)
+                .font(.communityPostBody)
+                .foregroundStyle(Color.textPrimary)
+                .lineLimit(1)
 
-                if post.likeCount > 0 || post.commentCount > 0 {
-                    HStack(spacing: Spacing.xs) {
+            if post.likeCount > 0 || post.commentCount > 0 {
+                HStack(spacing: Spacing.xs) {
+                    if post.likeCount > 0 {
                         reaction(systemImage: "heart", count: post.likeCount)
+                    }
+                    if post.commentCount > 0 {
                         reaction(systemImage: "bubble.right", count: post.commentCount)
                     }
-                    .padding(.top, 2)
                 }
+                .padding(.top, 2)
             }
-            .contentShape(Rectangle())
-            .onTapGesture { onSelect?() }
-
-            Spacer(minLength: 0)
-
-            // Figma: "더보기(케밥) 버튼" — opens "커뮤니티 - 액션메뉴".
-            Button(action: onTapMore) {
-                Image(systemName: "ellipsis")
-                    .rotationEffect(.degrees(90))
-                    .foregroundStyle(Color.textPrimary)
-                    .frame(width: 24, height: 24)
-            }
-            .buttonStyle(.plain)
         }
+        .contentShape(Rectangle())
+        .onTapGesture { onSelect?() }
         .padding(.vertical, Spacing.xs)
     }
 
@@ -73,11 +61,49 @@ struct CommunityPostRow: View {
     }
 }
 
-#Preview {
+/// `CommunityPost`'s memberwise init is `private` (two of its stored
+/// properties are), so these previews build dummy posts by mutating a copy
+/// of an existing mock instead of constructing one directly.
+private func mockPost(title: String, likeCount: Int, commentCount: Int) -> CommunityPost {
+    var post = CommunityPost.mockList[0]
+    post.title = title
+    post.likeCount = likeCount
+    post.commentCount = commentCount
+    return post
+}
+
+#Preview("좋아요만 있음") {
     List {
-        ForEach(CommunityPost.mockList) { post in
-            CommunityPostRow(post: post, onTapMore: {})
-        }
+        CommunityPostRow(
+            post: mockPost(title: "좋아요만 있는 게시글", likeCount: 3, commentCount: 0)
+        )
+    }
+    .listStyle(.plain)
+}
+
+#Preview("댓글만 있음") {
+    List {
+        CommunityPostRow(
+            post: mockPost(title: "댓글만 있는 게시글", likeCount: 0, commentCount: 5)
+        )
+    }
+    .listStyle(.plain)
+}
+
+#Preview("좋아요 + 댓글 모두 있음") {
+    List {
+        CommunityPostRow(
+            post: mockPost(title: "둘 다 있는 게시글", likeCount: 2, commentCount: 4)
+        )
+    }
+    .listStyle(.plain)
+}
+
+#Preview("좋아요 + 댓글 모두 없음") {
+    List {
+        CommunityPostRow(
+            post: mockPost(title: "둘 다 없는 게시글 (반응 영역 없음)", likeCount: 0, commentCount: 0)
+        )
     }
     .listStyle(.plain)
 }

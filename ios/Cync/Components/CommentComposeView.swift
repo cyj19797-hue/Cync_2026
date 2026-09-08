@@ -2,99 +2,92 @@
 //  CommentComposeView.swift
 //  Cync
 //
-//  Comment/reply composer, presented as a `.sheet` from
-//  CommunityPostDetailView — same bottom-sheet chrome as
-//  Views/ReportReasonSheet.swift (header + close button,
-//  `.presentationDetents([.medium])` + drag indicator) and the same
-//  enabled/disabled submit-button pattern as CommunityPostComposeView's
-//  "완료" button, reused directly via `PrimaryActionButton` rather than
-//  redrawing it.
+//  Figma: "26 2 창학" file, component `294:1984` ("댓글 입력 영역") for the
+//  익명 체크박스 + single-line input pill + inline "등록" button, wrapped in
+//  `DialogCard` (Radius.card) per this project's UI rule (CLAUDE.md): a
+//  centered custom popup, not `.sheet` — no drag handle, no forced bottom-
+//  slide chrome. `CommunityPostDetailView` presents this as a ZStack +
+//  dimmed-backdrop overlay (`composeOverlay`), the same pattern
+//  `LockerApplicationConfirmDialog`/`NoticeDetailView` already use, rather
+//  than a system sheet.
+//
+//  This view has no dismiss action of its own — tapping the dim backdrop
+//  behind it (handled by the presenter) is the only way to cancel; tapping
+//  "등록" just calls `onSubmit` and leaves closing the popup to the caller.
+//
+//  The "익명" checkbox reuses `CheckboxToggle` (the same "익명" control
+//  CommunityPostComposeView already uses for posts) and finally gives
+//  comments the anonymous toggle `CommunityPostDetailViewModel.addComment`
+//  always hardcoded to `true` for, since no UI exposed it before.
 //
 
 import SwiftUI
 
 struct CommentComposeView: View {
-    /// The parent comment's author when replying, so the header can show
-    /// "OO님에게 답글 남기는 중"; nil for a new top-level comment.
+    /// The parent comment's author when replying, so the card can show
+    /// "OO님에게 답글 남기는 중" and title itself "답글 달기"; nil for a new
+    /// top-level comment ("댓글 달기").
     var replyingToAuthor: String?
-    var onSubmit: (String) -> Void
+    var onSubmit: (String, Bool) -> Void
 
-    @Environment(\.dismiss) private var dismiss
     @State private var text: String = ""
+    @State private var isAnonymous = true
 
     private var canSubmit: Bool {
         !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
-        VStack(spacing: Spacing.xxs) {
-            header
+        DialogCard {
+            Text(replyingToAuthor == nil ? "댓글 달기" : "답글 달기")
+                .font(.dialogTitle)
+                .foregroundStyle(Color.textPrimary)
 
             if let replyingToAuthor {
                 Text("\(replyingToAuthor)님에게 답글 남기는 중")
                     .font(.noticeDate)
                     .foregroundStyle(Color.textSecondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, Spacing.sm)
+                    .padding(.bottom, Spacing.xxs)
             }
 
-            Divider()
-                .overlay(Color.borderLight)
+            CheckboxToggle(isChecked: $isAnonymous, titleKey: "익명")
+                .padding(.vertical, Spacing.xxs)
 
-            PlaceholderTextEditor(
-                text: $text,
-                placeholder: "댓글을 입력하세요.",
-                font: .communityPostBody,
-                placeholderColor: .gray400,
-                textColor: .textPrimary
-            )
-            .frame(height: 120)
-            .padding(Spacing.sm)
+            HStack(spacing: Spacing.xs) {
+                TextField("댓글을 입력하세요.", text: $text)
+                    .font(.categoryBadge)
+                    .foregroundStyle(Color.textPrimary)
 
-            PrimaryActionButton(titleKey: "등록", isEnabled: canSubmit) {
-                onSubmit(text)
-                dismiss()
+                Button("등록") {
+                    onSubmit(text, isAnonymous)
+                }
+                .font(.categoryBadge)
+                .foregroundStyle(canSubmit ? Color.eventAccent : Color.gray400)
+                .disabled(!canSubmit)
             }
-            .padding(Spacing.md)
+            .padding(.horizontal, Spacing.xs)
+            .padding(.vertical, Spacing.xxs)
+            .background(Color.white)
+            .overlay {
+                RoundedRectangle(cornerRadius: Radius.inputField)
+                    .strokeBorder(Color.borderLight)
+            }
         }
-        .presentationDetents([.medium])
-        .presentationDragIndicator(.visible)
-    }
-
-    private var header: some View {
-        HStack {
-            Text(replyingToAuthor == nil ? "댓글 달기" : "답글 달기")
-                .font(.myLockerTitle)
-                .foregroundStyle(Color.textPrimary)
-
-            Spacer(minLength: 0)
-
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Color.textSecondary)
-                    .frame(width: 28, height: 28)
-                    .background(Circle().fill(Color.gray50))
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.horizontal, Spacing.xs)
-        .padding(.top, Spacing.sm)
     }
 }
 
 #Preview("새 댓글") {
-    Color.clear
-        .sheet(isPresented: .constant(true)) {
-            CommentComposeView(onSubmit: { _ in })
-        }
+    ZStack {
+        Color.black.opacity(0.6).ignoresSafeArea()
+        CommentComposeView(onSubmit: { _, _ in })
+            .padding(.horizontal, Spacing.md)
+    }
 }
 
 #Preview("답글") {
-    Color.clear
-        .sheet(isPresented: .constant(true)) {
-            CommentComposeView(replyingToAuthor: "익명", onSubmit: { _ in })
-        }
+    ZStack {
+        Color.black.opacity(0.6).ignoresSafeArea()
+        CommentComposeView(replyingToAuthor: "익명", onSubmit: { _, _ in })
+            .padding(.horizontal, Spacing.md)
+    }
 }

@@ -6,7 +6,12 @@
 //
 //  Figma node `I44:269;256:5689` ("bookmark") — Code Connect mapped it to a
 //  Material 3 `Bookmark` component with no literal SwiftUI snippet, so it is
-//  reproduced here with the matching SF Symbol (`bookmark` / `bookmark.fill`).
+//  reproduced here with the matching SF Symbol (`bookmark`/`bookmark.fill`,
+//  not the `.square` variant — that one draws its own square border box,
+//  which isn't wanted here). `.resizable().scaledToFit()` in a fixed square
+//  frame keeps the glyph's own proportions (no stretching/cropping) while
+//  giving it an even, slightly larger square footprint than the symbol's
+//  default (taller-than-wide) rendered size.
 //
 //  Removing a bookmark asks for confirmation first (`.confirmationDialog`,
 //  same pattern as SettingsView's 로그아웃/회원탈퇴) — `action` only fires
@@ -31,6 +36,9 @@ struct BookmarkButton: View {
             }
         } label: {
             Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 22, height: 22)
         }
         .buttonStyle(.plain)
         .foregroundStyle(isBookmarked ? Color.accentRed : Color.textPrimary)

@@ -32,7 +32,7 @@ struct LockerApplicationConfirmDialog: View {
                 .foregroundStyle(Color.textPrimary)
                 .padding(.vertical, Spacing.xxs)
 
-            HStack(spacing: Spacing.sm) {
+            HStack(spacing: Spacing.xs) {
                 Spacer(minLength: 0)
                 DialogActionButton(titleKey: "취소", action: onCancel)
                 DialogActionButton(titleKey: "신청", style: .primary, action: onConfirm)

@@ -39,8 +39,10 @@ struct Comment: Identifiable, Codable, Hashable {
 
     var createdAt: Date { SpringDate.parse(createdAtRaw) }
 
+    /// `anonymous` hides identity entirely — even a set `authorNickname` —
+    /// so an anonymous comment always shows "익명", never the nickname.
     var displayAuthorName: String {
-        anonymous ? (authorNickname ?? "익명") : (authorNickname ?? authorName)
+        anonymous ? "익명" : (authorNickname ?? authorName)
     }
 }
 

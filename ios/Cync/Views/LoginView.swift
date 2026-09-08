@@ -51,7 +51,7 @@ struct LoginView: View {
     }
 
     private var loginCard: some View {
-        VStack(alignment: .leading, spacing: Spacing.xxs) {
+        return VStack(alignment: .leading, spacing: Spacing.xxs) {
             Text("로그인")
                 .font(.loginTitle)
                 .foregroundStyle(Color.eventAccent)

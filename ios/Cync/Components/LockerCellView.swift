@@ -49,6 +49,7 @@ struct LockerCellView: View {
         switch locker.status {
         case .inUse: return "사용중"
         case .available: return "사용 가능"
+        case .pending: return "승인 대기중"
         case .broken: return "사용 불가"
         }
     }
@@ -58,6 +59,7 @@ struct LockerCellView: View {
         switch locker.status {
         case .inUse: return .gray400
         case .available: return .gray50
+        case .pending: return .gray200
         case .broken: return .gray300
         }
     }

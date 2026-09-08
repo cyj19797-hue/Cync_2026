@@ -51,11 +51,9 @@ final class CommunityPostDetailViewModel: ObservableObject {
 
     /// Posts a new comment (or, with `parentCommentId` set, a reply) via
     /// `POST /api/posts/{id}/comments` and appends the server's response.
-    /// No "익명" toggle exists in `CommentComposeView` yet (unlike the post
-    /// composer), so every comment posts anonymously, matching this
-    /// screen's previous local-only mock behavior (every comment showed
-    /// "익명").
-    func addComment(content: String, parentCommentId: Int? = nil) async {
+    /// `isAnonymous` comes from `CommentComposeView`'s own "익명" checkbox
+    /// (Figma `294:1984`, "댓글 입력 영역").
+    func addComment(content: String, parentCommentId: Int? = nil, isAnonymous: Bool) async {
         let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         do {
@@ -63,7 +61,7 @@ final class CommunityPostDetailViewModel: ObservableObject {
                 postId: post.id,
                 content: trimmed,
                 parentCommentId: parentCommentId,
-                isAnonymous: true
+                isAnonymous: isAnonymous
             )
             comments.append(comment)
             post.commentCount += 1

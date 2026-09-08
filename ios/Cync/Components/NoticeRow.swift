@@ -10,6 +10,13 @@
 //  row separator, so the parent view relies on that instead (see §10 of the
 //  design-to-code guide: don't hand-roll separators `List` gives for free).
 //
+//  The row's tap target is a real `Button` (`.buttonStyle(.plain)`), not a
+//  bare `.contentShape(Rectangle()).onTapGesture` — inside a `List`, a plain
+//  tap gesture placed beside a sibling `Button` (here, `BookmarkButton`)
+//  doesn't reliably fire; `List` only arbitrates correctly between an
+//  *outer* row `Button` and an inner nested one (`BookmarkButton` sitting
+//  inside this `Button`'s label), which is the pattern below.
+//
 
 import SwiftUI
 
@@ -21,41 +28,43 @@ struct NoticeRow: View {
     var onSelect: (() -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xxs) {
-            HStack(spacing: Spacing.xs) {
+        Button {
+            onSelect?()
+        } label: {
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
                 HStack(spacing: Spacing.xs) {
-                    NoticeCategoryBadge(category: notice.category)
-                    Text(notice.title)
-                        .font(.noticeTitle)
-                        .foregroundStyle(Color.textPrimary)
-                        .lineLimit(1)
+                    HStack(spacing: Spacing.xs) {
+                        NoticeCategoryBadge(category: notice.category)
+                        Text(notice.title)
+                            .font(.noticeTitle)
+                            .foregroundStyle(Color.textPrimary)
+                            .lineLimit(1)
+                    }
+
+                    Spacer(minLength: 0)
+
+                    BookmarkButton(isBookmarked: notice.isBookmarked, action: onToggleBookmark)
                 }
-                .contentShape(Rectangle())
-                .onTapGesture { onSelect?() }
 
-                Spacer(minLength: 0)
+                HStack(spacing: Spacing.xs) {
+                    Text(notice.dateText)
+                        .font(.noticeDate)
+                        .foregroundStyle(Color.textPrimary)
 
-                BookmarkButton(isBookmarked: notice.isBookmarked, action: onToggleBookmark)
-            }
+                    if let deadlineDays = notice.deadlineDays {
+                        Circle()
+                            .fill(Color.gray400)
+                            .frame(width: 4, height: 4)
 
-            HStack(spacing: Spacing.xs) {
-                Text(notice.dateText)
-                    .font(.noticeDate)
-                    .foregroundStyle(Color.textPrimary)
-
-                if let deadlineDays = notice.deadlineDays {
-                    Circle()
-                        .fill(Color.gray400)
-                        .frame(width: 4, height: 4)
-
-                    Text("마감 D-\(deadlineDays)")
-                        .font(.noticeDeadline)
-                        .foregroundStyle(Color.accentRed)
+                        Text("마감 D-\(deadlineDays)")
+                            .font(.noticeDeadline)
+                            .foregroundStyle(Color.accentRed)
+                    }
                 }
             }
             .contentShape(Rectangle())
-            .onTapGesture { onSelect?() }
         }
+        .buttonStyle(.plain)
         .padding(.vertical, Spacing.xxs)
     }
 }
