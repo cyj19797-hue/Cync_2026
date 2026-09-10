@@ -189,6 +189,23 @@ extension Font {
     /// consistency with the rest of the app.
     static let commentReplyButton = Font.pretendard(.medium, size: 14, relativeTo: .subheadline)
 
+    // MARK: - "start" (launch screen)
+
+    /// "Campus, in Cync" tagline under the logo — Pretendard Medium 16.
+    ///
+    /// NOTE (design deviation): Figma specifies `Inter Medium 16` here, same
+    /// authoring slip as `.commentReplyButton`/`.screenNavTitle` above —
+    /// Pretendard is used instead for consistency with the rest of the app.
+    static let launchTagline = Font.pretendard(.medium, size: 16, relativeTo: .body)
+
+    // MARK: - "1-3 앱 소개" (app intro)
+
+    /// "학과 생활을 하나로 연결하다," headline — Pretendard Bold 24.
+    static let appIntroTitle = Font.pretendard(.bold, size: 24, relativeTo: .title2)
+
+    /// Two-line body copy under the headline — Pretendard Medium 16.
+    static let appIntroBody = Font.pretendard(.medium, size: 16, relativeTo: .body)
+
     // MARK: - "1-5 로그인" (login)
 
     /// "로그인" card title — Pretendard Bold 32.
@@ -211,4 +228,16 @@ extension Font {
     /// `.categoryChip` (Pretendard Medium 16, used by `PrimaryActionButton`'s
     /// default) since this button is specifically Bold in Figma.
     static let loginButtonLabel = Font.pretendard(.bold, size: 16, relativeTo: .headline)
+
+    // MARK: - "6-2 Cync 공지" / "6-2-1 공지사항 내용"
+
+    /// "Cync 공지" list row title — Pretendard SemiBold 20. Note the school
+    /// notice board's `.noticeTitle` (Bold 16) doesn't apply here — this
+    /// board's Figma row uses a distinctly larger/lighter-weight style.
+    static let cyncNoticeRowTitle = Font.pretendard(.semibold, size: 20, relativeTo: .title3)
+
+    /// "Cync 공지" detail date ("2026.03.05") — Pretendard SemiBold 14.
+    /// The detail title itself reuses `.postDetailTitle` (Pretendard Bold
+    /// 20), which happens to match this frame's title spec exactly.
+    static let cyncNoticeDetailDate = Font.pretendard(.semibold, size: 14, relativeTo: .subheadline)
 }

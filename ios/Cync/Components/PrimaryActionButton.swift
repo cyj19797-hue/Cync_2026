@@ -21,6 +21,10 @@ struct PrimaryActionButton: View {
     var isEnabled: Bool = true
     var tint: Color = .brandPrimary
     var font: Font = .categoryChip
+    /// Optional 1pt border, e.g. "1-3 앱 소개"'s "연결하기" button
+    /// (`eventAccentLight` border around an `eventAccent` fill). `nil` (the
+    /// default) keeps every existing call site borderless.
+    var borderColor: Color? = nil
     let action: () -> Void
 
     var body: some View {
@@ -33,6 +37,12 @@ struct PrimaryActionButton: View {
                 .background {
                     RoundedRectangle(cornerRadius: isEnabled ? Radius.chipDefault : Radius.chipSelected)
                         .fill(isEnabled ? tint : Color.surface)
+                }
+                .overlay {
+                    if isEnabled, let borderColor {
+                        RoundedRectangle(cornerRadius: Radius.chipDefault)
+                            .strokeBorder(borderColor)
+                    }
                 }
         }
         .buttonStyle(.plain)

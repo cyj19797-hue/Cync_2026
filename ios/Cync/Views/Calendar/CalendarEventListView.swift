@@ -31,7 +31,7 @@ struct CalendarEventListView: View {
             ScreenNavigationBar(titleKey: "일정 전체보기", onBack: { dismiss() })
 
             VStack(alignment: .leading, spacing: 0) {
-                Text(viewModel.selectedDate.formatted(.dateTime.month(.wide).day().weekday(.wide)))
+                Text(viewModel.selectedDate.formatted(.dateTime.month(.wide).day().weekday(.wide).locale(Locale(identifier: "ko_KR"))))
                     .font(.noticeTitle)
                     .foregroundStyle(Color.textPrimary)
                     .padding(Spacing.xs)

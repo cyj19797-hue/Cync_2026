@@ -41,7 +41,7 @@ struct BookmarkButton: View {
                 .frame(width: 16, height: 16)
         }
         .buttonStyle(.plain)
-        .foregroundStyle(isBookmarked ? Color.accentRed : Color.textPrimary)
+        .foregroundStyle(isBookmarked ? Color.accentRed : Color.textSecondary)
         .accessibilityLabel(isBookmarked ? "북마크 해제" : "북마크")
         .confirmationDialog("북마크를 취소하시겠습니까?", isPresented: $isConfirmingRemoval, titleVisibility: .visible) {
             Button("북마크 취소", role: .destructive, action: action)

@@ -189,7 +189,7 @@ struct CalendarView: View {
                     .font(.noticeTitle)
                     .foregroundStyle(Color.textPrimary)
 
-                Text(viewModel.selectedDate.formatted(.dateTime.month(.wide).day().weekday(.wide)))
+                Text(viewModel.selectedDate.formatted(.dateTime.month(.wide).day().weekday(.wide).locale(Locale(identifier: "ko_KR"))))
                     .font(.calendarCaption)
                     .foregroundStyle(Color.textPrimary)
 

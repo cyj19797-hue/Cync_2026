@@ -20,6 +20,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct SettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
@@ -77,7 +78,7 @@ struct SettingsView: View {
                             isCyncNoticePresented = true
                         }
                         SettingsRow(systemImage: "questionmark.circle", titleKey: "오류 및 문의") {
-                            // TODO: 오류 및 문의 화면 연동 필요
+                            openInquiryChat()
                         }
                         SettingsRow(systemImage: "info.circle", titleKey: "프로그램 정보") {
                             // TODO: 프로그램 정보 화면 연동 필요
@@ -153,6 +154,18 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    /// "오류 및 문의" — opens the team's KakaoTalk open-chat link. A plain
+    /// `UIApplication.shared.open(_:)` on the `https://open.kakao.com/...`
+    /// universal link is enough for both cases the row needs: iOS routes it
+    /// straight into the KakaoTalk app when installed (Kakao registers that
+    /// domain as an associated/universal link), and falls back to opening it
+    /// in Safari when the app isn't installed — no separate custom-scheme
+    /// check needed.
+    private func openInquiryChat() {
+        guard let url = URL(string: "https://open.kakao.com/o/shz9nZMi") else { return }
+        UIApplication.shared.open(url)
     }
 }
 

@@ -49,7 +49,7 @@ struct NoticeRow: View {
                 HStack(spacing: Spacing.xs) {
                     Text(notice.dateText)
                         .font(.noticeDate)
-                        .foregroundStyle(Color.textPrimary)
+                        .foregroundStyle(Color.textSecondary)
 
                     if let deadlineDays = notice.deadlineDays {
                         Circle()
