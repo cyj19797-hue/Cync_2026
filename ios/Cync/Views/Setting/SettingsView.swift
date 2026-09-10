@@ -5,7 +5,9 @@
 //  Figma: "26 2 창학" file, frame `47:872` ("6 - 설정"), nav-title "마이페이지".
 //  Profile card (`47:1067`, now `ProfileSummaryCard`) + "설정" section (5
 //  rows) + "계정" section (2 rows), all built from the shared `SettingsRow`.
-//  "알림 설정" pushes "6-1 알림 설정" (`NotificationSettingsView`).
+//  "알림 설정" pushes "6-1 알림 설정" (`NotificationSettingsView`); "Cync 공지"
+//  pushes "6-2 Cync 공지" (`CyncNoticeListView`), which in turn pushes
+//  "6-2-1 공지사항 내용" (`CyncNoticeDetailView`) when a row is tapped.
 //  The bottom tab bar (`47:1086`) is not built here — it's RootTabView's
 //  `TabView`, this is just its "설정" tab content.
 //
@@ -28,6 +30,7 @@ struct SettingsView: View {
     @State private var isLogoutConfirmPresented = false
     @State private var isWithdrawConfirmPresented = false
     @State private var isNotificationSettingsPresented = false
+    @State private var isCyncNoticePresented = false
 
     var body: some View {
         NavigationStack {
@@ -71,7 +74,7 @@ struct SettingsView: View {
                             isNotificationSettingsPresented = true
                         }
                         SettingsRow(systemImage: "number", titleKey: "Cync 공지") {
-                            // TODO: Cync 공지 화면 연동 필요
+                            isCyncNoticePresented = true
                         }
                         SettingsRow(systemImage: "questionmark.circle", titleKey: "오류 및 문의") {
                             // TODO: 오류 및 문의 화면 연동 필요
@@ -102,6 +105,9 @@ struct SettingsView: View {
             }
             .navigationDestination(isPresented: $isNotificationSettingsPresented) {
                 NotificationSettingsView()
+            }
+            .navigationDestination(isPresented: $isCyncNoticePresented) {
+                CyncNoticeListView()
             }
             .background(Color.appBackground)
             .animation(.default, value: isSearchPresented)
