@@ -24,14 +24,14 @@ struct SettingsRow: View {
                     .frame(width: 20)
 
                 Text(titleKey)
-                    .font(.categoryBadge)
+                    .font(.categoryBadge).tracking(Tracking.categoryBadge)
                     .foregroundStyle(Color.textPrimary)
 
                 Spacer(minLength: 0)
 
                 if let value {
                     Text(value)
-                        .font(.lockerLocationText)
+                        .font(.lockerLocationText).tracking(Tracking.lockerLocationText)
                         .foregroundStyle(Color.textPrimary)
                 }
 

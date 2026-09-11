@@ -29,7 +29,7 @@ struct CalendarWeekdayHeaderRow: View {
         HStack(spacing: Spacing.xs) {
             ForEach(Array(symbols.enumerated()), id: \.offset) { _, symbol in
                 Text(symbol)
-                    .font(.calendarWeekdayLabel)
+                    .font(.calendarWeekdayLabel).tracking(Tracking.calendarWeekdayLabel)
                     .foregroundStyle(Color.textPrimary)
                     .frame(maxWidth: .infinity)
             }

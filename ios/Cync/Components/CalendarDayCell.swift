@@ -34,7 +34,7 @@ struct CalendarDayCell: View {
         Button(action: action) {
             VStack(spacing: Spacing.xxs) {
                 Text("\(dayNumber)")
-                    .font(.calendarDayNumber)
+                    .font(.calendarDayNumber).tracking(Tracking.calendarDayNumber)
                     .foregroundStyle(day.isWithinDisplayedMonth ? Color.textPrimary : Color.gray400)
                     .frame(width: 24, height: 24)
                     .background {

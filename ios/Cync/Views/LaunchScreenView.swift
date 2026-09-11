@@ -72,7 +72,7 @@ struct LaunchScreenView: View {
                             }
 
                         Text("Campus, in Cync")
-                            .font(.launchTagline)
+                            .font(.launchTagline).tracking(Tracking.launchTagline)
                             .foregroundStyle(Color.textPrimary)
                             .opacity(isTaglineVisible ? 1 : 0)
                     }

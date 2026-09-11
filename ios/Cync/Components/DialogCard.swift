@@ -31,7 +31,7 @@ struct DialogCard<Content: View>: View {
 #Preview {
     DialogCard {
         Text("미리보기")
-            .font(.dialogBody)
+            .font(.dialogBody).tracking(Tracking.dialogBody)
     }
     .padding()
 }

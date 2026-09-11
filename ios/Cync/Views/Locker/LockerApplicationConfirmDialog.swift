@@ -21,14 +21,14 @@ struct LockerApplicationConfirmDialog: View {
         DialogCard {
             HStack(alignment: .lastTextBaseline, spacing: Spacing.xxs) {
                 Text("\(String(format: "%03d", locker.lockerNumber))번")
-                    .font(.noticeDetailTitle)
+                    .font(.noticeDetailTitle).tracking(Tracking.noticeDetailTitle)
                 Text(location)
-                    .font(.categoryBadge)
+                    .font(.categoryBadge).tracking(Tracking.categoryBadge)
             }
             .foregroundStyle(Color.textPrimary)
 
             Text("사물함을 신청하시겠습니까?")
-                .font(.dialogBody)
+                .font(.dialogBody).tracking(Tracking.dialogBody)
                 .foregroundStyle(Color.textPrimary)
                 .padding(.vertical, Spacing.xxs)
 

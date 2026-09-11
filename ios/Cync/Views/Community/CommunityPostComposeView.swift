@@ -66,7 +66,7 @@ struct CommunityPostComposeView: View {
     private var titleRow: some View {
         HStack(spacing: Spacing.xs) {
             TextField("제목", text: $viewModel.title)
-                .font(.postDetailTitle)
+                .font(.postDetailTitle).tracking(Tracking.postDetailTitle)
                 .foregroundStyle(Color.textPrimary)
 
             CheckboxToggle(isChecked: $viewModel.isAnonymous, titleKey: "익명")
@@ -84,7 +84,7 @@ struct CommunityPostComposeView: View {
             }
         } label: {
             Text("완료")
-                .font(.categoryChip)
+                .font(.categoryChip).tracking(Tracking.categoryChip)
                 .foregroundStyle(viewModel.canSubmit ? Color.white : Color.gray400)
                 .padding(.horizontal, Spacing.sm)
                 .padding(.vertical, Spacing.xs)

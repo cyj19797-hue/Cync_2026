@@ -14,6 +14,10 @@
 //  existing `TextField`/`SecureField`-based components covers the whole
 //  layout, so nothing here needed it.
 //
+//  A failed `submit()` shows `ErrorDialog` ("로그인 실패") as a dimmed-backdrop
+//  overlay — same non-`.alert()` pattern the locker application dialogs use
+//  — instead of the system `.alert(...)` this screen used to show.
+//
 
 import SwiftUI
 
@@ -29,16 +33,20 @@ struct LoginView: View {
         .padding(Spacing.md)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.appBackground)
-        .alert(
-            "오류",
-            isPresented: Binding(
-                get: { viewModel.errorMessage != nil },
-                set: { isPresented in if !isPresented { viewModel.errorMessage = nil } }
-            )
-        ) {
-            Button("확인", role: .cancel) {}
-        } message: {
-            Text(viewModel.errorMessage ?? "")
+        .overlay {
+            if let errorMessage = viewModel.errorMessage {
+                ZStack {
+                    Color.black.opacity(0.6)
+                        .ignoresSafeArea()
+
+                    ErrorDialog(
+                        titleKey: "로그인 실패",
+                        message: errorMessage,
+                        onConfirm: { viewModel.errorMessage = nil }
+                    )
+                    .padding(.horizontal, Spacing.md)
+                }
+            }
         }
     }
 
@@ -53,7 +61,7 @@ struct LoginView: View {
     private var loginCard: some View {
         return VStack(alignment: .leading, spacing: Spacing.xxs) {
             Text("로그인")
-                .font(.loginTitle)
+                .font(.loginTitle).tracking(Tracking.loginTitle)
                 .foregroundStyle(Color.eventAccent)
 
             VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -75,7 +83,8 @@ struct LoginView: View {
                 titleKey: "로그인",
                 isEnabled: viewModel.canSubmit && !viewModel.isSubmitting,
                 tint: .eventAccent,
-                font: .loginButtonLabel
+                font: .loginButtonLabel,
+                tracking: Tracking.loginButtonLabel
             ) {
                 Task {
                     if await viewModel.submit() {
@@ -97,7 +106,7 @@ struct LoginView: View {
     private var studentIdField: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             Text("학번")
-                .font(.loginFieldLabel)
+                .font(.loginFieldLabel).tracking(Tracking.loginFieldLabel)
                 .foregroundStyle(Color.textPrimary)
             LabeledInputField(placeholder: "학번을 입력해주세요", text: $viewModel.studentId, keyboardType: .numberPad)
         }
@@ -107,7 +116,7 @@ struct LoginView: View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             HStack(spacing: Spacing.xxs) {
                 Text("비밀번호")
-                    .font(.loginFieldLabel)
+                    .font(.loginFieldLabel).tracking(Tracking.loginFieldLabel)
                     .foregroundStyle(Color.textPrimary)
 
                 HStack(spacing: Spacing.xxs) {
@@ -115,7 +124,7 @@ struct LoginView: View {
                         .font(.system(size: 12))
                         .foregroundStyle(Color.textSecondary)
                     Text("비밀번호는 서버에 저장되지 않아요!")
-                        .font(.loginCaption)
+                        .font(.loginCaption).tracking(Tracking.loginCaption)
                         .foregroundStyle(Color.textSecondary)
                 }
                 

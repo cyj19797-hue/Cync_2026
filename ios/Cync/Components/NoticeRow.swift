@@ -36,7 +36,7 @@ struct NoticeRow: View {
                     HStack(spacing: Spacing.xs) {
                         NoticeCategoryBadge(category: notice.category)
                         Text(notice.title)
-                            .font(.noticeTitle)
+                            .font(.noticeTitle).tracking(Tracking.noticeTitle)
                             .foregroundStyle(Color.textPrimary)
                             .lineLimit(1)
                     }
@@ -48,7 +48,7 @@ struct NoticeRow: View {
 
                 HStack(spacing: Spacing.xs) {
                     Text(notice.dateText)
-                        .font(.noticeDate)
+                        .font(.noticeDate).tracking(Tracking.noticeDate)
                         .foregroundStyle(Color.textSecondary)
 
                     if let deadlineDays = notice.deadlineDays {
@@ -57,7 +57,7 @@ struct NoticeRow: View {
                             .frame(width: 4, height: 4)
 
                         Text("마감 D-\(deadlineDays)")
-                            .font(.noticeDeadline)
+                            .font(.noticeDeadline).tracking(Tracking.noticeDeadline)
                             .foregroundStyle(Color.accentRed)
                     }
                 }

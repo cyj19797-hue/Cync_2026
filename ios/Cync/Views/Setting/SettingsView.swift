@@ -85,7 +85,7 @@ struct SettingsView: View {
                         }
                     } header: {
                         Text("설정")
-                            .font(.noticeTitle)
+                            .font(.noticeTitle).tracking(Tracking.noticeTitle)
                             .foregroundStyle(Color.textPrimary)
                     }
 
@@ -98,7 +98,7 @@ struct SettingsView: View {
                         }
                     } header: {
                         Text("계정")
-                            .font(.noticeTitle)
+                            .font(.noticeTitle).tracking(Tracking.noticeTitle)
                             .foregroundStyle(Color.textPrimary)
                     }
                 }

@@ -24,7 +24,7 @@ struct CalendarEventRow: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 HStack(spacing: Spacing.xs) {
                     Text(event.title)
-                        .font(.noticeTitle)
+                        .font(.noticeTitle).tracking(Tracking.noticeTitle)
                         .foregroundStyle(Color.textPrimary)
                         .lineLimit(1)
 
@@ -35,7 +35,7 @@ struct CalendarEventRow: View {
 
                 HStack(spacing: Spacing.xs) {
                     Text(event.category.localizedKey)
-                        .font(.noticeDate)
+                        .font(.noticeDate).tracking(Tracking.noticeDate)
                         .foregroundStyle(Color.textPrimary)
 
                     if let deadlineDays = event.deadlineDays {
@@ -44,7 +44,7 @@ struct CalendarEventRow: View {
                             .frame(width: 4, height: 4)
 
                         Text("마감 D-\(deadlineDays)")
-                            .font(.noticeDeadline)
+                            .font(.noticeDeadline).tracking(Tracking.noticeDeadline)
                             .foregroundStyle(Color.accentRed)
                     }
                 }

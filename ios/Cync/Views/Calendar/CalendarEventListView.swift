@@ -32,7 +32,7 @@ struct CalendarEventListView: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 Text(viewModel.selectedDate.formatted(.dateTime.month(.wide).day().weekday(.wide).locale(Locale(identifier: "ko_KR"))))
-                    .font(.noticeTitle)
+                    .font(.noticeTitle).tracking(Tracking.noticeTitle)
                     .foregroundStyle(Color.textPrimary)
                     .padding(Spacing.xs)
 

@@ -18,7 +18,7 @@ struct CategoryFilterRow: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Spacing.xs) {
                 ForEach(NoticeCategory.allCases) { category in
-                    NoticeCategoryChip(
+                    FilterChip(
                         category: category,
                         isSelected: selectedCategory == category
                     ) {

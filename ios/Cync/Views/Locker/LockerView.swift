@@ -17,6 +17,16 @@
 //  while the student has no locker, `lockerApplicationPreview` also embeds
 //  the bare map (no apply flow, browsing only) inline below the grid.
 //
+//  `.scrollBounceBehavior(.basedOnSize)` on the outer `ScrollView` — when
+//  the content already fits on screen (no locker grid overflow, no map
+//  preview pushing it past the fold), the view shouldn't rubber-band/bounce
+//  at all when touched. Scrolling itself stays on for whenever the content
+//  actually is taller than the screen (a large grid, or with the map
+//  preview) — `SwiftUI` has no way to kill bounce unconditionally without
+//  also killing real scrolling, so `.basedOnSize` (not `.never`, which
+//  doesn't exist on `ScrollBounceBehavior`) is the closest match to "don't
+//  move unless it actually needs to."
+//
 
 import SwiftUI
 
@@ -55,6 +65,7 @@ struct LockerView: View {
                     }
                     .padding(Spacing.md)
                 }
+                .scrollBounceBehavior(.basedOnSize)
                 .background(Color.appBackground)
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -96,9 +107,9 @@ struct LockerView: View {
             HStack {
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("아직 신청한 사물함이 없어요")
-                        .font(.noticeTitle)
+                        .font(.noticeTitle).tracking(Tracking.noticeTitle)
                     Text("사물함을 신청해보세요")
-                        .font(.calendarCaption)
+                        .font(.calendarCaption).tracking(Tracking.calendarCaption)
                         .foregroundStyle(Color.textSecondary)
                 }
 
@@ -120,7 +131,7 @@ struct LockerView: View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             HStack {
                 Text("전체 사물함")
-                    .font(.noticeTitle)
+                    .font(.noticeTitle).tracking(Tracking.noticeTitle)
                     .foregroundStyle(Color.textPrimary)
 
                 Spacer(minLength: 0)
@@ -142,7 +153,7 @@ struct LockerView: View {
                         Text(viewModel.selectedLocation)
                         Image(systemName: "chevron.down")
                     }
-                    .font(.lockerLocationText)
+                    .font(.lockerLocationText).tracking(Tracking.lockerLocationText)
                     .foregroundStyle(Color.textPrimary)
                 }
             }

@@ -42,7 +42,7 @@ struct NoticeDetailNavigationBar: View {
                     Image(systemName: systemImage)
                 }
                 Text(titleKey)
-                    .font(.remoteNavLabel)
+                    .font(.remoteNavLabel).tracking(Tracking.remoteNavLabel)
                 if !iconLeading {
                     Image(systemName: systemImage)
                 }

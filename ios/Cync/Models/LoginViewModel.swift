@@ -44,8 +44,11 @@ final class LoginViewModel: ObservableObject {
         do {
             _ = try await CyncAPI.login(studentId: studentId, password: password)
         } catch {
-            errorMessage = (error as? CyncAPIError)?.errorDescription
-                ?? "로그인에 실패했습니다. 학번/비밀번호를 확인해주세요."
+            // Always this exact wording, regardless of the underlying
+            // `CyncAPIError` case — a login screen shouldn't surface raw
+            // HTTP/decoding failure detail to the user, and any failure here
+            // reads the same to them either way: wrong id/password.
+            errorMessage = "학번 또는 비밀번호를 제대로 입력해주세요."
             return false
         }
 

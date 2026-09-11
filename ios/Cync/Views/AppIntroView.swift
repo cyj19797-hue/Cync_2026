@@ -38,12 +38,12 @@ struct AppIntroView: View {
 
                 VStack(spacing: Spacing.xs) {
                     Text("학과 생활을 하나로 연결하다,")
-                        .font(.appIntroTitle)
+                        .font(.appIntroTitle).tracking(Tracking.appIntroTitle)
                         .foregroundStyle(Color.textPrimary)
                         .multilineTextAlignment(.center)
 
                     Text("공지부터 사물함, 커뮤니티까지\n누구나 컴퓨터공학과의 정보를 한 곳에서.")
-                        .font(.appIntroBody)
+                        .font(.appIntroBody).tracking(Tracking.appIntroBody)
                         .foregroundStyle(Color.textPrimary)
                         .multilineTextAlignment(.center)
                 }
@@ -53,6 +53,7 @@ struct AppIntroView: View {
                 titleKey: "연결하기",
                 tint: .eventAccent,
                 font: .loginButtonLabel,
+                tracking: Tracking.loginButtonLabel,
                 borderColor: .eventAccentLight,
                 action: onConnect
             )

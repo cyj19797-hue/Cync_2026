@@ -67,9 +67,9 @@ struct LockerCellView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(displayNumber)
-                .font(.lockerCellNumber)
+                .font(.lockerCellNumber).tracking(Tracking.lockerCellNumber)
             Text(statusLabel)
-                .font(.lockerCellStatus)
+                .font(.lockerCellStatus).tracking(Tracking.lockerCellStatus)
         }
         .foregroundStyle(Color.textPrimary)
         .padding(Spacing.xs)

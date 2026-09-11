@@ -25,7 +25,7 @@ struct ProfileSummaryCard: View {
             Button(action: onEditNickname) {
                 HStack(spacing: Spacing.xxs) {
                     Text(nickname)
-                        .font(.noticeTitle)
+                        .font(.noticeTitle).tracking(Tracking.noticeTitle)
                         .foregroundStyle(Color.textPrimary)
                     Image(systemName: "pencil")
                         .font(.system(size: 12))

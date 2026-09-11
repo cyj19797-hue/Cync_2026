@@ -41,10 +41,10 @@ struct ProfileEditSheet: View {
 
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("닉네임")
-                    .font(.categoryBadge)
+                    .font(.categoryBadge).tracking(Tracking.categoryBadge)
                     .foregroundStyle(Color.textSecondary)
                 TextField("닉네임", text: $nickname)
-                    .font(.noticeTitle)
+                    .font(.noticeTitle).tracking(Tracking.noticeTitle)
                     .foregroundStyle(Color.textPrimary)
                     .padding(Spacing.xs)
                     .background(Color.gray50)
@@ -53,7 +53,7 @@ struct ProfileEditSheet: View {
 
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("프로필 색상")
-                    .font(.categoryBadge)
+                    .font(.categoryBadge).tracking(Tracking.categoryBadge)
                     .foregroundStyle(Color.textSecondary)
                 LazyVGrid(columns: columns, spacing: Spacing.sm) {
                     ForEach(ProfileColor.allCases, id: \.self) { option in
@@ -75,7 +75,7 @@ struct ProfileEditSheet: View {
     private var header: some View {
         HStack {
             Text("프로필 수정")
-                .font(.myLockerTitle)
+                .font(.myLockerTitle).tracking(Tracking.myLockerTitle)
                 .foregroundStyle(Color.textPrimary)
             Spacer(minLength: 0)
             Button {

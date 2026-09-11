@@ -25,12 +25,12 @@ struct CommunityPostRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             Text(post.title)
-                .font(.communityPostTitle)
+                .font(.communityPostTitle).tracking(Tracking.communityPostTitle)
                 .foregroundStyle(Color.textPrimary)
                 .lineLimit(1)
 
             Text(post.content)
-                .font(.communityPostBody)
+                .font(.communityPostBody).tracking(Tracking.communityPostBody)
                 .foregroundStyle(Color.textPrimary)
                 .lineLimit(1)
 
@@ -56,7 +56,7 @@ struct CommunityPostRow: View {
             Image(systemName: systemImage)
             Text("\(count)")
         }
-        .font(.communityReactionCount)
+        .font(.communityReactionCount).tracking(Tracking.communityReactionCount)
         .foregroundStyle(Color.gray700)
     }
 }

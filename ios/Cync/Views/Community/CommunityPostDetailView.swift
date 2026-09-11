@@ -147,12 +147,12 @@ struct CommunityPostDetailView: View {
             }
 
             Text(viewModel.post.title)
-                .font(.postDetailTitle)
+                .font(.postDetailTitle).tracking(Tracking.postDetailTitle)
                 .foregroundStyle(Color.textPrimary)
                 .padding(.top, Spacing.xxs)
 
             Text(viewModel.post.content)
-                .font(.communityPostBody)
+                .font(.communityPostBody).tracking(Tracking.communityPostBody)
                 .foregroundStyle(Color.textPrimary)
 
             HStack(spacing: Spacing.xs) {
@@ -183,7 +183,7 @@ struct CommunityPostDetailView: View {
             Image(systemName: systemImage)
             Text("\(count)")
         }
-        .font(.communityReactionCount)
+        .font(.communityReactionCount).tracking(Tracking.communityReactionCount)
     }
 
     private var commentsSection: some View {
@@ -211,7 +211,7 @@ struct CommunityPostDetailView: View {
     private var commentsSectionHeader: some View {
         HStack {
             Text("댓글")
-                .font(.commentsSectionTitle)
+                .font(.commentsSectionTitle).tracking(Tracking.commentsSectionTitle)
                 .foregroundStyle(Color.textPrimary)
 
             Spacer(minLength: 0)
@@ -223,7 +223,7 @@ struct CommunityPostDetailView: View {
                     Image(systemName: "square.and.pencil")
                     Text("댓글 달기")
                 }
-                .font(.commentReplyButton)
+                .font(.commentReplyButton).tracking(Tracking.commentReplyButton)
                 .foregroundStyle(Color.brandPrimary)
             }
             .buttonStyle(.plain)

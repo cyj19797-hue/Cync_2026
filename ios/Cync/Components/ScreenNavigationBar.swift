@@ -46,7 +46,7 @@ struct ScreenNavigationBar<Trailing: View>: View {
             .accessibilityLabel("뒤로")
 
             Text(titleKey)
-                .font(.screenNavTitle)
+                .font(.screenNavTitle).tracking(Tracking.screenNavTitle)
                 .foregroundStyle(Color.textPrimary)
                 .padding(Spacing.xs)
                 .frame(height: 44)
@@ -68,7 +68,7 @@ struct ScreenNavigationBar<Trailing: View>: View {
 #Preview("trailing 슬롯") {
     ScreenNavigationBar(titleKey: "글쓰기", onBack: {}) {
         Text("완료")
-            .font(.categoryChip)
+            .font(.categoryChip).tracking(Tracking.categoryChip)
             .foregroundStyle(Color.white)
             .padding(.horizontal, Spacing.sm)
             .padding(.vertical, Spacing.xs)

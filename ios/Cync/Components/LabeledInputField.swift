@@ -25,7 +25,7 @@ struct LabeledInputField: View {
                     .keyboardType(keyboardType)
             }
         }
-        .font(.loginFieldValue)
+        .font(.loginFieldValue).tracking(Tracking.loginFieldValue)
         .foregroundStyle(Color.textPrimary)
         .padding(Spacing.xs)
         .overlay {

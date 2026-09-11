@@ -118,7 +118,7 @@ struct RootTabView: View {
                 Image(systemName: tab.systemImage)
                     .font(.system(size: 22))
                 Text(tab.title)
-                    .font(.tabItemLabel)
+                    .font(.tabItemLabel).tracking(Tracking.tabItemLabel)
             }
             .foregroundStyle(isSelected ? Color.textPrimary : Color.gray400)
             .frame(maxWidth: .infinity)

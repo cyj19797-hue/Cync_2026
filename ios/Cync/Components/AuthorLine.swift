@@ -27,9 +27,9 @@ struct AuthorLine: View {
     var body: some View {
         HStack(spacing: Spacing.xxs) {
             Text(authorName)
-                .font(.commentAuthor)
+                .font(.commentAuthor).tracking(Tracking.commentAuthor)
             Text(Self.formatter.string(from: createdAt))
-                .font(.calendarCaption)
+                .font(.calendarCaption).tracking(Tracking.calendarCaption)
         }
         .foregroundStyle(Color.textPrimary)
     }

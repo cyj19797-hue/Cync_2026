@@ -28,18 +28,18 @@ struct CyncNoticeDetailView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     VStack(alignment: .leading, spacing: Spacing.xxs) {
                         Text(notice.title)
-                            .font(.postDetailTitle)
+                            .font(.postDetailTitle).tracking(Tracking.postDetailTitle)
                             .foregroundStyle(Color.textPrimary)
 
                         Text(notice.dateText)
-                            .font(.cyncNoticeDetailDate)
+                            .font(.cyncNoticeDetailDate).tracking(Tracking.cyncNoticeDetailDate)
                             .foregroundStyle(Color.textSecondary)
                     }
                     .padding(.horizontal, Spacing.md)
                     .padding(.top, Spacing.xs)
 
                     Text(notice.content)
-                        .font(.noticeDetailBody)
+                        .font(.noticeDetailBody).tracking(Tracking.noticeDetailBody)
                         .foregroundStyle(Color.textPrimary)
                         .lineSpacing(4)
                         .frame(maxWidth: .infinity, alignment: .leading)

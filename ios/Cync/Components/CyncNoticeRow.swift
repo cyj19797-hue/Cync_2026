@@ -18,7 +18,7 @@ struct CyncNoticeRow: View {
     var body: some View {
         Button(action: onSelect) {
             Text(notice.title)
-                .font(.cyncNoticeRowTitle)
+                .font(.cyncNoticeRowTitle).tracking(Tracking.cyncNoticeRowTitle)
                 .foregroundStyle(Color.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())

@@ -34,7 +34,7 @@ struct NotificationSettingsView: View {
                     }
                 } header: {
                     Text("공지사항")
-                        .font(.noticeTitle)
+                        .font(.noticeTitle).tracking(Tracking.noticeTitle)
                         .foregroundStyle(Color.textPrimary)
                 }
 
@@ -44,7 +44,7 @@ struct NotificationSettingsView: View {
                     }
                 } header: {
                     Text("사물함")
-                        .font(.noticeTitle)
+                        .font(.noticeTitle).tracking(Tracking.noticeTitle)
                         .foregroundStyle(Color.textPrimary)
                 }
 
@@ -52,7 +52,7 @@ struct NotificationSettingsView: View {
                     NotificationSettingRow(titleKey: "댓글", isOn: $viewModel.preferences.commentAlerts)
                 } header: {
                     Text("커뮤니티")
-                        .font(.noticeTitle)
+                        .font(.noticeTitle).tracking(Tracking.noticeTitle)
                         .foregroundStyle(Color.textPrimary)
                 }
             }

@@ -186,11 +186,11 @@ struct CalendarView: View {
         VStack(alignment: .leading, spacing: Spacing.xxs) {
             HStack(alignment: .firstTextBaseline) {
                 Text("등록된 일정")
-                    .font(.noticeTitle)
+                    .font(.noticeTitle).tracking(Tracking.noticeTitle)
                     .foregroundStyle(Color.textPrimary)
 
                 Text(viewModel.selectedDate.formatted(.dateTime.month(.wide).day().weekday(.wide).locale(Locale(identifier: "ko_KR"))))
-                    .font(.calendarCaption)
+                    .font(.calendarCaption).tracking(Tracking.calendarCaption)
                     .foregroundStyle(Color.textPrimary)
 
                 Spacer(minLength: 0)
@@ -200,7 +200,7 @@ struct CalendarView: View {
                 } label: {
                     HStack(spacing: 2) {
                         Text("전체 보기")
-                            .font(.calendarCaption)
+                            .font(.calendarCaption).tracking(Tracking.calendarCaption)
                             .foregroundStyle(Color.gray400)
                         NavigationChevron()
                     }

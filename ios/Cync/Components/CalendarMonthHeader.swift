@@ -24,7 +24,7 @@ struct CalendarMonthHeader: View {
             Spacer(minLength: 0)
 
             Text(month.formatted(.dateTime.year().month(.wide).locale(Locale(identifier: "ko_KR"))))
-                .font(.calendarMonthLabel)
+                .font(.calendarMonthLabel).tracking(Tracking.calendarMonthLabel)
                 .foregroundStyle(Color.textPrimary)
 
             Spacer(minLength: 0)

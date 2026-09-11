@@ -134,7 +134,7 @@ struct NoticeDetailView: View {
             header
 
             bodyContent
-                .font(.noticeDetailBody)
+                .font(.noticeDetailBody).tracking(Tracking.noticeDetailBody)
                 .foregroundStyle(Color.textPrimary)
                 .lineSpacing(6)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -163,7 +163,7 @@ struct NoticeDetailView: View {
             HStack(spacing: 2) {
                 NavigationChevron(direction: .left, color: .textSecondary)
                 Text("목록으로")
-                    .font(.noticeDetailBackLabel)
+                    .font(.noticeDetailBackLabel).tracking(Tracking.noticeDetailBackLabel)
                     .foregroundStyle(Color.textSecondary)
             }
         }
@@ -175,21 +175,21 @@ struct NoticeDetailView: View {
             HStack(alignment: .lastTextBaseline, spacing: Spacing.xs) {
                 NoticeCategoryBadge(category: notice.category)
                 Text(notice.dateText)
-                    .font(.noticeDetailDate)
+                    .font(.noticeDetailDate).tracking(Tracking.noticeDetailDate)
                     .foregroundStyle(Color.textPrimary)
 
                 Spacer(minLength: 0)
 
                 if let deadlineDays = notice.deadlineDays {
                     Text("D-\(deadlineDays)")
-                        .font(.noticeDeadline)
+                        .font(.noticeDeadline).tracking(Tracking.noticeDeadline)
                         .foregroundStyle(Color.accentRed)
                 }
             }
 
             HStack(alignment: .top, spacing: Spacing.xs) {
                 Text(notice.title)
-                    .font(.noticeDetailTitle)
+                    .font(.noticeDetailTitle).tracking(Tracking.noticeDetailTitle)
                     .foregroundStyle(Color.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
 

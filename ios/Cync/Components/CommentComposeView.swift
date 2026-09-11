@@ -40,12 +40,12 @@ struct CommentComposeView: View {
     var body: some View {
         DialogCard {
             Text(replyingToAuthor == nil ? "댓글 달기" : "답글 달기")
-                .font(.dialogTitle)
+                .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
 
             if let replyingToAuthor {
                 Text("\(replyingToAuthor)님에게 답글 남기는 중")
-                    .font(.noticeDate)
+                    .font(.noticeDate).tracking(Tracking.noticeDate)
                     .foregroundStyle(Color.textSecondary)
                     .padding(.bottom, Spacing.xxs)
             }
@@ -55,13 +55,13 @@ struct CommentComposeView: View {
 
             HStack(spacing: Spacing.xs) {
                 TextField("댓글을 입력하세요.", text: $text)
-                    .font(.categoryBadge)
+                    .font(.categoryBadge).tracking(Tracking.categoryBadge)
                     .foregroundStyle(Color.textPrimary)
 
                 Button("등록") {
                     onSubmit(text, isAnonymous)
                 }
-                .font(.categoryBadge)
+                .font(.categoryBadge).tracking(Tracking.categoryBadge)
                 .foregroundStyle(canSubmit ? Color.eventAccent : Color.gray400)
                 .disabled(!canSubmit)
             }

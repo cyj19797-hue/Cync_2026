@@ -21,26 +21,42 @@ struct PrimaryActionButton: View {
     var isEnabled: Bool = true
     var tint: Color = .brandPrimary
     var font: Font = .categoryChip
+    /// Matches `font`'s default (`.categoryChip`) — a call site overriding
+    /// `font:` to a different token must also override this to
+    /// `Tracking.thatToken`, since the two can't be derived from each other.
+    var tracking: CGFloat = Tracking.categoryChip
     /// Optional 1pt border, e.g. "1-3 앱 소개"'s "연결하기" button
     /// (`eventAccentLight` border around an `eventAccent` fill). `nil` (the
     /// default) keeps every existing call site borderless.
     var borderColor: Color? = nil
+    /// Overrides the enabled-state corner radius (normally `Radius.chipDefault`,
+    /// 7.5pt) — e.g. "1-4 이용약관 동의"'s "세종대학교 계정으로 시작하기"
+    /// button, which Figma specs at 12pt instead. `nil` (the default) keeps
+    /// every existing call site's radius unchanged.
+    var enabledCornerRadius: CGFloat? = nil
+    /// "1-4 이용약관 동의"'s button underlines its label; every other call
+    /// site leaves this `false`.
+    var isUnderlined: Bool = false
     let action: () -> Void
 
     var body: some View {
+        let cornerRadius = isEnabled ? (enabledCornerRadius ?? Radius.chipDefault) : Radius.chipSelected
+
         Button(action: action) {
             Text(titleKey)
                 .font(font)
+                .tracking(tracking)
+                .underline(isUnderlined)
                 .foregroundStyle(isEnabled ? Color.white : Color.gray400)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.xs)
                 .background {
-                    RoundedRectangle(cornerRadius: isEnabled ? Radius.chipDefault : Radius.chipSelected)
+                    RoundedRectangle(cornerRadius: cornerRadius)
                         .fill(isEnabled ? tint : Color.surface)
                 }
                 .overlay {
                     if isEnabled, let borderColor {
-                        RoundedRectangle(cornerRadius: Radius.chipDefault)
+                        RoundedRectangle(cornerRadius: cornerRadius)
                             .strokeBorder(borderColor)
                     }
                 }
