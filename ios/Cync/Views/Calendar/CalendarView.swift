@@ -44,34 +44,10 @@ struct CalendarView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: Spacing.xs) {
-                    if isSearchPresented {
-                        // UIKit UISearchBar — see Components/SearchBar.swift for why.
-                        SearchBar(text: $viewModel.searchText, isActive: $isSearchPresented)
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                    } else {
-                        CategoryFilterRow(selectedCategory: $viewModel.selectedCategory)
-                            .transition(.opacity)
-                    }
-
-                    calendarCard
-                    scheduleCard
-                }
-                .padding(.horizontal, Spacing.md)
-                .animation(.default, value: isSearchPresented)
-            }
-            .background(Color.appBackground)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    HStack(spacing: Spacing.xs) {
-                        Image(systemName: "calendar")
-                        Text("캘린더")
-                            .font(.noticeNavTitle)
-                    }
-                    .foregroundStyle(Color.textPrimary)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
+            VStack(spacing: 0) {
+                AppTopBar(title: "캘린더") {
+                    Image(systemName: "calendar")
+                } trailing: {
                     Button {
                         isSearchPresented = true
                     } label: {
@@ -80,8 +56,36 @@ struct CalendarView: View {
                     }
                     .accessibilityLabel("검색")
                 }
+
+                ScrollView {
+                    VStack(spacing: Spacing.xs) {
+                        if isSearchPresented {
+                            // UIKit UISearchBar — see Components/SearchBar.swift for why.
+                            SearchBar(text: $viewModel.searchText, isActive: $isSearchPresented)
+                                .padding(.horizontal, Spacing.xs)
+                                .transition(.move(edge: .top).combined(with: .opacity))
+                        } else {
+                            // `CategoryFilterRow` already carries its own
+                            // `Spacing.md` horizontal padding (matching
+                            // NoticeListView's), so it sits outside the
+                            // `.padding(.horizontal, Spacing.md)` below —
+                            // stacking both would double the row's left/right
+                            // margin against `calendarCard`/`scheduleCard`.
+                            CategoryFilterRow(selectedCategory: $viewModel.selectedCategory)
+                                .transition(.opacity)
+                        }
+
+                        VStack(spacing: Spacing.xs) {
+                            calendarCard
+                            scheduleCard
+                        }
+                        .padding(.horizontal, Spacing.md)
+                    }
+                    .animation(.default, value: isSearchPresented)
+                }
+                .background(Color.appBackground)
             }
-            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
             .task {
                 await viewModel.load()
             }
@@ -182,11 +186,11 @@ struct CalendarView: View {
         VStack(alignment: .leading, spacing: Spacing.xxs) {
             HStack(alignment: .firstTextBaseline) {
                 Text("등록된 일정")
-                    .font(.noticeTitle)
+                    .font(.noticeTitle).tracking(Tracking.noticeTitle)
                     .foregroundStyle(Color.textPrimary)
 
-                Text(viewModel.selectedDate.formatted(.dateTime.month(.wide).day().weekday(.wide)))
-                    .font(.calendarCaption)
+                Text(viewModel.selectedDate.formatted(.dateTime.month(.wide).day().weekday(.wide).locale(Locale(identifier: "ko_KR"))))
+                    .font(.calendarCaption).tracking(Tracking.calendarCaption)
                     .foregroundStyle(Color.textPrimary)
 
                 Spacer(minLength: 0)
@@ -196,7 +200,7 @@ struct CalendarView: View {
                 } label: {
                     HStack(spacing: 2) {
                         Text("전체 보기")
-                            .font(.calendarCaption)
+                            .font(.calendarCaption).tracking(Tracking.calendarCaption)
                             .foregroundStyle(Color.gray400)
                         NavigationChevron()
                     }

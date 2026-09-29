@@ -25,7 +25,7 @@ struct DialogActionButton: View {
     var body: some View {
         Button(action: action) {
             Text(titleKey)
-                .font(.categoryChip)
+                .font(.categoryChip).tracking(Tracking.categoryChip)
                 .foregroundStyle(style == .primary ? Color.white : Color.textPrimary)
                 .padding(Spacing.xs)
                 .background {

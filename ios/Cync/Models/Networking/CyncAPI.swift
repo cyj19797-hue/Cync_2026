@@ -4,15 +4,15 @@
 //
 //  Networking layer for the endpoints documented in `docs/API.md`
 //  ("Cync API 명세 업데이트 (2026-08-22)") — the Spring Boot backend deployed
-//  on Azure. That doc, not the `backend/` folder in this repo, is the real
-//  server: `backend/` is an unrelated NestJS scaffold (`/health` + an AI
-//  proxy) that these endpoints aren't part of.
+//  on Azure, now the same one under `backend/` in this repo
+//  (`com.sejong.sjc_app`, superseding the older NestJS scaffold that used
+//  to live there).
 //
-//  Every endpoint here needs `Authorization: Bearer <accessToken>`, but
-//  this app has no login screen yet, so `accessToken` starts `nil` and
-//  every call below will fail (401/403) until a future login flow calls
-//  `KeychainTokenStore.save`. See the iOS/API gap table for what's missing
-//  before that's possible.
+//  Every endpoint here needs `Authorization: Bearer <accessToken>`.
+//  `login(studentId:password:)` below calls `backend/.../AuthController`'s
+//  `POST /api/auth/login` (not yet in `docs/API.md`) and saves the token
+//  via `KeychainTokenStore.save`; every other call fails (401/403) until
+//  that's happened.
 //
 
 import Foundation
@@ -80,9 +80,14 @@ enum KeychainTokenStore {
 }
 
 enum CyncAPI {
-    static let baseURL = URL(string: "https://cync-backend-evena5hbhjevdsc8.koreacentral-01.azurewebsites.net")!
+    static let baseURL = URL(string: "https://cync-backend.azurewebsites.net")!
 
     static var accessToken: String? = KeychainTokenStore.load()
+
+    static func logout() {
+        KeychainTokenStore.clear()
+        accessToken = nil
+    }
 
     private static func authorizedRequest(path: String, method: String, query: [String: String] = [:]) -> URLRequest {
         var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false)!
@@ -127,6 +132,18 @@ enum CyncAPI {
     private static func send(_ request: URLRequest) async throws {
         let (_, response) = try await URLSession.shared.data(for: request)
         try checkStatus(response)
+    }
+
+    // MARK: - 0. 로그인
+
+    static func login(studentId: String, password: String) async throws -> LoginResponse {
+        var request = authorizedRequest(path: "/api/auth/login", method: "POST")
+        request.httpBody = formBody(["id": studentId, "password": password])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        let response: LoginResponse = try await send(request)
+        KeychainTokenStore.save(response.accessToken)
+        accessToken = response.accessToken
+        return response
     }
 
     // MARK: - 1. 닉네임 / 프로필 색상
@@ -179,6 +196,12 @@ enum CyncAPI {
 
     static func fetchCouncilNotices() async throws -> [CouncilNotice] {
         try await send(authorizedRequest(path: "/api/notices/council", method: "GET"))
+    }
+
+    // MARK: - 3b. 학과공지 (크롤링)
+
+    static func fetchSchoolNotices() async throws -> [SchoolNotice] {
+        try await send(authorizedRequest(path: "/api/notices/school", method: "GET"))
     }
 
     // MARK: - 4. 사물함

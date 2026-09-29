@@ -25,12 +25,12 @@ struct LockerApplicationAccountDialog: View {
     var body: some View {
         DialogCard {
             Text("계좌 안내")
-                .font(.dialogTitle)
+                .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
                 .padding(.bottom, Spacing.xxs)
 
             Text(accountInfoText)
-                .font(.dialogBody)
+                .font(.dialogBody).tracking(Tracking.dialogBody)
                 .foregroundStyle(Color.textPrimary)
                 .padding(.bottom, Spacing.xxs)
 

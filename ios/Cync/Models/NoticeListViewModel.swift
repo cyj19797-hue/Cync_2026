@@ -2,8 +2,13 @@
 //  NoticeListViewModel.swift
 //  test
 //
-//  Backs NoticeListView with the real `GET /api/notices/council` call
-//  (`docs/API.md` §3) — see `Notice.init(councilNotice:)` for the mapping.
+//  Backs NoticeListView with the real `GET /api/notices/council` (mostly
+//  empty — no one's posted there yet) and `GET /api/notices/school`
+//  (`docs/API.md` §3 / §7) calls, merged into one list — see
+//  `Notice.init(councilNotice:)` / `Notice.init(schoolNotice:)`.
+//
+//  Bookmarking reads/writes `BookmarkStore` — see its header comment —
+//  which is what surfaces bookmarked notices on "캘린더" too.
 //
 
 import Combine
@@ -18,8 +23,18 @@ final class NoticeListViewModel: ObservableObject {
 
     func load() async {
         do {
-            let councilNotices = try await CyncAPI.fetchCouncilNotices()
-            notices = councilNotices.map(Notice.init(councilNotice:)).sorted { $0.date > $1.date }
+            async let council = CyncAPI.fetchCouncilNotices()
+            async let school = CyncAPI.fetchSchoolNotices()
+            let councilNotices = try await council
+            let schoolNotices = try await school
+            let merged = councilNotices.map(Notice.init(councilNotice:)) + schoolNotices.map(Notice.init(schoolNotice:))
+            notices = merged
+                .map { notice in
+                    var notice = notice
+                    notice.isBookmarked = BookmarkStore.shared.isBookmarked(notice.id)
+                    return notice
+                }
+                .sorted { $0.date > $1.date }
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -35,7 +50,7 @@ final class NoticeListViewModel: ObservableObject {
 
     func toggleBookmark(for notice: Notice) {
         guard let index = notices.firstIndex(where: { $0.id == notice.id }) else { return }
-        notices[index].isBookmarked.toggle()
+        notices[index].isBookmarked = BookmarkStore.shared.toggle(notices[index])
     }
 
     /// The notice shown before/after `notice` in the currently filtered,

@@ -15,7 +15,7 @@ import SwiftUI
 struct EmptyScheduleView: View {
     var body: some View {
         Text("등록된 일정이 없습니다.")
-            .font(.emptyStateMessage)
+            .font(.emptyStateMessage).tracking(Tracking.emptyStateMessage)
             .foregroundStyle(Color.textSecondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(Spacing.md)

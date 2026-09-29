@@ -45,4 +45,6 @@ enum Radius {
     static let statusPill: CGFloat = 15
     /// "1-5 로그인" text field border radius (8px).
     static let inputField: CGFloat = 8
+    /// "1-4 이용약관 동의" agreement item card corner radius (12px).
+    static let agreementCard: CGFloat = 12
 }

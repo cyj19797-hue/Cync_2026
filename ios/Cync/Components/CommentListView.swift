@@ -19,7 +19,7 @@ struct CommentListView: View {
     var body: some View {
         if threads.isEmpty {
             Text("첫 댓글을 달아보세요.")
-                .font(.communityPostBody)
+                .font(.communityPostBody).tracking(Tracking.communityPostBody)
                 .foregroundStyle(Color.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.vertical, Spacing.xl)

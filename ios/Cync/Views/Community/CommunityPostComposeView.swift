@@ -30,6 +30,10 @@ struct CommunityPostComposeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            ScreenNavigationBar(titleKey: "글쓰기", onBack: { dismiss() }) {
+                submitButton
+            }
+
             titleRow
 
             Divider()
@@ -45,13 +49,7 @@ struct CommunityPostComposeView: View {
             .padding(.horizontal, Spacing.sm)
         }
         .background(Color.appBackground)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                submitButton
-            }
-        }
-        .navigationTitle("글쓰기")
-        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
         .alert(
             "오류",
             isPresented: Binding(
@@ -68,7 +66,7 @@ struct CommunityPostComposeView: View {
     private var titleRow: some View {
         HStack(spacing: Spacing.xs) {
             TextField("제목", text: $viewModel.title)
-                .font(.postDetailTitle)
+                .font(.postDetailTitle).tracking(Tracking.postDetailTitle)
                 .foregroundStyle(Color.textPrimary)
 
             CheckboxToggle(isChecked: $viewModel.isAnonymous, titleKey: "익명")
@@ -86,7 +84,7 @@ struct CommunityPostComposeView: View {
             }
         } label: {
             Text("완료")
-                .font(.categoryChip)
+                .font(.categoryChip).tracking(Tracking.categoryChip)
                 .foregroundStyle(viewModel.canSubmit ? Color.white : Color.gray400)
                 .padding(.horizontal, Spacing.sm)
                 .padding(.vertical, Spacing.xs)

@@ -6,15 +6,20 @@
 //  card, and reused by "4-1 사물함 신청" (Locker Application)'s own grid —
 //  now the real `Locker` shape from `GET /api/lockers` (`docs/API.md` §4).
 //
-//  The server only tracks 3 raw states (`LockerStatus`) plus
-//  `currentUserId`; "내 사물함" isn't a status of its own, it's derived by
-//  comparing `currentUserId` to the signed-in student's id (`isMine(studentId:)`).
+//  The server tracks 4 raw states (`LockerStatus`) plus `currentUserId`;
+//  "내 사물함" isn't a status of its own, it's derived by comparing
+//  `currentUserId` to the signed-in student's id (`isMine(studentId:)`).
+//
+//  `.pending` was added by the 2026-09-03 API change (`docs/API.md` §4):
+//  applying no longer grants a locker immediately, it moves it to
+//  `PENDING` until an admin approves it.
 //
 
 import Foundation
 
 enum LockerStatus: String, Codable {
     case available = "AVAILABLE"
+    case pending = "PENDING"
     case inUse = "IN_USE"
     case broken = "BROKEN"
 }

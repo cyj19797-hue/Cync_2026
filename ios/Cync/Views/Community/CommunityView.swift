@@ -11,12 +11,10 @@
 //  built here — it's RootTabView's `TabView`, this is just its "커뮤니티" tab
 //  content.
 //
-//  A row's "더보기" kebab opens "커뮤니티 - 액션메뉴" (공유/저장/신고 →
-//  신고사유입력 → 신고완료), wired via `.communityPostActionMenu(target:)`.
-//
 //  No UIKit anywhere on this screen — `List` supplies the row separators
-//  Figma drew as image lines, and the action menu is a native
-//  `.confirmationDialog`.
+//  Figma drew as image lines. Rows have no trailing "더보기" button —
+//  the 공유/저장/신고 action menu that used to live behind it
+//  (`.communityPostActionMenu(target:)`) has been removed.
 //
 
 import SwiftUI
@@ -25,7 +23,6 @@ struct CommunityView: View {
     @StateObject private var viewModel = CommunityViewModel()
     @State private var selectedPost: CommunityPost?
     @State private var isComposePresented = false
-    @State private var actionMenuTarget: CommunityPost?
 
     var body: some View {
         NavigationStack {
@@ -47,7 +44,6 @@ struct CommunityView: View {
                     ForEach(viewModel.posts) { post in
                         CommunityPostRow(
                             post: post,
-                            onTapMore: { actionMenuTarget = post },
                             onSelect: { selectedPost = post }
                         )
                         .listRowSeparatorTint(Color.borderLight)
@@ -64,7 +60,6 @@ struct CommunityView: View {
                     viewModel.posts.insert(newPost, at: 0)
                 }
             }
-            .communityPostActionMenu(target: $actionMenuTarget)
             .background(Color.appBackground)
             .toolbar(.hidden, for: .navigationBar)
             .task {

@@ -56,7 +56,7 @@ struct AppTopBar<TitleContent: View, Leading: View, Trailing: View>: View {
         }
         .foregroundStyle(Color.textPrimary)
         .padding(.horizontal, Spacing.md)
-        .padding(.vertical, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
         .background(Color.appBackground)
     }
 }
@@ -72,7 +72,7 @@ extension AppTopBar where TitleContent == Text {
         self.init(
             title: {
                 Text(title)
-                    .font(.noticeNavTitle)
+                    .font(.noticeNavTitle).tracking(Tracking.noticeNavTitle)
             },
             leading: leading,
             trailing: trailing
@@ -107,7 +107,7 @@ extension AppTopBar where TitleContent == Text {
 #Preview("커스텀 타이틀 슬롯") {
     AppTopBar {
         Text("검색 중…")
-            .font(.noticeNavTitle)
+            .font(.noticeNavTitle).tracking(Tracking.noticeNavTitle)
             .foregroundStyle(Color.textSecondary)
     } trailing: {
         Image(systemName: "xmark")

@@ -56,14 +56,19 @@ private enum RootTab: CaseIterable, Hashable {
 
 struct RootTabView: View {
     @State private var selectedTab: RootTab = .notices
+    @StateObject private var tabBarVisibility = TabBarVisibility()
 
     var body: some View {
         VStack(spacing: 0) {
             selectedContent
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .environmentObject(tabBarVisibility)
 
-            tabBar
+            if !tabBarVisibility.isHidden {
+                tabBar
+            }
         }
+        .animation(.default, value: tabBarVisibility.isHidden)
     }
 
     @ViewBuilder
@@ -88,6 +93,14 @@ struct RootTabView: View {
                 tabButton(tab)
             }
         }
+        // Left/right breathing room from the screen's curved corners — a
+        // plain SwiftUI view already insets from any actual safe area
+        // (notch/Dynamic Island cutouts, home-indicator bezel), but the
+        // rounded corner radius itself isn't part of that safe area, so the
+        // outermost tab icons (공지사항/설정) would otherwise sit flush
+        // against it. A fixed design-token value (not measured against one
+        // specific device) keeps every tab readable on any iPhone size.
+        .padding(.horizontal, Spacing.xs)
         .padding(.top, Spacing.xs)
         .padding(.bottom, Spacing.xxs)
         .overlay(alignment: .top) {
@@ -105,7 +118,7 @@ struct RootTabView: View {
                 Image(systemName: tab.systemImage)
                     .font(.system(size: 22))
                 Text(tab.title)
-                    .font(.tabItemLabel)
+                    .font(.tabItemLabel).tracking(Tracking.tabItemLabel)
             }
             .foregroundStyle(isSelected ? Color.textPrimary : Color.gray400)
             .frame(maxWidth: .infinity)
@@ -116,4 +129,5 @@ struct RootTabView: View {
 
 #Preview {
     RootTabView()
+        .environmentObject(SessionStore())
 }

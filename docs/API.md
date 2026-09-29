@@ -1,4 +1,4 @@
-# Cync API 명세 업데이트 (2026-08-22, 2026-09-03 갱신) — iOS 연동 가이드
+# Cync API 명세 업데이트 (2026-08-22, 2026-09-03·09-04 갱신) — iOS 연동 가이드
 
 > 기존 `sjc-app-인계문서-v2.md`의 8장(API 명세) 이후 새로 추가/변경된 API만 정리했습니다. Swift(URLSession, async/await) 기준 실제 호출 코드를 넣었으니, 프로젝트에서 Alamofire를 쓰신다면 요청 구성 방식만 맞춰 옮기시면 됩니다.
 
@@ -9,6 +9,8 @@
 ```swift
 let baseURL = URL(string: "https://cync-backend.azurewebsites.net")!
 ```
+
+~~이전 주소(더 이상 사용 안 함): `https://cync-backend-evena5hbhjevdsc8.koreacentral-01.azurewebsites.net`~~
 
 ---
 
@@ -529,6 +531,230 @@ func deleteSchedule(id: Int) async throws {
 
 ---
 
+## 7. 학과공지 — 본문 내용 추가
+
+> ⚠️ **2026-09-04 변경**: 학과공지 크롤러가 이제 목록뿐 아니라 각 게시글의 **본문 내용까지** 함께 긁어옵니다. 기존에는 `sourceUrl`(원문 링크)만 주고 본문은 없었는데, 이제 `content` 필드가 응답에 추가됐습니다.
+
+### 모델
+
+```swift
+struct SchoolNotice: Decodable {
+    let id: Int
+    let articleNo: Int
+    let title: String
+    let content: String?      // 신규: 게시글 본문 (없을 수도 있어 옵셔널)
+    let category: String
+    let isNotice: Bool
+    let postedDate: String
+    let viewCount: Int
+    let sourceUrl: String
+    let crawledAt: String
+}
+```
+
+### 조회 — 기존과 동일한 방식, 이제 content도 함께 옴
+
+```swift
+func fetchSchoolNotices() async throws -> [SchoolNotice] {
+    let url = APIClient.baseURL.appendingPathComponent("/api/notices/school")
+    let (data, _) = try await URLSession.shared.data(from: url)
+    return try JSONDecoder().decode([SchoolNotice].self, from: data)
+}
+```
+로그인 없이 조회 가능합니다 (기존과 동일). 상세 화면에서 `notice.content`를 그대로 본문으로 보여주면 되고, `content`가 `nil`이거나 빈 문자열인 경우(크롤링이 아직 안 됐거나 실패한 극히 일부 케이스)에는 `sourceUrl`로 원문 링크를 대신 보여주는 걸 권장합니다.
+
+**참고**: `content`는 순수 텍스트만 담겨 있고 (원본 HTML의 서식, 이미지는 빠집니다) 줄바꿈은 유지되지 않을 수 있습니다. 표나 이미지가 포함된 공지는 `sourceUrl`(학교 홈페이지 원문)로 안내하는 게 안전합니다.
+
+---
+
+## 8. 앱 자체 공지사항 (버전 업데이트, 서버 점검 등)
+
+새로 추가된 기능입니다. 커뮤니티 게시판이나 학교 공지와는 별개로, **앱 운영진(관리자)이 앱 사용자에게 직접 전달하는 공지**입니다 (예: "v1.2 업데이트 안내", "9/5 새벽 서버 점검").
+
+### 모델
+
+```swift
+struct AppNotice: Decodable {
+    let id: Int
+    let title: String
+    let content: String
+    let isPopup: Bool     // true면 앱 실행 시 강제로 팝업 표시 대상
+    let authorId: String
+    let createdAt: String
+    let updatedAt: String
+}
+```
+
+### 전체 목록 조회 — 설정 메뉴의 "공지사항" 화면용
+
+```swift
+func fetchAppNotices() async throws -> [AppNotice] {
+    let url = APIClient.baseURL.appendingPathComponent("/api/app-notices")
+    let (data, _) = try await URLSession.shared.data(from: url)
+    return try JSONDecoder().decode([AppNotice].self, from: data)
+}
+```
+로그인 없이도 조회 가능합니다. 최신순으로 정렬되어 옵니다. 설정 탭 안의 "공지사항" 메뉴를 누르면 이 목록을 리스트로 보여주면 됩니다. `createdAt`을 날짜로 포맷해서 각 항목에 표시하세요.
+
+### 팝업 대상 조회 — 앱 실행 시 자동 호출
+
+```swift
+func fetchPopupNotices() async throws -> [AppNotice] {
+    let url = APIClient.baseURL.appendingPathComponent("/api/app-notices/popup")
+    let (data, _) = try await URLSession.shared.data(from: url)
+    return try JSONDecoder().decode([AppNotice].self, from: data)
+}
+```
+**앱이 처음 켜질 때(로그인 화면이든 메인 화면이든) 이 API를 호출**해서, 배열이 비어있지 않으면 그 내용을 팝업(Alert 또는 커스텀 모달)로 강제 표시하세요. 로그인 여부와 무관하게 호출 가능하므로, 로그인 화면 뜨기 직전이나 앱 진입 시점에 걸어두면 됩니다.
+
+```swift
+// 사용 예 — 앱 진입 시점
+Task {
+    let popups = try? await fetchPopupNotices()
+    if let first = popups?.first {
+        showPopup(title: first.title, message: first.content)
+    }
+}
+```
+여러 개가 동시에 `isPopup: true`일 수 있으니, 전부 순서대로 보여줄지 최신 것 하나만 보여줄지는 화면 설계에 맞게 정하시면 됩니다 (배열 순서는 최신순은 아니라서, 필요하면 `createdAt` 기준으로 정렬해서 쓰세요).
+
+### 관리자 — 작성/수정/삭제
+
+```swift
+func createAppNotice(title: String, content: String, isPopup: Bool) async throws -> AppNotice {
+    var params = ["title": title, "content": content, "isPopup": String(isPopup)]
+    var request = APIClient.authorizedRequest(path: "/api/app-notices", method: "POST")
+    request.httpBody = APIClient.formBody(params)
+    request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+    let (data, _) = try await URLSession.shared.data(for: request)
+    return try JSONDecoder().decode(AppNotice.self, from: data)
+}
+
+func deleteAppNotice(id: Int) async throws {
+    let request = APIClient.authorizedRequest(path: "/api/app-notices/\(id)", method: "DELETE")
+    _ = try await URLSession.shared.data(for: request)
+}
+```
+ADMIN 권한이 있는 계정만 성공합니다 (일반 유저는 403/500).
+
+---
+
+## 9. 신고 기능 (게시글/댓글 공용)
+
+새로 추가된 기능입니다. 게시글과 댓글을 **같은 API 하나로** 신고 처리합니다 — 대상이 게시글인지 댓글인지는 `targetType` 파라미터로 구분하고, 둘은 완전히 독립적으로 신고됩니다 (게시글 신고와 그 안의 댓글 신고는 서로 무관한 별개의 신고 건입니다).
+
+### 모델
+
+```swift
+enum ReportTargetType: String {
+    case post = "POST"
+    case comment = "COMMENT"
+}
+
+enum ReportReason: String, CaseIterable {
+    case spam = "SPAM"             // 스팸 또는 광고성 게시글
+    case abuse = "ABUSE"           // 욕설 또는 혐오 표현
+    case privacy = "PRIVACY"       // 개인정보 노출
+    case falseInfo = "FALSE_INFO"  // 허위 정보
+    case other = "OTHER"           // 기타
+}
+
+struct Report: Decodable {
+    let id: Int
+    let targetType: String
+    let targetId: Int
+    let reporterId: String
+    let reason: String
+    let detail: String?
+    let status: String   // "PENDING" 또는 "RESOLVED"
+    let createdAt: String
+}
+```
+
+### 신고하기 — 게시글/댓글 공통 함수
+
+```swift
+func report(targetType: ReportTargetType, targetId: Int,
+            reason: ReportReason, detail: String? = nil) async throws -> Report {
+    var params = [
+        "targetType": targetType.rawValue,
+        "targetId": String(targetId),
+        "reason": reason.rawValue
+    ]
+    if let detail, !detail.isEmpty {
+        params["detail"] = detail
+    }
+
+    var request = APIClient.authorizedRequest(path: "/api/reports", method: "POST")
+    request.httpBody = APIClient.formBody(params)
+    request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+
+    let (data, response) = try await URLSession.shared.data(for: request)
+    if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+        throw NSError(domain: "이미 신고했거나 대상을 찾을 수 없습니다.", code: http.statusCode)
+    }
+    return try JSONDecoder().decode(Report.self, from: data)
+}
+```
+
+**사용 예 — 게시글 신고 버튼**
+```swift
+try await report(targetType: .post, targetId: post.id, reason: .abuse, detail: "욕설이 포함되어 있습니다")
+```
+
+**사용 예 — 댓글 신고 버튼 (같은 함수, targetType만 다름)**
+```swift
+try await report(targetType: .comment, targetId: comment.id, reason: .spam)
+```
+
+첨부해주신 신고 화면(체크박스 5개 + 상세 사유 텍스트박스)을 그대로 쓰시되, "신고 제출하기" 버튼을 누를 때 **어느 화면에서 열렸는지(게시글 상세 vs 댓글 셀)에 따라 `targetType`/`targetId`만 다르게 넘기면** 됩니다. UI 자체는 완전히 재사용 가능합니다.
+
+**제약사항**
+- 같은 사용자가 같은 대상(같은 게시글 또는 같은 댓글)을 **두 번 신고할 수 없습니다** — 재시도 시 서버가 에러를 반환하니, "이미 신고한 게시물입니다" 같은 안내를 보여주세요.
+- 이미 삭제된 게시글/댓글을 신고하려고 하면 에러가 납니다.
+
+### 관리자 화면 — 신고 목록 조회 및 처리
+
+```swift
+func fetchPendingReports() async throws -> [Report] {
+    let request = APIClient.authorizedRequest(path: "/api/reports/pending", method: "GET")
+    let (data, _) = try await URLSession.shared.data(for: request)
+    return try JSONDecoder().decode([Report].self, from: data)
+}
+
+func fetchAllReports() async throws -> [Report] {
+    let request = APIClient.authorizedRequest(path: "/api/reports", method: "GET")
+    let (data, _) = try await URLSession.shared.data(for: request)
+    return try JSONDecoder().decode([Report].self, from: data)
+}
+
+func resolveReport(id: Int) async throws -> Report {
+    let request = APIClient.authorizedRequest(path: "/api/reports/\(id)/resolve", method: "POST")
+    let (data, _) = try await URLSession.shared.data(for: request)
+    return try JSONDecoder().decode(Report.self, from: data)
+}
+```
+ADMIN 권한이 있는 계정만 호출 가능합니다.
+
+**관리자 처리 흐름 (중요 — 이 API가 자동으로 삭제/정지를 해주지 않습니다)**
+
+`Report`는 신고 접수 및 "확인했다"는 표시만 담당합니다. 실제 조치는 관리자가 신고 내용을 보고, **기존에 이미 있는 다른 API를 조합해서** 처리해야 합니다.
+
+```
+1. fetchPendingReports() 로 미처리 신고 목록 확인
+2. 신고 내용(reason, detail)을 보고 관리자가 판단
+3-A. 삭제가 맞다고 판단
+     → targetType == .post 면 DELETE /api/posts/{targetId}
+     → targetType == .comment 면 DELETE /api/comments/{targetId}
+3-B. 작성자 활동정지가 필요하다고 판단
+     → 먼저 GET /api/posts/{targetId} (또는 댓글 목록에서) 조회해서 작성자 학번(authorId) 확인
+     → POST /api/admin/users/{authorId}/ban 호출
+4. resolveReport(id:) 호출로 이 신고 건을 처리완료 표시
+```
+관리자 화면에서는 신고 목록 각 항목에 "삭제" / "작성자 정지" / "처리완료" 버튼을 두고, 위 흐름대로 여러 API를 순차 호출하도록 구성하면 됩니다.
+
+---
+
 ## 요약 — iOS 구현 시 체크리스트
 
 1. **서버 주소가 `https://cync-backend.azurewebsites.net`으로 변경됨** — `baseURL` 꼭 업데이트
@@ -539,3 +765,6 @@ func deleteSchedule(id: Int) async throws {
 6. **사물함은 신청 즉시 사용이 아니라 관리자 승인 방식(PENDING 단계)으로 변경됨** — `apply` → 대기 화면 → `approve`/`reject`/`cancel`, `dueDate` 필드는 사라짐
 7. **학사일정은 일반적인 GET/POST 패턴**과 동일, `source` enum으로 UI 분기
 8. **정지 여부(`currentlyBanned`)로 글쓰기 관련 버튼 사전 비활성화** — 서버 에러 이후 대응이 아니라 사전 방지
+9. **학과공지에 `content`(본문) 필드 추가됨** — 상세 화면에서 본문을 바로 보여줄 수 있음
+10. **앱 자체 공지사항(`AppNotice`) 신규 추가** — 앱 실행 시 `/api/app-notices/popup` 호출해서 팝업 처리, 설정 메뉴에는 `/api/app-notices` 전체 목록 표시
+11. **신고 기능(`Report`) 신규 추가** — 게시글/댓글 공용 API, `targetType`으로 구분. 신고 처리는 관리자가 기존 삭제/정지 API를 조합해서 수동으로 진행

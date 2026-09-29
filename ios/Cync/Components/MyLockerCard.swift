@@ -33,13 +33,13 @@ struct MyLockerCard: View {
     var body: some View {
         VStack(spacing: Spacing.md) {
             Text("나의 사물함")
-                .font(.myLockerTitle)
+                .font(.myLockerTitle).tracking(Tracking.myLockerTitle)
                 .frame(maxWidth: .infinity, alignment: .center)
 
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 HStack {
                     Text("\(locker.lockerNumber)번")
-                        .font(.lockerNumberLarge)
+                        .font(.lockerNumberLarge).tracking(Tracking.lockerNumberLarge)
 
                     Spacer(minLength: 0)
 
@@ -48,7 +48,7 @@ struct MyLockerCard: View {
                             .fill(Color(.systemGreen))
                             .frame(width: 8, height: 8)
                         Text("사용중")
-                            .font(.lockerStatusBadge)
+                            .font(.lockerStatusBadge).tracking(Tracking.lockerStatusBadge)
                     }
                     .padding(.horizontal, Spacing.sm)
                     .padding(.vertical, Spacing.xs)
@@ -58,7 +58,7 @@ struct MyLockerCard: View {
                 }
 
                 Text("기간 : \(periodText)")
-                    .font(.lockerPeriodText)
+                    .font(.lockerPeriodText).tracking(Tracking.lockerPeriodText)
 
                 HStack {
                     Spacer(minLength: 0)
@@ -66,7 +66,7 @@ struct MyLockerCard: View {
                         Text("사물함 비밀번호 찾기")
                             .underline()
                     }
-                    .font(.calendarCaption)
+                    .font(.calendarCaption).tracking(Tracking.calendarCaption)
                     .foregroundStyle(Color.textSecondary)
                 }
             }

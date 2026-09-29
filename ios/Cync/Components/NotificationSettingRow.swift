@@ -27,7 +27,7 @@ struct NotificationSettingRow: View {
     private var rowContent: some View {
         HStack(spacing: Spacing.xs) {
             Text(titleKey)
-                .font(.categoryBadge)
+                .font(.categoryBadge).tracking(Tracking.categoryBadge)
                 .foregroundStyle(Color.textPrimary)
 
             Spacer(minLength: 0)

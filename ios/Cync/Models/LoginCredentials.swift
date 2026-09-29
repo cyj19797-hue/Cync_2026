@@ -2,10 +2,9 @@
 //  LoginCredentials.swift
 //  Cync
 //
-//  Payload shape for a future `POST /api/auth/login` call — no such endpoint
-//  exists in `docs/API.md` yet (see `CyncAPI.swift`'s header comment on
-//  `accessToken` always starting `nil`), so `LoginViewModel.submit()` only
-//  mocks a successful login for now instead of calling a real endpoint.
+//  Unused — `CyncAPI.login(studentId:password:)` takes the two fields
+//  directly rather than this struct. Kept in case a caller wants to pass
+//  credentials around as one value.
 //
 
 import Foundation

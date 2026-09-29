@@ -2,14 +2,15 @@
 //  Notice.swift
 //  test
 //
-//  Data model backing the "공지사항" (Notices) screen — mapped from the real
-//  `StudentCouncilNotice` shape returned by `GET /api/notices/council`
-//  (`docs/API.md` §3).
+//  Data model backing the "공지사항" (Notices) screen — merges two boards:
+//  the real `StudentCouncilNotice` shape from `GET /api/notices/council`
+//  (`docs/API.md` §3, usually empty — no one's posted yet) and the crawled
+//  `SchoolNotice` shape from `GET /api/notices/school` (`docs/API.md` §7,
+//  the one that's actually populated).
 //
-//  The server only has a "학생회" (student council) notice board so far —
-//  same gap as `CalendarEvent`'s 장학/국제교류 categories — so 학사/장학/
-//  국제교류 filter chips will always be empty against real data until those
-//  boards exist server-side.
+//  Neither board has a concept of "장학"/"국제교류" notices yet — same gap
+//  as `CalendarEvent`'s matching categories — so those filter chips will
+//  stay empty against real data until those boards exist server-side.
 //
 
 import Foundation
@@ -86,6 +87,59 @@ extension Notice {
             deadlineDays: nil,
             isBookmarked: false,
             originalText: councilNotice.content,
+            translatedText: nil
+        )
+    }
+}
+
+/// Raw shape of one row from `GET /api/notices/school` (`docs/API.md` §7's
+/// `SchoolNotice`) — department notices crawled from the school site.
+///
+/// The server's actual JSON key for this field is `notice`, not `isNotice`
+/// as `docs/API.md` has it — Jackson serializes a Java `isNotice()` getter
+/// by dropping the `is` prefix. Verified directly against a live response
+/// from `/api/notices/school`, whose keys are `id, articleNo, title,
+/// content, category, postedDate, viewCount, sourceUrl, crawledAt, notice`.
+struct SchoolNotice: Decodable {
+    let id: Int
+    let articleNo: Int
+    let title: String
+    let content: String?
+    let category: String
+    let isNotice: Bool
+    let postedDate: String
+    let viewCount: Int
+    let sourceUrl: String
+    let crawledAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, articleNo, title, content, category, postedDate, viewCount, sourceUrl, crawledAt
+        case isNotice = "notice"
+    }
+}
+
+extension Notice {
+    /// Offsets `SchoolNotice.id` clear of `CouncilNotice.id` — both boards
+    /// number their rows from 1, and the merged list needs one `Identifiable`
+    /// id space.
+    private static let schoolNoticeIDOffset = 1_000_000
+
+    /// Maps a crawled department notice onto the app's `Notice` model.
+    /// `category` is free-text from the crawler (예: "학사", "행사", "기타",
+    /// or blank) rather than one of `NoticeCategory`'s fixed cases, so
+    /// anything that isn't an exact match falls back to `.academic` — these
+    /// are all department-office notices at heart. When the crawler hasn't
+    /// picked up a body (`content` nil/empty), `sourceUrl` is shown instead,
+    /// per `docs/API.md` §7's recommendation.
+    init(schoolNotice: SchoolNotice) {
+        self.init(
+            id: schoolNotice.id + Self.schoolNoticeIDOffset,
+            category: NoticeCategory(rawValue: schoolNotice.category) ?? .academic,
+            title: schoolNotice.title,
+            date: SpringDate.parseDottedDay(schoolNotice.postedDate) ?? Date(),
+            deadlineDays: nil,
+            isBookmarked: false,
+            originalText: (schoolNotice.content?.isEmpty == false ? schoolNotice.content : nil) ?? schoolNotice.sourceUrl,
             translatedText: nil
         )
     }

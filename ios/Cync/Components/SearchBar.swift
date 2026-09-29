@@ -10,7 +10,7 @@
 //  pill), which reads as a foreign, "off brand" element next to this app's
 //  Pretendard/`Color.surface`/pill-chip styling everywhere else. Rebuilt
 //  here as a plain SwiftUI view using the same fill/radius/font tokens as
-//  `NoticeCategoryChip` (the row this replaces), so it looks like it
+//  `FilterChip` (the row this replaces), so it looks like it
 //  belongs to the same design system rather than a native iOS control
 //  dropped in. (The deployment target is also actually iOS 17.0 already —
 //  see IPHONEOS_DEPLOYMENT_TARGET — so the iOS-16-compatibility reason this
@@ -34,7 +34,7 @@ struct SearchBar: View {
                     .foregroundStyle(Color.gray400)
 
                 TextField("검색", text: $text)
-                    .font(.categoryChip)
+                    .font(.categoryChip).tracking(Tracking.categoryChip)
                     .foregroundStyle(Color.textPrimary)
                     .focused($isFocused)
                     .textInputAutocapitalization(.never)
@@ -64,7 +64,7 @@ struct SearchBar: View {
                 isFocused = false
                 isActive = false
             }
-            .font(.categoryChip)
+            .font(.categoryChip).tracking(Tracking.categoryChip)
             .foregroundStyle(Color.textPrimary)
             .buttonStyle(.plain)
         }

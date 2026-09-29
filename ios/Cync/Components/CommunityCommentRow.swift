@@ -21,7 +21,7 @@ struct CommunityCommentRow: View {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 AuthorLine(authorName: comment.authorName, createdAt: comment.createdAt)
                 Text(comment.content)
-                    .font(.communityPostBody)
+                    .font(.communityPostBody).tracking(Tracking.communityPostBody)
                     .foregroundStyle(Color.textPrimary)
             }
 
@@ -35,7 +35,7 @@ struct CommunityCommentRow: View {
                 if let onReply {
                     Button(action: onReply) {
                         Text("답글 달기")
-                            .font(.commentReplyButton)
+                            .font(.commentReplyButton).tracking(Tracking.commentReplyButton)
                             .foregroundStyle(Color.gray400)
                     }
                     .buttonStyle(.plain)
