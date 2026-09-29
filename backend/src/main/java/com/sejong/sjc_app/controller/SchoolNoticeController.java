@@ -19,7 +19,7 @@ public class SchoolNoticeController {
 
     @GetMapping
     public List<SchoolNotice> getNotices() {
-        return schoolNoticeRepository.findAll();
+        return schoolNoticeRepository.findAllByOrderByIsNoticeDescPostedDateDesc();
     }
 
     @PostMapping("/crawl")
@@ -28,7 +28,6 @@ public class SchoolNoticeController {
         return "새로 저장된 공지: " + count + "개";
     }
 
-    // 기존 공지들의 본문을 다시 크롤링해서 채워넣기 (ADMIN만, 1회성 작업)
     @PostMapping("/backfill-content")
     @PreAuthorize("hasRole('ADMIN')")
     public String backfillContent() throws Exception {
