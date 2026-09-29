@@ -66,7 +66,7 @@ final class CommunityPostDetailViewModel: ObservableObject {
             comments.append(comment)
             post.commentCount += 1
         } catch {
-            errorMessage = "댓글을 등록하지 못했습니다. \(error.localizedDescription)"
+            errorMessage = String(localized: .commentPostFailed(error.localizedDescription))
         }
     }
 }

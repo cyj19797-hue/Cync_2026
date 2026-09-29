@@ -28,10 +28,10 @@ struct CalendarEventListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScreenNavigationBar(titleKey: "일정 전체보기", onBack: { dismiss() })
+            ScreenNavigationBar(titleKey: .calendarAllEvents, onBack: { dismiss() })
 
             VStack(alignment: .leading, spacing: 0) {
-                Text(viewModel.selectedDate.formatted(.dateTime.month(.wide).day().weekday(.wide).locale(Locale(identifier: "ko_KR"))))
+                Text(viewModel.selectedDate.formatted(.dateTime.month(.wide).day().weekday(.wide)))
                     .font(.noticeTitle).tracking(Tracking.noticeTitle)
                     .foregroundStyle(Color.textPrimary)
                     .padding(Spacing.xs)

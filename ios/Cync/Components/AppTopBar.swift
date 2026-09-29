@@ -17,7 +17,7 @@
 //  thing controlling the bar's layout, height, and colors.
 //
 //  Two initializers cover the two ways a screen needs its title:
-//    - `title: String` — the common case (plain nav-title styling).
+//    - `title: LocalizedStringResource` — the common case (plain nav-title styling).
 //    - `title: () -> TitleContent` (`@ViewBuilder`) — for a screen that
 //      needs to swap the whole title area for something else entirely
 //      (e.g. a search field in place of the title). None of the 3 screens
@@ -65,7 +65,7 @@ extension AppTopBar where TitleContent == Text {
     /// Convenience for the common case: a plain string title styled with
     /// the design system's standard nav-title font/color.
     init(
-        title: String,
+        title: LocalizedStringResource,
         @ViewBuilder leading: () -> Leading = { EmptyView() },
         @ViewBuilder trailing: () -> Trailing = { EmptyView() }
     ) {

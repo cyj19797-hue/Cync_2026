@@ -31,11 +31,11 @@ enum LockerDataError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .fileNotFound(let name):
-            return "사물함 배치 데이터(\(name).json)를 찾을 수 없습니다."
+            return String(localized: .lockerDataFileNotFound(name))
         case .unreadable:
-            return "사물함 배치 데이터를 읽지 못했습니다."
+            return String(localized: .lockerDataUnreadable)
         case .decoding:
-            return "사물함 배치 데이터 형식이 올바르지 않습니다."
+            return String(localized: .lockerDataInvalid)
         }
     }
 }

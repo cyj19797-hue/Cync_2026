@@ -90,6 +90,16 @@ final class LockerZoneView: UIView {
         }
     }
 
+    /// Overrides `lockerNumber`'s cell to `.selected`, regardless of its
+    /// server status — used by `LockerMapViewController.focusLockerNumber`
+    /// to highlight "내 사물함" on the map. No-op if this zone has no cell
+    /// with that number.
+    func highlight(lockerNumber: Int) {
+        for (_, cellView) in cellViews where cellView.cell.lockerNumber == lockerNumber {
+            cellView.updateStatus(.selected)
+        }
+    }
+
     override func layoutSubviews() {
         super.layoutSubviews()
 
@@ -146,20 +156,20 @@ extension LockerCellStatus {
         // server record for it at all), but shown identically to `.broken`
         // rather than as its own legend color.
         case .reserved: return LockerCellStatus.broken.uiColor
-        case .selected: return UIColor(hex: 0xFF4F6D)  // matches Color.brandPrimary
+        case .selected: return .systemGreen  // "내 사물함" highlight — matches MyLockerCard's `.active` pill
         }
     }
 
     /// Label shown next to this status's swatch in `LockerStatusLegendBar`.
     var legendLabel: String {
         switch self {
-        case .empty: return "신청 가능"
-        case .pending: return "승인 대기중"
-        case .occupied: return "사용중"
-        case .broken: return "사용 불가"
-        case .reserved: return "학생회 사물함"
-        case .unknown: return "정보 없음"
-        case .selected: return "선택됨"
+        case .empty: return String(localized: .lockerStatusApplicable)
+        case .pending: return String(localized: .lockerStatusPending)
+        case .occupied: return String(localized: .lockerStatusInUse)
+        case .broken: return String(localized: .lockerStatusBroken)
+        case .reserved: return String(localized: .lockerStatusReserved)
+        case .unknown: return String(localized: .lockerStatusUnknown)
+        case .selected: return String(localized: .lockerMine)
         }
     }
 }

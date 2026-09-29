@@ -39,26 +39,26 @@ struct CommentComposeView: View {
 
     var body: some View {
         DialogCard {
-            Text(replyingToAuthor == nil ? "댓글 달기" : "답글 달기")
+            Text(replyingToAuthor == nil ? LocalizedStringResource.commentWrite : .commentReply)
                 .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
 
             if let replyingToAuthor {
-                Text("\(replyingToAuthor)님에게 답글 남기는 중")
+                Text(.commentReplyingTo(replyingToAuthor))
                     .font(.noticeDate).tracking(Tracking.noticeDate)
                     .foregroundStyle(Color.textSecondary)
                     .padding(.bottom, Spacing.xxs)
             }
 
-            CheckboxToggle(isChecked: $isAnonymous, titleKey: "익명")
+            CheckboxToggle(isChecked: $isAnonymous, titleKey: .commonAnonymous)
                 .padding(.vertical, Spacing.xxs)
 
             HStack(spacing: Spacing.xs) {
-                TextField("댓글을 입력하세요.", text: $text)
+                TextField(String(localized: .commentPlaceholder), text: $text)
                     .font(.categoryBadge).tracking(Tracking.categoryBadge)
                     .foregroundStyle(Color.textPrimary)
 
-                Button("등록") {
+                Button(.commentSubmit) {
                     onSubmit(text, isAnonymous)
                 }
                 .font(.categoryBadge).tracking(Tracking.categoryBadge)

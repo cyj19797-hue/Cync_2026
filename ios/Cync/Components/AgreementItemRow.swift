@@ -13,7 +13,7 @@
 import SwiftUI
 
 struct AgreementItemRow: View {
-    let titleKey: LocalizedStringKey
+    let titleKey: LocalizedStringResource
     @Binding var isAgreed: Bool
     var onViewDetail: () -> Void = {}
 
@@ -23,12 +23,7 @@ struct AgreementItemRow: View {
                 isAgreed.toggle()
             } label: {
                 HStack(spacing: Spacing.xs) {
-                    CheckboxSquare(
-                        isChecked: isAgreed,
-                        checkedFill: .eventAccent,
-                        checkedBorderColor: .eventAccentDark,
-                        checkmarkColor: .white
-                    )
+                    CheckboxSquare(isChecked: isAgreed, style: .accent)
 
                     Text(titleKey)
                         .font(.termsItemLabel).tracking(Tracking.termsItemLabel)

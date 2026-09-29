@@ -30,7 +30,7 @@ struct CommunityPostComposeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScreenNavigationBar(titleKey: "글쓰기", onBack: { dismiss() }) {
+            ScreenNavigationBar(titleKey: .communityWrite, onBack: { dismiss() }) {
                 submitButton
             }
 
@@ -41,7 +41,7 @@ struct CommunityPostComposeView: View {
 
             PlaceholderTextEditor(
                 text: $viewModel.content,
-                placeholder: "내용을 자유롭게 입력하세요.",
+                placeholder: .communityContentPlaceholder,
                 font: .communityPostBody,
                 placeholderColor: .gray400,
                 textColor: .textPrimary
@@ -51,13 +51,13 @@ struct CommunityPostComposeView: View {
         .background(Color.appBackground)
         .toolbar(.hidden, for: .navigationBar)
         .alert(
-            "오류",
+            Text(.commonError),
             isPresented: Binding(
                 get: { viewModel.errorMessage != nil },
                 set: { isPresented in if !isPresented { viewModel.errorMessage = nil } }
             )
         ) {
-            Button("확인", role: .cancel) {}
+            Button(.commonOk, role: .cancel) {}
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
@@ -65,11 +65,11 @@ struct CommunityPostComposeView: View {
 
     private var titleRow: some View {
         HStack(spacing: Spacing.xs) {
-            TextField("제목", text: $viewModel.title)
+            TextField(String(localized: .communityTitlePlaceholder), text: $viewModel.title)
                 .font(.postDetailTitle).tracking(Tracking.postDetailTitle)
                 .foregroundStyle(Color.textPrimary)
 
-            CheckboxToggle(isChecked: $viewModel.isAnonymous, titleKey: "익명")
+            CheckboxToggle(isChecked: $viewModel.isAnonymous, titleKey: .commonAnonymous)
         }
         .padding(Spacing.sm)
     }
@@ -83,7 +83,7 @@ struct CommunityPostComposeView: View {
                 }
             }
         } label: {
-            Text("완료")
+            Text(.commonDone)
                 .font(.categoryChip).tracking(Tracking.categoryChip)
                 .foregroundStyle(viewModel.canSubmit ? Color.white : Color.gray400)
                 .padding(.horizontal, Spacing.sm)

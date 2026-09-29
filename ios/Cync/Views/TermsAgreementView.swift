@@ -14,7 +14,7 @@
 //  Reuses existing components/tokens throughout instead of one-offs:
 //  `AgreementItemRow` (+ its shared `CheckboxSquare`) for each agreement
 //  line, `CheckboxToggle` for the "전체 동의" master checkbox (its filled
-//  `eventAccent`/`eventAccentDark`/white-check styling already matches
+//  `eventAccent`/`eventAccentLight`/white-check styling already matches
 //  "1-5 로그인"'s "학번 기억하기" checkbox exactly), `NavigationChevron` for
 //  the per-row disclosure hint, and `PrimaryActionButton` (with its
 //  `enabledCornerRadius`/`isUnderlined` overrides — see that file) for the
@@ -75,11 +75,9 @@ struct TermsAgreementView: View {
             Spacer(minLength: 0)
 
             PrimaryActionButton(
-                titleKey: "👉 세종대학교 계정으로 시작하기",
+                titleKey: .termsStart,
                 isEnabled: canContinue,
                 tint: .eventAccent,
-                font: .termsButtonLabel,
-                tracking: Tracking.termsButtonLabel,
                 borderColor: .eventAccentLight,
                 enabledCornerRadius: Radius.agreementCard,
                 isUnderlined: true,
@@ -97,21 +95,21 @@ struct TermsAgreementView: View {
         switch detail {
         case .terms:
             AgreementDetailView(
-                titleKey: "이용약관",
+                titleKey: .termsTermsOfService,
                 bodyText: LegalDocumentContent.termsOfService
             ) {
                 presentedDetail = nil
             }
         case .privacyPolicy:
             AgreementDetailView(
-                titleKey: "개인정보 처리 방침",
+                titleKey: .termsPrivacyPolicy,
                 bodyText: LegalDocumentContent.privacyPolicy
             ) {
                 presentedDetail = nil
             }
         case .notification:
             AgreementDetailView(
-                titleKey: "[선택] 중요한 학과 소식 알림",
+                titleKey: .termsOptionalNotification,
                 titleFont: .termsItemLabel,
                 bodyText: LegalDocumentContent.notificationInfo
             ) {
@@ -121,7 +119,7 @@ struct TermsAgreementView: View {
     }
 
     private var title: some View {
-        Text("Cync를 시작하기 전에,\n서비스 이용에 필요한 내용을 확인해주세요.")
+        Text(.termsTitle)
             .font(.termsAgreementTitle).tracking(Tracking.termsAgreementTitle)
             .foregroundStyle(Color.textPrimary)
             .fixedSize(horizontal: false, vertical: true)
@@ -129,7 +127,7 @@ struct TermsAgreementView: View {
     }
 
     private var subtitle: some View {
-        Text("더 나은 학과 생활을 위해 필요한 최소한의 정보만\n안전하게 수집 ・이용돼요.")
+        Text(.termsSubtitle)
             .font(.termsAgreementSubtitle).tracking(Tracking.termsAgreementSubtitle)
             .foregroundStyle(Color.textSecondary)
             .fixedSize(horizontal: false, vertical: true)
@@ -138,18 +136,18 @@ struct TermsAgreementView: View {
 
     private var essentialSection: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text("필수 동의 항목")
+            Text(.termsRequiredSection)
                 .font(.postDetailTitle).tracking(Tracking.postDetailTitle)
                 .foregroundStyle(Color.textPrimary)
 
             VStack(spacing: 0) {
-                AgreementItemRow(titleKey: "[필수] 이용약관", isAgreed: $isTermsAgreed) {
+                AgreementItemRow(titleKey: .termsRequiredTerms, isAgreed: $isTermsAgreed) {
                     presentedDetail = .terms
                 }
 
                 Divider().overlay(Color.borderLight)
 
-                AgreementItemRow(titleKey: "[필수] 개인정보 처리 방침", isAgreed: $isPrivacyPolicyAgreed) {
+                AgreementItemRow(titleKey: .termsRequiredPrivacy, isAgreed: $isPrivacyPolicyAgreed) {
                     presentedDetail = .privacyPolicy
                 }
             }
@@ -164,11 +162,11 @@ struct TermsAgreementView: View {
 
     private var optionalSection: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text("선택 동의 항목")
+            Text(.termsOptionalSection)
                 .font(.postDetailTitle).tracking(Tracking.postDetailTitle)
                 .foregroundStyle(Color.textPrimary)
 
-            AgreementItemRow(titleKey: "[선택] 중요한 학과 소식 알림", isAgreed: $isMarketingAgreed) {
+            AgreementItemRow(titleKey: .termsOptionalNotification, isAgreed: $isMarketingAgreed) {
                 presentedDetail = .notification
             }
             .padding(.horizontal, Spacing.cardInset)
@@ -190,14 +188,12 @@ struct TermsAgreementView: View {
                     isMarketingAgreed = newValue
                 }
             ),
-            titleKey: "전체 동의",
-            checkedFill: .eventAccent,
-            checkedBorderColor: .eventAccentDark,
-            checkmarkColor: .white,
+            titleKey: .termsAgreeAll,
+            style: .accent,
             font: .termsAgreeAllLabel,
             tracking: Tracking.termsAgreeAllLabel
         )
-        .padding(Spacing.cardInset)
+        .padding(Spacing.button)
     }
 }
 

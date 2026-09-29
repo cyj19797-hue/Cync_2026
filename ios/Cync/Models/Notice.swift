@@ -31,9 +31,18 @@ enum NoticeCategory: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
-    /// Wraps `rawValue` as a `LocalizedStringKey` so the Korean label can be
-    /// looked up in a String Catalog (`Localizable.xcstrings`) for English.
-    var localizedKey: LocalizedStringKey { LocalizedStringKey(rawValue) }
+    /// Display label. `rawValue` stays the Korean category string the
+    /// server sends (see `NoticeCategory(rawValue:)` below), so the UI label
+    /// is looked up separately in `Localizable.xcstrings`.
+    var label: LocalizedStringResource {
+        switch self {
+        case .all: return .noticeCategoryAll
+        case .academic: return .noticeCategoryAcademic
+        case .scholarship: return .noticeCategoryScholarship
+        case .studentCouncil: return .noticeCategoryStudentCouncil
+        case .exchange: return .noticeCategoryExchange
+        }
+    }
 }
 
 /// A single 공지사항 (notice/announcement) list entry.
@@ -54,7 +63,7 @@ struct Notice: Identifiable, Codable {
     var translatedText: String?
 
     var dateText: String {
-        date.formatted(.dateTime.year().month(.twoDigits).day(.twoDigits).locale(Locale(identifier: "ko_KR")))
+        date.formatted(.dateTime.year().month(.twoDigits).day(.twoDigits))
             .replacingOccurrences(of: " ", with: "")
     }
 }

@@ -31,7 +31,7 @@ final class CommunityPostComposeViewModel: ObservableObject {
         do {
             return try await CyncAPI.createPost(title: title, content: content, isAnonymous: isAnonymous)
         } catch {
-            errorMessage = "게시글을 등록하지 못했습니다. \(error.localizedDescription)"
+            errorMessage = String(localized: .communityPostFailed(error.localizedDescription))
             return nil
         }
     }

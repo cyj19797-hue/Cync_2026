@@ -14,8 +14,10 @@
 //  affordance implies. Tapping the "전체 사물함" grid itself (not a chevron)
 //  and the "사물함 신청" prompt both push `LockerApplicationMapView` (the
 //  physical map + apply flow, UIKit under the hood via `LockerMapScreenView`);
-//  while the student has no locker, `lockerApplicationPreview` also embeds
-//  the bare map (no apply flow, browsing only) inline below the grid.
+//  `lockerApplicationPreview` also always embeds the bare map (no apply
+//  flow, browsing only) inline below the grid — once the student has a
+//  locker assigned, it warps to and highlights that locker's cell instead
+//  of resting at the plain fit-to-screen view (`focusLockerNumber`).
 //
 //  `.scrollBounceBehavior(.basedOnSize)` on the outer `ScrollView` — when
 //  the content already fits on screen (no locker grid overflow, no map
@@ -43,25 +45,17 @@ struct LockerView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                AppTopBar(title: "사물함", trailing:  {
+                AppTopBar(title: .tabLockers, trailing:  {
                     Image(systemName: "shippingbox")
                 })
 
                 ScrollView {
                     VStack(spacing: Spacing.md) {
-                        if let myLocker = viewModel.myLocker {
-                            MyLockerCard(locker: myLocker) {
-                                isPasswordAlertPresented = true
-                            }
-                        } else {
-                            applyPrompt
-                        }
+                        myLockerCard
 
                         allLockersSection
 
-                        if viewModel.myLocker == nil {
-                            lockerApplicationPreview
-                        }
+                        lockerApplicationPreview
                     }
                     .padding(Spacing.md)
                 }
@@ -72,65 +66,60 @@ struct LockerView: View {
             .task {
                 await viewModel.load()
             }
-            .alert("사물함 비밀번호", isPresented: $isPasswordAlertPresented) {
-                Button("확인", role: .cancel) {}
+            .alert(Text(.lockerPasswordAlertTitle), isPresented: $isPasswordAlertPresented) {
+                Button(.commonOk, role: .cancel) {}
             } message: {
-                Text(viewModel.myLocker?.password ?? "비밀번호 정보가 없습니다.")
+                Text(viewModel.myLocker?.password ?? String(localized: .lockerNoPassword))
             }
             .alert(
-                "오류",
+                Text(.commonError),
                 isPresented: Binding(
                     get: { viewModel.errorMessage != nil },
                     set: { isPresented in if !isPresented { viewModel.errorMessage = nil } }
                 )
             ) {
-                Button("확인", role: .cancel) {}
+                Button(.commonOk, role: .cancel) {}
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
         }
     }
 
-    /// Shown instead of `MyLockerCard` when the user has no locker yet —
-    /// opens `LockerApplicationMapView` (physical map + legend, tap an
-    /// empty cell to apply) instead of "4-1 사물함 신청"'s 6×6 mock grid
+    /// The "내 사물함" summary card (Figma component `243:4541`). While the
+    /// student has no locker, this is its `속성 1=신청` variant wrapped in a
+    /// `NavigationLink` — tapping the whole card opens
+    /// `LockerApplicationMapView` (physical map + legend, tap an empty cell
+    /// to apply) instead of "4-1 사물함 신청"'s 6×6 mock grid
     /// (`LockerApplicationView`) — that screen's code is unchanged but is
-    /// currently unreachable from the app's UI.
-    private var applyPrompt: some View {
-        NavigationLink {
-            LockerApplicationMapView { locker in
-                // 신청 완료: 서버가 배정한 실제 사물함(비밀번호 포함)을 "나의
-                // 사물함"으로 승격.
-                viewModel.myLocker = locker
-            }
-        } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: Spacing.xxs) {
-                    Text("아직 신청한 사물함이 없어요")
-                        .font(.noticeTitle).tracking(Tracking.noticeTitle)
-                    Text("사물함을 신청해보세요")
-                        .font(.calendarCaption).tracking(Tracking.calendarCaption)
-                        .foregroundStyle(Color.textSecondary)
+    /// currently unreachable from the app's UI. Once assigned, the card
+    /// itself picks the right variant (승인대기/베리언트4/기본) from
+    /// `viewModel.myLocker`'s status and password.
+    @ViewBuilder
+    private var myLockerCard: some View {
+        if viewModel.myLocker == nil {
+            NavigationLink {
+                LockerApplicationMapView { locker in
+                    // 신청 완료: 서버가 배정한 실제 사물함(비밀번호 포함)을 "나의
+                    // 사물함"으로 승격.
+                    viewModel.myLocker = locker
                 }
-
-                Spacer(minLength: 0)
-
-                NavigationChevron()
+            } label: {
+                MyLockerCard(locker: nil)
             }
-            .foregroundStyle(Color.textPrimary)
-            .padding(Spacing.md)
-            .overlay {
-                RoundedRectangle(cornerRadius: Radius.scheduleCard)
-                    .strokeBorder(Color.gray300)
+            .buttonStyle(.plain)
+        } else {
+            MyLockerCard(locker: viewModel.myLocker) {
+                isPasswordAlertPresented = true
+            } onRegisterPassword: {
+                isPasswordAlertPresented = true
             }
         }
-        .buttonStyle(.plain)
     }
 
     private var allLockersSection: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             HStack {
-                Text("전체 사물함")
+                Text(.lockerAll)
                     .font(.noticeTitle).tracking(Tracking.noticeTitle)
                     .foregroundStyle(Color.textPrimary)
 
@@ -173,16 +162,21 @@ struct LockerView: View {
         }
     }
 
-    /// Shown below `allLockersSection` only while the student has no
-    /// locker — an always-visible, embedded preview of the physical map
-    /// with the same color legend, so a locker's status is visible without
-    /// a tap. Deliberately the bare `LockerMapScreenView`, not
-    /// `LockerApplicationMapView` — no apply flow here; tapping a cell does
-    /// nothing. Applying still works from tapping the grid above or from
-    /// the "사물함 신청" prompt.
+    /// Always shown below `allLockersSection` — an embedded preview of the
+    /// physical map with the same color legend, so a locker's status is
+    /// visible without a tap. While the student has an assigned locker
+    /// (any status), it warps straight to and highlights that locker's
+    /// cell instead of resting at the plain fit-to-screen view. Deliberately
+    /// the bare `LockerMapScreenView`, not `LockerApplicationMapView` — no
+    /// apply flow here; tapping a cell does nothing. Applying still works
+    /// from tapping the grid above or from the "사물함 신청" prompt.
     private var lockerApplicationPreview: some View {
-        LockerMapScreenView(initialZoomFit: .fitHeight(padding: Spacing.sm), showsLegend: true)
-            .frame(height: 520)
+        LockerMapScreenView(
+            initialZoomFit: .fitHeight(padding: Spacing.sm),
+            showsLegend: true,
+            focusLockerNumber: viewModel.myLocker?.lockerNumber
+        )
+        .frame(height: 520)
             .clipShape(RoundedRectangle(cornerRadius: Radius.scheduleCard))
             .overlay {
                 RoundedRectangle(cornerRadius: Radius.scheduleCard)

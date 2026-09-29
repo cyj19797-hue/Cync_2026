@@ -34,7 +34,7 @@ struct CalendarEventRow: View {
                 }
 
                 HStack(spacing: Spacing.xs) {
-                    Text(event.category.localizedKey)
+                    Text(event.category.label)
                         .font(.noticeDate).tracking(Tracking.noticeDate)
                         .foregroundStyle(Color.textPrimary)
 
@@ -43,7 +43,7 @@ struct CalendarEventRow: View {
                             .fill(Color.gray400)
                             .frame(width: 4, height: 4)
 
-                        Text("마감 D-\(deadlineDays)")
+                        Text(.noticeDeadline(deadlineDays))
                             .font(.noticeDeadline).tracking(Tracking.noticeDeadline)
                             .foregroundStyle(Color.accentRed)
                     }

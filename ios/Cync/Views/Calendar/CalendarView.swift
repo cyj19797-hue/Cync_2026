@@ -45,7 +45,7 @@ struct CalendarView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                AppTopBar(title: "캘린더") {
+                AppTopBar(title: .tabCalendar) {
                     Image(systemName: "calendar")
                 } trailing: {
                     Button {
@@ -54,7 +54,7 @@ struct CalendarView: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(Color.textPrimary)
                     }
-                    .accessibilityLabel("검색")
+                    .accessibilityLabel(Text(.commonSearch))
                 }
 
                 ScrollView {
@@ -90,13 +90,13 @@ struct CalendarView: View {
                 await viewModel.load()
             }
             .alert(
-                "오류",
+                Text(.commonError),
                 isPresented: Binding(
                     get: { viewModel.errorMessage != nil },
                     set: { isPresented in if !isPresented { viewModel.errorMessage = nil } }
                 )
             ) {
-                Button("확인", role: .cancel) {}
+                Button(.commonOk, role: .cancel) {}
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
@@ -185,11 +185,11 @@ struct CalendarView: View {
     private var scheduleCard: some View {
         VStack(alignment: .leading, spacing: Spacing.xxs) {
             HStack(alignment: .firstTextBaseline) {
-                Text("등록된 일정")
+                Text(.calendarScheduled)
                     .font(.noticeTitle).tracking(Tracking.noticeTitle)
                     .foregroundStyle(Color.textPrimary)
 
-                Text(viewModel.selectedDate.formatted(.dateTime.month(.wide).day().weekday(.wide).locale(Locale(identifier: "ko_KR"))))
+                Text(viewModel.selectedDate.formatted(.dateTime.month(.wide).day().weekday(.wide)))
                     .font(.calendarCaption).tracking(Tracking.calendarCaption)
                     .foregroundStyle(Color.textPrimary)
 
@@ -199,7 +199,7 @@ struct CalendarView: View {
                     CalendarEventListView(viewModel: viewModel)
                 } label: {
                     HStack(spacing: 2) {
-                        Text("전체 보기")
+                        Text(.calendarViewAll)
                             .font(.calendarCaption).tracking(Tracking.calendarCaption)
                             .foregroundStyle(Color.gray400)
                         NavigationChevron()

@@ -42,9 +42,9 @@ struct BookmarkButton: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(isBookmarked ? Color.accentRed : Color.textSecondary)
-        .accessibilityLabel(isBookmarked ? "북마크 해제" : "북마크")
-        .confirmationDialog("북마크를 취소하시겠습니까?", isPresented: $isConfirmingRemoval, titleVisibility: .visible) {
-            Button("북마크 취소", role: .destructive, action: action)
+        .accessibilityLabel(Text(isBookmarked ? LocalizedStringResource.bookmarkRemove : .bookmarkAdd))
+        .confirmationDialog(Text(.bookmarkConfirmRemove), isPresented: $isConfirmingRemoval, titleVisibility: .visible) {
+            Button(.bookmarkRemoveAction, role: .destructive, action: action)
         }
     }
 }

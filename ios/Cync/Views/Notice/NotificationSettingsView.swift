@@ -24,34 +24,34 @@ struct NotificationSettingsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScreenNavigationBar(titleKey: "알림 설정", onBack: { dismiss() })
+            ScreenNavigationBar(titleKey: .settingsNotifications, onBack: { dismiss() })
 
             List {
                 Section {
-                    NotificationSettingRow(titleKey: "마감 D-day", isOn: $viewModel.preferences.deadlineDDayAlerts)
-                    NotificationSettingRow(titleKey: "새 공지사항 등록") {
+                    NotificationSettingRow(titleKey: .notifDeadline, isOn: $viewModel.preferences.deadlineDDayAlerts)
+                    NotificationSettingRow(titleKey: .notifNewNotice) {
                         // TODO: 공지사항 알림 세부 설정 화면 연동 필요
                     }
                 } header: {
-                    Text("공지사항")
+                    Text(.tabNotices)
                         .font(.noticeTitle).tracking(Tracking.noticeTitle)
                         .foregroundStyle(Color.textPrimary)
                 }
 
                 Section {
-                    NotificationSettingRow(titleKey: "사물함 결과") {
+                    NotificationSettingRow(titleKey: .notifLockerResult) {
                         // TODO: 사물함 결과 알림 세부 설정 화면 연동 필요
                     }
                 } header: {
-                    Text("사물함")
+                    Text(.tabLockers)
                         .font(.noticeTitle).tracking(Tracking.noticeTitle)
                         .foregroundStyle(Color.textPrimary)
                 }
 
                 Section {
-                    NotificationSettingRow(titleKey: "댓글", isOn: $viewModel.preferences.commentAlerts)
+                    NotificationSettingRow(titleKey: .commentTitle, isOn: $viewModel.preferences.commentAlerts)
                 } header: {
-                    Text("커뮤니티")
+                    Text(.tabCommunity)
                         .font(.noticeTitle).tracking(Tracking.noticeTitle)
                         .foregroundStyle(Color.textPrimary)
                 }

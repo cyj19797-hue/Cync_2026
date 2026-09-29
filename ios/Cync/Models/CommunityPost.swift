@@ -40,7 +40,7 @@ struct CommunityPost: Identifiable, Codable, Hashable {
     /// back from the server even for anonymous posts, but must never be
     /// rendered when `anonymous == true` (`docs/API.md` §2).
     var displayAuthorName: String {
-        anonymous ? (authorNickname ?? "익명") : (authorNickname ?? authorName)
+        anonymous ? (authorNickname ?? String(localized: .commonAnonymous)) : (authorNickname ?? authorName)
     }
 }
 

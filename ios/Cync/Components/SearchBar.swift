@@ -33,7 +33,7 @@ struct SearchBar: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(Color.gray400)
 
-                TextField("검색", text: $text)
+                TextField(String(localized: .commonSearch), text: $text)
                     .font(.categoryChip).tracking(Tracking.categoryChip)
                     .foregroundStyle(Color.textPrimary)
                     .focused($isFocused)
@@ -59,7 +59,7 @@ struct SearchBar: View {
                     .fill(Color.surface)
             }
 
-            Button("취소") {
+            Button(.commonCancel) {
                 text = ""
                 isFocused = false
                 isActive = false

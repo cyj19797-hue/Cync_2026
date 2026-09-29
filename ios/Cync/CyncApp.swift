@@ -32,6 +32,7 @@ private struct RootView: View {
     var body: some View {
         ZStack {
             if sessionStore.isLoggedIn {
+            //if true{
                 RootTabView()
             } else if hasAgreedToTerms {
                 LoginView()

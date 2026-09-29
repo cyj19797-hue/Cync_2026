@@ -15,16 +15,12 @@ struct LockerApplicationAccountDialog: View {
 
     // TODO: Figma의 목업 문구("듀듀은행 123456-01-987654 듀듀듓 / 10,000원 입금이엇나 ...")는
     // 자리표시용 더미 텍스트라 실제 학과 계좌/입금 안내 문구로 교체 필요.
-    private let accountInfoText: LocalizedStringKey = """
-    듀듀은행 123456-01-987654 (예금주: 컴퓨터공학과 학생회)
-    사물함 이용료 10,000원을 입금해 주세요.
-    입금자명은 "학번+이름"으로 입력해 주세요.
-    확인 후 승인까지 최대 2~3일 소요됩니다.
-    """
+    // 문구 원본은 `Localizable.xcstrings`의 `locker.accountInfo` 키 (ko/en).
+    private let accountInfoText: LocalizedStringResource = .lockerAccountInfo
 
     var body: some View {
         DialogCard {
-            Text("계좌 안내")
+            Text(.lockerAccountTitle)
                 .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
                 .padding(.bottom, Spacing.xxs)
@@ -36,7 +32,7 @@ struct LockerApplicationAccountDialog: View {
 
             HStack {
                 Spacer(minLength: 0)
-                DialogActionButton(titleKey: "확인", action: onConfirm)
+                DialogActionButton(titleKey: .commonOk, action: onConfirm)
             }
         }
     }

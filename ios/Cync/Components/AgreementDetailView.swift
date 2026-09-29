@@ -27,7 +27,7 @@
 import SwiftUI
 
 struct AgreementDetailView: View {
-    let titleKey: LocalizedStringKey
+    let titleKey: LocalizedStringResource
     var titleFont: Font = .dialogTitle
     let bodyText: String
     let onConfirm: () -> Void
@@ -35,7 +35,7 @@ struct AgreementDetailView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(titleKey)
-                .font(titleFont)
+                .font(titleFont).tracking(Tracking.standard)
                 .foregroundStyle(Color.textPrimary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -55,10 +55,8 @@ struct AgreementDetailView: View {
             }
 
             PrimaryActionButton(
-                titleKey: "확인",
+                titleKey: .commonOk,
                 tint: .eventAccent,
-                font: .loginButtonLabel,
-                tracking: Tracking.loginButtonLabel,
                 borderColor: .eventAccentLight,
                 enabledCornerRadius: Radius.agreementCard,
                 action: onConfirm

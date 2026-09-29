@@ -15,7 +15,7 @@
 import SwiftUI
 
 struct ScreenNavigationBar<Trailing: View>: View {
-    let titleKey: LocalizedStringKey
+    let titleKey: LocalizedStringResource
     let onBack: () -> Void
     private let trailing: Trailing
 
@@ -25,7 +25,7 @@ struct ScreenNavigationBar<Trailing: View>: View {
     /// `ToolbarItem` — putting it there is exactly what triggers iOS 26's
     /// Liquid Glass button chrome, which this component exists to avoid.
     init(
-        titleKey: LocalizedStringKey,
+        titleKey: LocalizedStringResource,
         onBack: @escaping () -> Void,
         @ViewBuilder trailing: () -> Trailing = { EmptyView() }
     ) {
@@ -43,7 +43,7 @@ struct ScreenNavigationBar<Trailing: View>: View {
             .buttonStyle(.plain)
             .padding(Spacing.xs)
             .frame(width: 44, height: 44)
-            .accessibilityLabel("뒤로")
+            .accessibilityLabel(Text(.commonBack))
 
             Text(titleKey)
                 .font(.screenNavTitle).tracking(Tracking.screenNavTitle)

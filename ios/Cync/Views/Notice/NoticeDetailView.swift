@@ -162,7 +162,7 @@ struct NoticeDetailView: View {
         Button(action: onDismiss) {
             HStack(spacing: 2) {
                 NavigationChevron(direction: .left, color: .textSecondary)
-                Text("목록으로")
+                Text(.noticeBackToList)
                     .font(.noticeDetailBackLabel).tracking(Tracking.noticeDetailBackLabel)
                     .foregroundStyle(Color.textSecondary)
             }
@@ -173,7 +173,7 @@ struct NoticeDetailView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             HStack(alignment: .lastTextBaseline, spacing: Spacing.xs) {
-                NoticeCategoryBadge(category: notice.category)
+                FilterChip(category: notice.category, style: .badge)
                 Text(notice.dateText)
                     .font(.noticeDetailDate).tracking(Tracking.noticeDetailDate)
                     .foregroundStyle(Color.textPrimary)
@@ -206,7 +206,7 @@ struct NoticeDetailView: View {
             if let translatedText = notice.translatedText {
                 Text(translatedText)
             } else {
-                Text("아직 번역 결과가 없습니다")
+                Text(.noticeNoTranslation)
                     .foregroundStyle(Color.gray400)
             }
         } else {

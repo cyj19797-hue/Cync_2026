@@ -57,6 +57,11 @@ extension Color {
     /// badge shown inside each notice row.
     static let categoryBadgeBackground = Color(hex: 0xFFB5B5).opacity(0.5)
 
+    /// Same hex as `categoryBadgeBackground` (#FFB5B5) at full opacity — used
+    /// as the badge's outline now that it's a hairline-border tag (like the
+    /// unselected filter chip) instead of a filled pill.
+    static let categoryBadgeBorder = Color(hex: 0xFFB5B5)
+
     /// Raw one-off fill (#EAEAEA, not a named Figma style) — background of
     /// the pill-shaped 이전 글/목록으로/다음 글 control on the detail screen.
     static let controlPillBackground = Color(hex: 0xEAEAEA)
@@ -88,6 +93,16 @@ extension Color {
     /// only this one element uses it in the file so far; promote it to
     /// `AccentColor` later if it turns out to be the app-wide tint too.
     static let brandPrimary = Color(hex: 0xFF4F6D)
+
+    /// Figma fill `rgba(255,141,40,0.3)` (#FF8D28) — "내 사물함" component's
+    /// `속성 1=승인대기` variant status dot/pill (신청 후 관리자 승인 대기 중).
+    /// Not an exact match for any `UIColor` system color, unlike the
+    /// `systemGreen`/`systemOrange` used elsewhere on this card.
+    static let lockerPendingBadge = Color(hex: 0xFF8D28)
+
+    /// Figma fill `rgba(0,192,232,0.3)` (#00C0E8) — "내 사물함" component's
+    /// `속성 1=베리언트4` variant status dot/pill (승인 완료, 비밀번호 등록 필요).
+    static let lockerApprovedBadge = Color(hex: 0x00C0E8)
 
     // MARK: - "5 커뮤니티" (community)
 

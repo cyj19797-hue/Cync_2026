@@ -12,7 +12,7 @@ import SwiftUI
 
 struct SettingsRow: View {
     let systemImage: String
-    let titleKey: LocalizedStringKey
+    let titleKey: LocalizedStringResource
     var value: String?
     let action: () -> Void
 

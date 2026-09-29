@@ -14,7 +14,7 @@
 import SwiftUI
 
 struct ErrorDialog: View {
-    let titleKey: LocalizedStringKey
+    let titleKey: LocalizedStringResource
     let message: String
     let onConfirm: () -> Void
 
@@ -32,7 +32,7 @@ struct ErrorDialog: View {
 
             HStack {
                 Spacer(minLength: 0)
-                DialogActionButton(titleKey: "확인", action: onConfirm)
+                DialogActionButton(titleKey: .commonOk, action: onConfirm)
             }
         }
     }

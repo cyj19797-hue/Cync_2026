@@ -34,7 +34,7 @@ struct NoticeRow: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 HStack(spacing: Spacing.xs) {
                     HStack(spacing: Spacing.xs) {
-                        NoticeCategoryBadge(category: notice.category)
+                        FilterChip(category: notice.category, style: .badge)
                         Text(notice.title)
                             .font(.noticeTitle).tracking(Tracking.noticeTitle)
                             .foregroundStyle(Color.textPrimary)
@@ -56,7 +56,7 @@ struct NoticeRow: View {
                             .fill(Color.gray400)
                             .frame(width: 4, height: 4)
 
-                        Text("마감 D-\(deadlineDays)")
+                        Text(.noticeDeadline(deadlineDays))
                             .font(.noticeDeadline).tracking(Tracking.noticeDeadline)
                             .foregroundStyle(Color.accentRed)
                     }

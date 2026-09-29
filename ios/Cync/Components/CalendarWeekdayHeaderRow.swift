@@ -19,7 +19,7 @@ struct CalendarWeekdayHeaderRow: View {
         let calendar = Calendar.current
         let formatter = DateFormatter()
         formatter.calendar = calendar
-        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.locale = .autoupdatingCurrent
         let all = formatter.shortWeekdaySymbols ?? ["S", "M", "T", "W", "T", "F", "S"]
         let firstIndex = calendar.firstWeekday - 1
         return Array(all[firstIndex...] + all[..<firstIndex])

@@ -22,7 +22,7 @@ struct CyncNoticeDetailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScreenNavigationBar(titleKey: "공지사항", onBack: { dismiss() })
+            ScreenNavigationBar(titleKey: .tabNotices, onBack: { dismiss() })
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {

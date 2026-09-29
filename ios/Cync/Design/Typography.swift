@@ -17,6 +17,9 @@
 //  text-style role each token plays) even though the system font doesn't
 //  need it to scale.
 //
+//  Figma's 18pt tokens are intentionally rendered at 17pt (the iOS
+//  body/headline size) — their comments below still quote Figma's 18.
+//
 
 import SwiftUI
 
@@ -50,6 +53,10 @@ extension Font {
     /// this file used for the "전체"/"학사"/… filter chip label until it was
     /// split out below (`.categoryFilterChipLabel`) at a smaller size.
     static let categoryChip = Font.appDefault(.medium, size: 16, relativeTo: .body)
+
+    /// `PrimaryActionButton` label — iOS 기본 주요 버튼 크기(17pt SemiBold)를
+    /// 따른다. 앱의 모든 주요 버튼이 이 토큰을 공유한다.
+    static let primaryButtonLabel = Font.appDefault(.semibold, size: 17, relativeTo: .body)
 
     /// Category filter chip label ("전체", "학사", …) on "2 공지사항" /
     /// "3 캘린더" — Pretendard Regular 14. Deliberately smaller/lighter than
@@ -127,7 +134,7 @@ extension Font {
     // MARK: - "4 사물함" (locker)
 
     /// "나의 사물함" card title — Pretendard Bold 18.
-    static let myLockerTitle = Font.appDefault(.bold, size: 18, relativeTo: .title3)
+    static let myLockerTitle = Font.appDefault(.bold, size: 17, relativeTo: .title3)
 
     /// The large "XXX번" locker number on the summary card — Pretendard Bold 32.
     static let lockerNumberLarge = Font.appDefault(.bold, size: 28, relativeTo: .largeTitle)
@@ -150,7 +157,7 @@ extension Font {
     // MARK: - Popup dialogs ("4-1-1 사물함 신청 팝업", "4-1-2 사물함 신청 팝업2")
 
     /// Dialog title ("계좌 안내") — Pretendard Bold 20.
-    static let dialogTitle = Font.appDefault(.bold, size: 18, relativeTo: .title3)
+    static let dialogTitle = Font.appDefault(.bold, size: 17, relativeTo: .title3)
 
     /// Dialog body copy — Pretendard Medium 16.
     static let dialogBody = Font.appDefault(.medium, size: 16, relativeTo: .body)
@@ -158,7 +165,7 @@ extension Font {
     // MARK: - "5 커뮤니티" (community)
 
     /// Post title ("제목입니다") — Pretendard SemiBold 20.
-    static let communityPostTitle = Font.appDefault(.bold, size: 18, relativeTo: .title3)
+    static let communityPostTitle = Font.appDefault(.bold, size: 17, relativeTo: .title3)
 
     /// Post body preview (1-line clamp) — Pretendard Medium 16.
     static let communityPostBody = Font.appDefault(.medium, size: 16, relativeTo: .body)
@@ -175,7 +182,7 @@ extension Font {
     static let commentAuthor = Font.appDefault(.semibold, size: 14, relativeTo: .subheadline)
 
     /// "댓글" section title — Pretendard SemiBold 18.
-    static let commentsSectionTitle = Font.appDefault(.semibold, size: 18, relativeTo: .title3)
+    static let commentsSectionTitle = Font.appDefault(.semibold, size: 17, relativeTo: .title3)
 
     /// "답글 달기" reply button — Pretendard Medium 14.
     ///
@@ -214,13 +221,13 @@ extension Font {
 
     /// "[필수] 이용약관" / "[선택] 중요한 학과 소식 알림" item row label —
     /// Pretendard Medium 18.
-    static let termsItemLabel = Font.appDefault(.medium, size: 18, relativeTo: .title3)
+    static let termsItemLabel = Font.appDefault(.medium, size: 17, relativeTo: .title3)
 
     /// "전체 동의" label — Pretendard Medium 16.
     static let termsAgreeAllLabel = Font.appDefault(.medium, size: 16, relativeTo: .body)
 
     /// "👉 세종대학교 계정으로 시작하기" button label — Pretendard Bold 18.
-    static let termsButtonLabel = Font.appDefault(.bold, size: 18, relativeTo: .title3)
+    static let termsButtonLabel = Font.appDefault(.bold, size: 17, relativeTo: .title3)
 
     // MARK: - "1-5 로그인" (login)
 
@@ -228,7 +235,7 @@ extension Font {
     static let loginTitle = Font.appDefault(.bold, size: 32, relativeTo: .largeTitle)
 
     /// "학번" / "비밀번호" field label — Pretendard Bold 18.
-    static let loginFieldLabel = Font.appDefault(.bold, size: 18, relativeTo: .title3)
+    static let loginFieldLabel = Font.appDefault(.bold, size: 17, relativeTo: .title3)
 
     /// Typed value inside the 학번/비밀번호 input boxes — Pretendard Medium 16.
     /// Not specified in Figma (the mock shows both fields empty), chosen to

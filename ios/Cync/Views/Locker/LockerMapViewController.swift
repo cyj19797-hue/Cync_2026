@@ -72,6 +72,12 @@ final class LockerMapViewController: UIViewController {
     /// loads.
     var showsLegend = false
 
+    /// Set *before* the view loads. When set, the initial zoom warps past
+    /// the plain fit-to-screen view straight to this locker's zone and
+    /// highlights its cell (`.selected`) once statuses load — used by
+    /// `LockerView` to focus "내 사물함" once it's been assigned.
+    var focusLockerNumber: Int?
+
     private let scrollView = UIScrollView()
     private let contentView = UIView()
     private let loadingIndicator = UIActivityIndicatorView(style: .medium)
@@ -92,7 +98,7 @@ final class LockerMapViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "사물함 배치도"
+        title = String(localized: .lockerMapTitle)
         view.backgroundColor = .systemBackground
         setUpScrollView()
         setUpNavigationBar()
@@ -111,6 +117,9 @@ final class LockerMapViewController: UIViewController {
               scrollView.bounds.width > 0, scrollView.bounds.height > 0 else { return }
         hasAppliedInitialZoom = true
         applyFitToScreenZoom()
+        if let focusLockerNumber, let zoneId = zoneId(forLockerNumber: focusLockerNumber) {
+            warp(to: zoneId, animated: false)
+        }
     }
 
     private func setUpScrollView() {
@@ -152,8 +161,8 @@ final class LockerMapViewController: UIViewController {
             }
         }
         navigationItem.rightBarButtonItem = UIBarButtonItem(
-            title: "이동",
-            menu: UIMenu(title: "이동할 구역", children: warpActions)
+            title: String(localized: .lockerMove),
+            menu: UIMenu(title: String(localized: .lockerMoveZone), children: warpActions)
         )
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             image: UIImage(systemName: "arrow.clockwise"),
@@ -282,6 +291,14 @@ final class LockerMapViewController: UIViewController {
         scrollView.zoom(to: target, animated: animated)
     }
 
+    /// The zone containing `lockerNumber`, or `nil` if it isn't laid out
+    /// (unknown number, or the layout data failed to load).
+    private func zoneId(forLockerNumber lockerNumber: Int) -> String? {
+        zoneViews.first { _, zoneView in
+            zoneView.zone.cells.contains { $0.lockerNumber == lockerNumber }
+        }?.key
+    }
+
     @objc private func handlePullToRefresh() {
         fetchAndApplyLockerStatuses(isPullToRefresh: true)
     }
@@ -304,6 +321,11 @@ final class LockerMapViewController: UIViewController {
                 let statusByLockerNumber = try await LockerAPIService.fetchStatusByLockerNumber()
                 for zoneView in zoneViews.values {
                     zoneView.applyStatuses(statusByLockerNumber)
+                }
+                if let focusLockerNumber {
+                    for zoneView in zoneViews.values {
+                        zoneView.highlight(lockerNumber: focusLockerNumber)
+                    }
                 }
                 loadingIndicator.stopAnimating()
                 scrollView.refreshControl?.endRefreshing()
@@ -360,7 +382,7 @@ private final class LockerMapStatusErrorView: UIView {
         messageLabel.font = .systemFont(ofSize: 14)
 
         let retryButton = UIButton(type: .system)
-        retryButton.setTitle("다시 시도", for: .normal)
+        retryButton.setTitle(String(localized: .commonRetry), for: .normal)
         retryButton.addTarget(self, action: #selector(handleRetryTap), for: .touchUpInside)
 
         let stack = UIStackView(arrangedSubviews: [messageLabel, retryButton])
@@ -393,10 +415,14 @@ private final class LockerMapStatusErrorView: UIView {
 /// (`uiColor`/`legendLabel`) so this can never drift from the cells
 /// themselves.
 private final class LockerStatusLegendBar: UIView {
-    // `.pending`/`.occupied` (승인 대기중/사용중) and `.reserved` (학생회 사물함,
-    // which renders as `.broken`'s color with no legend entry of its own)
-    // are deliberately excluded — only 신청 가능/사용 불가 need explaining here.
-    private static let statuses: [LockerCellStatus] = [.empty, .broken]
+    // `.occupied` (사용중) and `.reserved` (학생회 사물함, which renders as
+    // `.broken`'s color with no legend entry of its own) are deliberately
+    // excluded. `.pending` (승인 대기중) IS included — once `LockerView`'s
+    // embedded map preview stays visible while the student's own
+    // application is pending (see its `lockerApplicationPreview` comment),
+    // this is the color their own cell shows on this exact legend-bearing
+    // map, so it needs explaining here too.
+    private static let statuses: [LockerCellStatus] = [.empty, .pending, .broken]
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -463,6 +489,8 @@ struct LockerMapScreenView: UIViewControllerRepresentable {
     var delegate: LockerMapViewControllerDelegate?
     var initialZoomFit: LockerMapViewController.InitialZoomFit = .fitCanvas
     var showsLegend: Bool = false
+    /// See `LockerMapViewController.focusLockerNumber`.
+    var focusLockerNumber: Int?
     /// Fired once with the created controller — lets a SwiftUI host (e.g.
     /// `LockerApplicationMapView`) drive `warp(to:)` from its own toolbar,
     /// since `navigationItem` set on a bare UIKit controller pushed via
@@ -474,6 +502,7 @@ struct LockerMapScreenView: UIViewControllerRepresentable {
         controller.delegate = delegate
         controller.initialZoomFit = initialZoomFit
         controller.showsLegend = showsLegend
+        controller.focusLockerNumber = focusLockerNumber
         onControllerReady?(controller)
         return controller
     }

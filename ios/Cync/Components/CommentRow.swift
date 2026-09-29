@@ -20,7 +20,7 @@ struct CommentRow: View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 AuthorLine(authorName: comment.displayAuthorName, createdAt: comment.createdAt)
-                Text(comment.deleted ? "삭제된 댓글입니다" : comment.content)
+                (comment.deleted ? Text(.commentDeleted) : Text(comment.content))
                     .font(.communityPostBody).tracking(Tracking.communityPostBody)
                     .foregroundStyle(comment.deleted ? Color.gray400 : Color.textPrimary)
             }
@@ -37,7 +37,7 @@ struct CommentRow: View {
 
                     if let onReply {
                         Button(action: onReply) {
-                            Text("답글 달기")
+                            Text(.commentReply)
                                 .font(.commentReplyButton).tracking(Tracking.commentReplyButton)
                                 .foregroundStyle(Color.gray400)
                         }

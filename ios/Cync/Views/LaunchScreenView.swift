@@ -79,7 +79,7 @@ struct LaunchScreenView: View {
 
                     Spacer(minLength: 0)
                 }
-                .padding(.leading, Spacing.md)
+                .padding(.leading, Spacing.cardInset)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .onAppear {

@@ -57,12 +57,3 @@ extension UserProfile {
     )
 }
 
-/// The app's in-app display language — distinct from the OS locale, since
-/// the design shows an explicit "언어 설정" (Language) row the user picks
-/// from directly, matching this app's Korean/English String Catalog setup.
-enum AppLanguage: String, CaseIterable, Identifiable, Codable {
-    case korean = "한국어"
-    case english = "English"
-
-    var id: String { rawValue }
-}

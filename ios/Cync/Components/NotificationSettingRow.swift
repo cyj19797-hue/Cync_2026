@@ -11,7 +11,7 @@
 import SwiftUI
 
 struct NotificationSettingRow: View {
-    let titleKey: LocalizedStringKey
+    let titleKey: LocalizedStringResource
     var isOn: Binding<Bool>?
     var onNavigate: (() -> Void)?
 

@@ -10,6 +10,10 @@
 //  `UserDefaults` so the field can be prefilled on next launch — this is
 //  local, on-device storage, not a server-side "remember me" session.
 //
+//  "자동 로그인" is the one that keeps a session: when checked, the issued
+//  JWT is saved to the Keychain so `SessionStore` can skip `LoginView` on
+//  next launch (see that file).
+//
 
 import Foundation
 
@@ -18,6 +22,7 @@ final class LoginViewModel: ObservableObject {
     @Published var studentId: String
     @Published var password: String = ""
     @Published var rememberStudentId: Bool
+    @Published var autoLogin: Bool
     @Published var isSubmitting = false
     @Published var errorMessage: String?
 
@@ -27,6 +32,7 @@ final class LoginViewModel: ObservableObject {
         let remembered = UserDefaults.standard.string(forKey: Self.rememberedStudentIdKey)
         studentId = remembered ?? ""
         rememberStudentId = remembered != nil
+        autoLogin = SessionStore.isAutoLoginEnabled
     }
 
     var canSubmit: Bool {
@@ -42,13 +48,13 @@ final class LoginViewModel: ObservableObject {
         defer { isSubmitting = false }
 
         do {
-            _ = try await CyncAPI.login(studentId: studentId, password: password)
+            _ = try await CyncAPI.login(studentId: studentId, password: password, persistToken: autoLogin)
         } catch {
             // Always this exact wording, regardless of the underlying
             // `CyncAPIError` case — a login screen shouldn't surface raw
             // HTTP/decoding failure detail to the user, and any failure here
             // reads the same to them either way: wrong id/password.
-            errorMessage = "학번 또는 비밀번호를 제대로 입력해주세요."
+            errorMessage = String(localized: .loginFailedMessage)
             return false
         }
 
@@ -57,6 +63,8 @@ final class LoginViewModel: ObservableObject {
         } else {
             UserDefaults.standard.removeObject(forKey: Self.rememberedStudentIdKey)
         }
+
+        SessionStore.isAutoLoginEnabled = autoLogin
 
         return true
     }

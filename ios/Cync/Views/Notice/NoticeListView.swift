@@ -58,7 +58,7 @@ struct NoticeListView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 // TODO: Assets에 커스텀 "CheckSquare" 아이콘 추가 필요 — 우선 SF Symbol로 대체
-                AppTopBar(title: "공지사항") {
+                AppTopBar(title: .tabNotices) {
                     Image(systemName: "checkmark.square")
                 } trailing: {
                     Button {
@@ -67,7 +67,7 @@ struct NoticeListView: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(Color.textPrimary)
                     }
-                    .accessibilityLabel("검색")
+                    .accessibilityLabel(Text(.commonSearch))
                 }
 
                 if isSearchPresented {
@@ -101,13 +101,13 @@ struct NoticeListView: View {
                 await viewModel.load()
             }
             .alert(
-                "오류",
+                Text(.commonError),
                 isPresented: Binding(
                     get: { viewModel.errorMessage != nil },
                     set: { isPresented in if !isPresented { viewModel.errorMessage = nil } }
                 )
             ) {
-                Button("확인", role: .cancel) {}
+                Button(.commonOk, role: .cancel) {}
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }

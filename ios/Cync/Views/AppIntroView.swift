@@ -25,40 +25,46 @@ import SwiftUI
 struct AppIntroView: View {
     let onConnect: () -> Void
 
-    var body: some View {
-        VStack(spacing: Spacing.xs) {
-            Spacer(minLength: 0)
+    /// 기하학적 중앙보다 살짝 위(광학적 중앙)에 두어야 눈에는 가운데로
+    /// 보이고, 위쪽 여백이 유독 넓어 보이지 않는다.
+    private let opticalCenterOffset: CGFloat = -40
 
+    var body: some View {
+        ZStack {
+            // 로고 + 소개 문구는 버튼 높이와 무관하게 화면 중앙 기준으로 배치.
             VStack(spacing: Spacing.xs) {
                 Image("CyncLogoLockup")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 70, height: 70)
-                    .padding(.vertical, Spacing.md)
+                    .frame(width: 100, height: 100)
+                    .padding(.vertical, Spacing.xl)
 
                 VStack(spacing: Spacing.xs) {
-                    Text("학과 생활을 하나로 연결하다,")
+                    Text(.introHeadline)
                         .font(.appIntroTitle).tracking(Tracking.appIntroTitle)
                         .foregroundStyle(Color.textPrimary)
                         .multilineTextAlignment(.center)
-
-                    Text("공지부터 사물함, 커뮤니티까지\n누구나 컴퓨터공학과의 정보를 한 곳에서.")
+                    Text(.introBody)
                         .font(.appIntroBody).tracking(Tracking.appIntroBody)
                         .foregroundStyle(Color.textPrimary)
                         .multilineTextAlignment(.center)
                 }
             }
+            .offset(y: opticalCenterOffset)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
 
-            PrimaryActionButton(
-                titleKey: "연결하기",
-                tint: .eventAccent,
-                font: .loginButtonLabel,
-                tracking: Tracking.loginButtonLabel,
-                borderColor: .eventAccentLight,
-                action: onConnect
-            )
+            // `TermsAgreementView`와 동일한 하단 버튼 배치/여백.
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
 
-            Spacer(minLength: 0)
+                PrimaryActionButton(
+                    titleKey: .introConnect,
+                    tint: .eventAccent,
+                    borderColor: .eventAccentLight,
+                    action: onConnect
+                )
+                .padding(Spacing.xs)
+            }
         }
         .padding(Spacing.md)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

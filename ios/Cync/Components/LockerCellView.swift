@@ -38,19 +38,19 @@ struct LockerCellView: View {
 
     private var displayNumber: String {
         if maskOccupiedNumbers, locker.status == .inUse, !isMine {
-            return "XXX번"
+            return String(localized: .lockerMaskedNumber)
         }
         let numberText = zeroPadded ? String(format: "%03d", locker.lockerNumber) : "\(locker.lockerNumber)"
-        return "\(numberText)번"
+        return String(localized: .lockerNumber(numberText))
     }
 
-    private var statusLabel: LocalizedStringKey {
-        if isMine { return "내 사물함" }
+    private var statusLabel: LocalizedStringResource {
+        if isMine { return .lockerMine }
         switch locker.status {
-        case .inUse: return "사용중"
-        case .available: return "사용 가능"
-        case .pending: return "승인 대기중"
-        case .broken: return "사용 불가"
+        case .inUse: return .lockerStatusInUse
+        case .available: return .lockerStatusAvailable
+        case .pending: return .lockerStatusPending
+        case .broken: return .lockerStatusBroken
         }
     }
 

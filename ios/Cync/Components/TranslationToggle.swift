@@ -15,16 +15,16 @@ struct TranslationToggle: View {
 
     var body: some View {
         HStack(spacing: Spacing.xs) {
-            tab(titleKey: "원문", isSelected: !isShowingTranslation) {
+            tab(titleKey: .noticeOriginal, isSelected: !isShowingTranslation) {
                 isShowingTranslation = false
             }
-            tab(titleKey: "AI 번역", isSelected: isShowingTranslation) {
+            tab(titleKey: .noticeAiTranslation, isSelected: isShowingTranslation) {
                 isShowingTranslation = true
             }
         }
     }
 
-    private func tab(titleKey: LocalizedStringKey, isSelected: Bool, action: @escaping () -> Void) -> some View {
+    private func tab(titleKey: LocalizedStringResource, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(titleKey)
                 .font(.toggleTabLabel).tracking(Tracking.toggleTabLabel)
