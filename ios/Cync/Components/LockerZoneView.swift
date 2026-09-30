@@ -9,6 +9,7 @@
 //  without a layout pass.
 //
 
+import SwiftUI
 import UIKit
 
 final class LockerZoneView: UIView {
@@ -55,8 +56,10 @@ final class LockerZoneView: UIView {
 
     private func setUp() {
         titleLabel.text = zone.zoneId
-        titleLabel.font = .boldSystemFont(ofSize: 13)
-        titleLabel.textColor = .label
+        // Larger than the 12pt cell numbers so room names stand out; the
+        // room the map is currently on is tinted (`setTitleHighlighted`).
+        titleLabel.font = .boldSystemFont(ofSize: 16)
+        titleLabel.textColor = UIColor(Color.textPrimary)
         titleLabel.textAlignment = .left
         addSubview(titleLabel)
 
@@ -100,6 +103,12 @@ final class LockerZoneView: UIView {
         }
     }
 
+    /// Tints the room name in the accent color while the map is focused on
+    /// this room (see `LockerMapViewController.focusedZoneId`).
+    func setTitleHighlighted(_ isHighlighted: Bool) {
+        titleLabel.textColor = UIColor(isHighlighted ? Color.eventAccent : Color.textPrimary)
+    }
+
     override func layoutSubviews() {
         super.layoutSubviews()
 
@@ -124,7 +133,7 @@ final class LockerCellLabel: UILabel {
         text = cell.lockerNumber.map(String.init) ?? "-"
         textAlignment = .center
         font = .systemFont(ofSize: 12, weight: .medium)
-        textColor = .label
+        textColor = cell.status.uiTextColor
         layer.cornerRadius = 6
         clipsToBounds = true
         backgroundColor = cell.status.uiColor
@@ -139,24 +148,44 @@ final class LockerCellLabel: UILabel {
     func updateStatus(_ status: LockerCellStatus) {
         cell.status = status
         backgroundColor = status.uiColor
+        textColor = status.uiTextColor
     }
 }
 
 /// Shared with `LockerStatusLegendBar` so the legend's swatches and labels
 /// never drift from what a cell actually renders.
 extension LockerCellStatus {
-    var uiColor: UIColor {
+    /// Tile fill — the SwiftUI `color` below, bridged for UIKit, so the
+    /// apply-screen map and the main-screen grid always match.
+    var uiColor: UIColor { UIColor(color) }
+
+    /// Number color on top of `uiColor`.
+    var uiTextColor: UIColor { UIColor(textColor) }
+
+    /// 사용중 · 고장 · 학생회 사물함 · 정보 없음 all render as one quiet
+    /// "사용 불가" tile — none can be applied for, and telling them apart
+    /// didn't help the student pick a locker.
+    var color: Color {
         switch self {
-        case .empty: return UIColor(hex: 0xFF383C)     // swapped with .broken — matches Color.accentRed
-        case .pending: return UIColor(hex: 0xFFC542)   // PENDING — 승인 대기중
-        case .occupied: return UIColor(hex: 0x98A2B3)  // matches Color.gray400 (IN_USE)
-        case .broken: return UIColor(hex: 0xF0F2F5)    // swapped with .empty — matches Color.surface
-        case .unknown: return UIColor(hex: 0xE5E7EB)   // no server match yet/at all
-        // 학생회 사물함, no number — not broken by the server (there's no
-        // server record for it at all), but shown identically to `.broken`
-        // rather than as its own legend color.
-        case .reserved: return LockerCellStatus.broken.uiColor
-        case .selected: return .systemGreen  // "내 사물함" highlight — matches MyLockerCard's `.active` pill
+        case .empty: return .lockerAvailable
+        case .pending: return .lockerPending
+        case .occupied, .broken, .unknown: return .lockerUnavailable
+        case .reserved: return .lockerRestricted
+        case .selected: return .lockerMine
+        }
+    }
+
+    /// The light-gray "사용 불가" swatch nearly matches a white background,
+    /// so legends outline it.
+    var needsLegendBorder: Bool {
+        color == .lockerUnavailable
+    }
+
+    var textColor: Color {
+        switch self {
+        case .empty, .pending: return .textPrimary
+        case .occupied, .broken, .unknown: return .lockerUnavailableText
+        case .reserved, .selected: return .white
         }
     }
 
@@ -165,10 +194,7 @@ extension LockerCellStatus {
         switch self {
         case .empty: return String(localized: .lockerStatusApplicable)
         case .pending: return String(localized: .lockerStatusPending)
-        case .occupied: return String(localized: .lockerStatusInUse)
-        case .broken: return String(localized: .lockerStatusBroken)
-        case .reserved: return String(localized: .lockerStatusReserved)
-        case .unknown: return String(localized: .lockerStatusUnknown)
+        case .occupied, .broken, .reserved, .unknown: return String(localized: .lockerStatusUnavailable)
         case .selected: return String(localized: .lockerMine)
         }
     }

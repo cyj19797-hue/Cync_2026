@@ -21,10 +21,10 @@ import SwiftUI
 
 private let dayGridColumns = Array(repeating: GridItem(.flexible(), spacing: Spacing.xs), count: 7)
 
-/// Which way the month grid should slide when `displayedMonth` changes —
-/// driven by both the header's arrow buttons and the drag gesture below,
-/// so both paths animate identically.
-private enum MonthSlideDirection {
+/// Which way month content should slide when `displayedMonth` changes —
+/// driven by the header's arrow buttons and the drag gestures, on both
+/// CalendarView and CalendarEventListView, so every path animates the same.
+enum MonthSlideDirection {
     case forward
     case backward
 
@@ -57,34 +57,38 @@ struct CalendarView: View {
                     .accessibilityLabel(Text(.commonSearch))
                 }
 
-                ScrollView {
-                    VStack(spacing: Spacing.xs) {
-                        if isSearchPresented {
-                            // UIKit UISearchBar — see Components/SearchBar.swift for why.
-                            SearchBar(text: $viewModel.searchText, isActive: $isSearchPresented)
-                                .padding(.horizontal, Spacing.xs)
-                                .transition(.move(edge: .top).combined(with: .opacity))
-                        } else {
-                            // `CategoryFilterRow` already carries its own
-                            // `Spacing.md` horizontal padding (matching
-                            // NoticeListView's), so it sits outside the
-                            // `.padding(.horizontal, Spacing.md)` below —
-                            // stacking both would double the row's left/right
-                            // margin against `calendarCard`/`scheduleCard`.
-                            CategoryFilterRow(selectedCategory: $viewModel.selectedCategory)
-                                .transition(.opacity)
-                        }
-
-                        VStack(spacing: Spacing.xs) {
-                            calendarCard
-                            scheduleCard
-                        }
-                        .padding(.horizontal, Spacing.md)
-                    }
-                    .animation(.default, value: isSearchPresented)
+                // Same placement as NoticeListView's filter/search row —
+                // pinned under the top bar (outside the ScrollView) with the
+                // same `Spacing.xs` top padding — so the chips don't jump when
+                // switching between the 공지사항 and 캘린더 tabs.
+                if isSearchPresented {
+                    // UIKit UISearchBar — see Components/SearchBar.swift for why.
+                    SearchBar(text: $viewModel.searchText, isActive: $isSearchPresented)
+                        .padding(.horizontal, Spacing.xs)
+                        .padding(.top, Spacing.xs)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                } else {
+                    CategoryFilterRow(selectedCategory: $viewModel.selectedCategory)
+                        .padding(.top, Spacing.xs)
+                        .transition(.opacity)
                 }
-                .background(Color.appBackground)
+
+                ScrollView {
+                    // Every visible gap is `Spacing.md`: filter → calendar
+                    // card is the row's own `Spacing.xs` bottom padding + this
+                    // stack's `Spacing.xs` top padding, card → card is the
+                    // stack spacing.
+                    VStack(spacing: Spacing.md) {
+                        calendarCard
+                        scheduleCard
+                    }
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.top, Spacing.xs)
+                    .padding(.bottom, Spacing.md)
+                }
             }
+            .background(Color.appBackground)
+            .animation(.default, value: isSearchPresented)
             .toolbar(.hidden, for: .navigationBar)
             .task {
                 await viewModel.load()
@@ -107,8 +111,10 @@ struct CalendarView: View {
         VStack(spacing: Spacing.xs) {
             CalendarMonthHeader(
                 month: viewModel.displayedMonth,
+                showsTodayButton: !viewModel.isShowingToday,
                 onPrevious: { changeMonth(.backward) },
-                onNext: { changeMonth(.forward) }
+                onNext: { changeMonth(.forward) },
+                onToday: goToToday
             )
 
             CalendarWeekdayHeaderRow()
@@ -118,13 +124,7 @@ struct CalendarView: View {
 
             dayGrid
         }
-        .padding(Spacing.md)
-        .background(Color.calendarSurface)
-        .overlay {
-            RoundedRectangle(cornerRadius: Radius.calendarCard)
-                .strokeBorder(Color.borderLight)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: Radius.calendarCard))
+        .modifier(CalendarCardSurface())
     }
 
     /// The 7×(5-6) day grid, wrapped for month-to-month swipe: `.id(...)`
@@ -135,13 +135,18 @@ struct CalendarView: View {
     /// `CalendarMonthHeader` reuse the exact same `changeMonth` path so
     /// swipe and tap animate identically.
     private var dayGrid: some View {
-        LazyVGrid(columns: dayGridColumns, spacing: Spacing.xs) {
+        // Row spacing `Spacing.md`: cells are only as tall as their content
+        // (number + dot row, see CalendarDayCell), so this sets the week rows'
+        // breathing room — 36pt cell + 16pt gap = 52pt per row.
+        LazyVGrid(columns: dayGridColumns, spacing: Spacing.md) {
             ForEach(viewModel.visibleDays) { day in
                 CalendarDayCell(
                     day: day,
                     isSelected: viewModel.isSelected(day.date),
                     isToday: viewModel.isToday(day.date),
-                    hasEvent: viewModel.hasEvent(on: day.date)
+                    holiday: viewModel.holiday(on: day.date),
+                    eventCategories: viewModel.eventCategories(on: day.date),
+                    eventCount: viewModel.eventCount(on: day.date)
                 ) {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         viewModel.selectDay(day)
@@ -182,16 +187,31 @@ struct CalendarView: View {
         }
     }
 
+    /// "오늘" pill — slides the grid toward today's month (no slide when
+    /// it's already showing) and selects today.
+    private func goToToday() {
+        slideDirection = Date() > viewModel.displayedMonth ? .forward : .backward
+        withAnimation(.easeInOut(duration: 0.28)) {
+            viewModel.goToToday()
+        }
+    }
+
     private var scheduleCard: some View {
         VStack(alignment: .leading, spacing: Spacing.xxs) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
                 Text(.calendarScheduled)
-                    .font(.noticeTitle).tracking(Tracking.noticeTitle)
+                    .font(.calendarSectionTitle).tracking(Tracking.calendarSectionTitle)
                     .foregroundStyle(Color.textPrimary)
 
-                Text(viewModel.selectedDate.formatted(.dateTime.month(.wide).day().weekday(.wide)))
-                    .font(.calendarCaption).tracking(Tracking.calendarCaption)
-                    .foregroundStyle(Color.textPrimary)
+                Text(viewModel.selectedDate.formatted(.calendarDay))
+                    .font(.calendarSectionSubtitle).tracking(Tracking.calendarSectionSubtitle)
+                    .foregroundStyle(Color.textSecondary)
+
+                if let holiday = viewModel.holiday(on: viewModel.selectedDate) {
+                    Text(holiday.name)
+                        .font(.calendarSectionSubtitle).tracking(Tracking.calendarSectionSubtitle)
+                        .foregroundStyle(Color.calendarSunday)
+                }
 
                 Spacer(minLength: 0)
 
@@ -199,33 +219,46 @@ struct CalendarView: View {
                     CalendarEventListView(viewModel: viewModel)
                 } label: {
                     HStack(spacing: 2) {
-                        Text(.calendarViewAll)
+                        Text(.calendarViewMonth(viewModel.displayedMonth.formatted(.dateTime.month(.wide))))
                             .font(.calendarCaption).tracking(Tracking.calendarCaption)
                             .foregroundStyle(Color.gray400)
                         NavigationChevron()
                     }
                 }
             }
-            .padding(.vertical, Spacing.xs)
+            .lineLimit(1)
+            .padding(.bottom, Spacing.xs)
 
             Divider()
-                .overlay(Color.cardBorder)
+                .overlay(Color.borderLight)
 
             if viewModel.eventsForSelectedDate.isEmpty {
-                EmptyScheduleView()
+                EmptyScheduleView(message: viewModel.emptyDayMessage)
             } else {
                 ForEach(viewModel.eventsForSelectedDate) { event in
-                    CalendarEventRow(event: event) {
+                    CalendarEventRow(event: event, showsCategory: viewModel.selectedCategory == .all) {
                         viewModel.toggleBookmark(for: event)
                     }
                 }
             }
         }
-        .padding(Spacing.xs)
-        .background {
-            RoundedRectangle(cornerRadius: Radius.scheduleCard)
-                .strokeBorder(Color.cardBorder)
-        }
+        .modifier(CalendarCardSurface())
+    }
+}
+
+/// Shared card style for the month grid card, the "등록된 일정" card and the
+/// full-screen month list — same `Spacing.md` inner padding, white fill,
+/// `borderLight` hairline and radius — so stacked cards line up and read as
+/// one system. Cards shouldn't add their own outer padding on top of this.
+struct CalendarCardSurface: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(Spacing.md)
+            .background(Color.appBackground, in: RoundedRectangle(cornerRadius: Radius.scheduleCard))
+            .overlay {
+                RoundedRectangle(cornerRadius: Radius.scheduleCard)
+                    .strokeBorder(Color.borderLight)
+            }
     }
 }
 

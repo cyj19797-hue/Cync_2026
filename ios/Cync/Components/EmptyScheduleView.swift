@@ -13,12 +13,18 @@
 import SwiftUI
 
 struct EmptyScheduleView: View {
+    /// `.calendarEmpty` for a single day, `.calendarEmptyMonth` for the
+    /// month-wide list.
+    var message: LocalizedStringResource = .calendarEmpty
+
     var body: some View {
-        Text(.calendarEmpty)
+        Text(message)
             .font(.emptyStateMessage).tracking(Tracking.emptyStateMessage)
             .foregroundStyle(Color.textSecondary)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Spacing.md)
+            // Vertical only — the card (`CalendarCardSurface`) already sets
+            // the horizontal inset, so the message lines up with its header.
+            .padding(.vertical, Spacing.md)
     }
 }
 

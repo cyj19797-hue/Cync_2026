@@ -37,7 +37,9 @@ struct LockerCellView: View {
     var isSelected: Bool = false
 
     private var displayNumber: String {
-        if maskOccupiedNumbers, locker.status == .inUse, !isMine {
+        // 고장 is displayed as 사용중 (see `statusLabel`), so it's masked the
+        // same way rather than standing out with a visible number.
+        if maskOccupiedNumbers, locker.status == .inUse || locker.status == .broken, !isMine {
             return String(localized: .lockerMaskedNumber)
         }
         let numberText = zeroPadded ? String(format: "%03d", locker.lockerNumber) : "\(locker.lockerNumber)"
@@ -47,20 +49,19 @@ struct LockerCellView: View {
     private var statusLabel: LocalizedStringResource {
         if isMine { return .lockerMine }
         switch locker.status {
-        case .inUse: return .lockerStatusInUse
+        // 고장 is folded into 사용중 — neither can be applied for.
+        case .inUse, .broken: return .lockerStatusInUse
         case .available: return .lockerStatusAvailable
         case .pending: return .lockerStatusPending
-        case .broken: return .lockerStatusBroken
         }
     }
 
     private var backgroundColor: Color {
         if isMine { return .brandPrimary }
         switch locker.status {
-        case .inUse: return .gray400
+        case .inUse, .broken: return .gray400
         case .available: return .gray50
         case .pending: return .gray200
-        case .broken: return .gray300
         }
     }
 

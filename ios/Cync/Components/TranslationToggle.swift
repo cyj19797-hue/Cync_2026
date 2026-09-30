@@ -5,7 +5,8 @@
 //  Figma node `271:1914` ("번역 탭") — "원문" / "AI 번역" pill toggle on the
 //  "2-1 공지글" detail card. Visually close to `FilterChip`, but it's
 //  a 2-state binary switch (not an open set of filter categories), so it
-//  gets its own small component rather than reusing the chip's API.
+//  gets its own small component rather than reusing the chip's API. No track
+//  behind the tabs — only the selected one gets a gray `surface` fill.
 //
 
 import SwiftUI

@@ -13,7 +13,8 @@
 //    - `속성 1=베리언트4` (`243:4765`) → `.awaitingPassword` — approved but
 //      `password` hasn't come back yet; register one before using the badge.
 //    - `속성 1=기본`     (`243:4521`) → `.active`            — normal in-use
-//      card with the usage period and "비밀번호 찾기" link.
+//      card with the "비밀번호 찾기" link. (Figma's "기간" line was dropped:
+//      the server no longer sends `dueDate`, so it only ever showed "-".)
 //
 //  The status pill's fill for `.active` (`rgba(52,199,89,0.3)`) is exactly
 //  Apple's system green (#34C759), so it's mapped to `Color(.systemGreen)`
@@ -40,6 +41,9 @@ import SwiftUI
 
 struct MyLockerCard: View {
     let locker: Locker?
+    /// Room of `locker` ("B201") — shown small and light gray after the big
+    /// "3번" so the card links to the map below. `nil` shows just "3번".
+    var zoneId: String?
     var onFindPassword: () -> Void = {}
     var onRegisterPassword: () -> Void = {}
 
@@ -57,10 +61,12 @@ struct MyLockerCard: View {
     }
 
     var body: some View {
-        VStack(spacing: Spacing.md) {
+        // Title → locker number a bit roomier than before (`md` + `xxs`).
+        VStack(spacing: Spacing.md + Spacing.xxs) {
+            // No extra inset of its own — the title shares the left edge
+            // with the locker number below.
             Text(.lockerMyLockerTitle)
                 .font(.myLockerTitle).tracking(Tracking.myLockerTitle)
-                .padding(Spacing.xxs)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             switch state {
@@ -71,7 +77,8 @@ struct MyLockerCard: View {
             }
         }
         .foregroundStyle(Color.textPrimary)
-        .padding(Spacing.md)
+        // Same roomier inner padding as LockerView's map card.
+        .padding(Spacing.sm)
         .overlay {
             RoundedRectangle(cornerRadius: Radius.scheduleCard)
                 .strokeBorder(Color.gray300)
@@ -87,10 +94,22 @@ struct MyLockerCard: View {
 
     @ViewBuilder
     private func lockerInfo(for locker: Locker) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            HStack {
-                Text(.lockerNumber("\(locker.lockerNumber)"))
-                    .font(.lockerNumberLarge).tracking(Tracking.lockerNumberLarge)
+        // Badge row → "비밀번호 찾기" gets `Spacing.sm` so the two right-edge
+        // items don't crowd each other.
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack(alignment: .center) {
+                // Big locker number first, then the room ("B201") small and
+                // light gray after it — the number is what reads first.
+                HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
+                    Text(.lockerNumber("\(locker.lockerNumber)"))
+                        .font(.lockerNumberLarge).tracking(Tracking.lockerNumberLarge)
+                    if let zoneId {
+                        Text(verbatim: zoneId)
+                            .font(.lockerRoomLabel).tracking(Tracking.lockerRoomLabel)
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                }
+                .accessibilityElement(children: .combine)
 
                 Spacer(minLength: 0)
 
@@ -99,9 +118,6 @@ struct MyLockerCard: View {
 
             switch state {
             case .active:
-                Text(.lockerPeriod(periodText(for: locker)))
-                    .font(.lockerPeriodText).tracking(Tracking.lockerPeriodText)
-
                 HStack {
                     Spacer(minLength: 0)
                     Button(action: onFindPassword) {
@@ -155,18 +171,6 @@ struct MyLockerCard: View {
         .padding(.vertical, Spacing.xs)
         .background {
             Capsule().fill(dotColor.opacity(0.3))
-        }
-    }
-
-    /// `assignedAt`/`dueDate` are `"yyyy-MM-dd"` strings straight from
-    /// `GET /api/lockers` (`docs/API.md` §4), not always present.
-    private func periodText(for locker: Locker) -> String {
-        let start = locker.assignedAt.flatMap(SpringDate.parseDay)?.formatted(.dateTime.year().month(.wide).day())
-        let end = locker.dueDate.flatMap(SpringDate.parseDay)?.formatted(.dateTime.year().month(.wide).day())
-        switch (start, end) {
-        case let (start?, end?): return "\(start) ~ \(end)"
-        case let (start?, nil): return start
-        default: return "-"
         }
     }
 }

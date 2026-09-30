@@ -45,7 +45,7 @@ private enum RootTab: CaseIterable, Hashable {
 
     var systemImage: String {
         switch self {
-        case .notices: return "checkmark.square"
+        case .notices: return "megaphone"
         case .calendar: return "calendar"
         case .lockers: return "shippingbox"
         case .community: return "face.smiling"

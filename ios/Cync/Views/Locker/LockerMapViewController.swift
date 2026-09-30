@@ -42,6 +42,12 @@ final class LockerMapViewController: UIViewController {
     /// Padding added around a zone's frame when warping to it, so the zone
     /// isn't cropped flush against the screen edges.
     private static let warpPadding: CGFloat = 24
+    /// On-screen margin (points, not canvas units) left of/above the rooms
+    /// after a `.fitWithNeighbors` warp — horizontal matches LockerView's
+    /// map-card inner edge (`Spacing.sm`); vertical is tighter, just below
+    /// the card's room button.
+    private static let fitMargin: CGFloat = 24
+    private static let fitMarginTop: CGFloat = 4
 
     /// Every zone, in floor-plan/warp-menu order — exposed so a SwiftUI
     /// host (e.g. `LockerApplicationMapView`'s own "이동" toolbar) can list
@@ -71,6 +77,28 @@ final class LockerMapViewController: UIViewController {
     /// the bottom of the screen, below the canvas. Set *before* the view
     /// loads.
     var showsLegend = false
+
+    /// How `warp(to:)` frames a zone.
+    enum WarpStyle {
+        /// Zoom so the zone alone fills the view (centered) — the apply
+        /// screen's "이동" menu.
+        case zoomToZone
+        /// Zoom so the zone *and* the other-row zones starting beneath/above
+        /// it are fully visible side to side (B201 brings B208(2) along),
+        /// pinned to the top-left — no blank band above, nothing cut off on
+        /// the right. Used by LockerView's embedded map.
+        case fitWithNeighbors
+    }
+
+    /// Set *before* the view loads.
+    var warpStyle: WarpStyle = .zoomToZone
+
+    /// The room the map is currently "on" — the one just warped to, or,
+    /// after the student scrolls/zooms by hand, the most visible one
+    /// (ties go to the top-left). Its title is tinted, and every change is
+    /// reported through `onFocusedZoneChange` (e.g. LockerView's "B201 ⌄").
+    private(set) var focusedZoneId: String?
+    var onFocusedZoneChange: ((String) -> Void)?
 
     /// Set *before* the view loads. When set, the initial zoom warps past
     /// the plain fit-to-screen view straight to this locker's zone and
@@ -119,6 +147,8 @@ final class LockerMapViewController: UIViewController {
         applyFitToScreenZoom()
         if let focusLockerNumber, let zoneId = zoneId(forLockerNumber: focusLockerNumber) {
             warp(to: zoneId, animated: false)
+        } else {
+            updateFocusedZoneFromViewport()
         }
     }
 
@@ -287,8 +317,96 @@ final class LockerMapViewController: UIViewController {
     /// No-op if `zoneId` isn't a known zone (e.g. data failed to load).
     func warp(to zoneId: String, animated: Bool = true) {
         guard let frame = zoneFrames[zoneId] else { return }
-        let target = frame.insetBy(dx: -Self.warpPadding, dy: -Self.warpPadding)
-        scrollView.zoom(to: target, animated: animated)
+        switch warpStyle {
+        case .zoomToZone:
+            let target = frame.insetBy(dx: -Self.warpPadding, dy: -Self.warpPadding)
+            scrollView.zoom(to: target, animated: animated)
+        case .fitWithNeighbors:
+            warpFittingNeighbors(of: frame, animated: animated)
+        }
+        setFocusedZone(zoneId)
+    }
+
+    private func setFocusedZone(_ zoneId: String) {
+        guard zoneId != focusedZoneId else { return }
+        if let previous = focusedZoneId { zoneViews[previous]?.setTitleHighlighted(false) }
+        zoneViews[zoneId]?.setTitleHighlighted(true)
+        focusedZoneId = zoneId
+        onFocusedZoneChange?(zoneId)
+    }
+
+    /// After a manual scroll/zoom: the most visible room becomes focused.
+    fileprivate func updateFocusedZoneFromViewport() {
+        let scale = scrollView.zoomScale
+        guard scale > 0 else { return }
+        let visible = CGRect(
+            x: scrollView.contentOffset.x / scale,
+            y: scrollView.contentOffset.y / scale,
+            width: scrollView.bounds.width / scale,
+            height: scrollView.bounds.height / scale
+        )
+        let best = zoneFrames
+            .map { zoneId, frame -> (String, CGFloat, CGRect) in
+                let overlap = frame.intersection(visible)
+                let fraction = overlap.isNull ? 0 : (overlap.width * overlap.height) / (frame.width * frame.height)
+                return (zoneId, fraction, frame)
+            }
+            .filter { $0.1 > 0 }
+            .max { lhs, rhs in
+                if abs(lhs.1 - rhs.1) > 0.01 { return lhs.1 < rhs.1 }
+                // Equal visibility: prefer the top-left room.
+                if lhs.2.minY != rhs.2.minY { return lhs.2.minY > rhs.2.minY }
+                return lhs.2.minX > rhs.2.minX
+            }
+        if let best { setFocusedZone(best.0) }
+    }
+
+    /// `.fitWithNeighbors`: union the zone with the other-row zones that
+    /// sit mostly (≥ half their width) within its horizontal span — its
+    /// "neighbors" above/below — scale that to the view (width *and*
+    /// height), and pin it to the top-left with a fixed on-screen margin
+    /// (`fitMargin`) so the room's left edge lines up with the host
+    /// screen's content edge (LockerView: `Spacing.md` inside the card).
+    private func warpFittingNeighbors(of frame: CGRect, animated: Bool) {
+        let neighbors = zoneFrames.values.filter { other in
+            guard other.minY != frame.minY else { return false }
+            let overlap = min(other.maxX, frame.maxX) - max(other.minX, frame.minX)
+            return overlap >= other.width / 2
+        }
+        let union = neighbors.reduce(frame) { $0.union($1) }
+        let margin = Self.fitMargin
+
+        // Side insets equal to the margin let the pinned offset go that far
+        // left of the canvas edge (otherwise it clamps to 0 and the first
+        // room sits closer to the edge than the host's content line).
+        scrollView.contentInset.left = margin
+        scrollView.contentInset.right = margin
+
+        let bounds = scrollView.bounds.size
+        let insets = scrollView.contentInset
+        let scale = min(
+            (bounds.width - margin * 2) / union.width,
+            (bounds.height - Self.fitMarginTop * 2) / union.height,
+            scrollView.maximumZoomScale
+        )
+        // Wide zones (B202, B204) need to zoom out past the fit-height
+        // minimum to fit side to side.
+        scrollView.minimumZoomScale = min(scrollView.minimumZoomScale, scale)
+
+        let apply = {
+            self.scrollView.zoomScale = scale
+            let contentSize = self.scrollView.contentSize
+            let maxX = max(contentSize.width - bounds.width + insets.right, -insets.left)
+            let maxY = max(contentSize.height - bounds.height + insets.bottom, -insets.top)
+            let x = min(max(union.minX * scale - margin, -insets.left), maxX)
+            let y = min(max(union.minY * scale - Self.fitMarginTop, -insets.top), maxY)
+            self.scrollView.contentOffset = CGPoint(x: x, y: y)
+        }
+        if animated {
+            UIView.animate(withDuration: 0.3, animations: apply)
+        } else {
+            apply()
+        }
     }
 
     /// The zone containing `lockerNumber`, or `nil` if it isn't laid out
@@ -360,6 +478,18 @@ extension LockerMapViewController: UIScrollViewDelegate {
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         contentView
     }
+
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        if !decelerate { updateFocusedZoneFromViewport() }
+    }
+
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        updateFocusedZoneFromViewport()
+    }
+
+    func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
+        updateFocusedZoneFromViewport()
+    }
 }
 
 /// Full-screen "fetch failed" message + retry button, shown over the
@@ -415,14 +545,11 @@ private final class LockerMapStatusErrorView: UIView {
 /// (`uiColor`/`legendLabel`) so this can never drift from the cells
 /// themselves.
 private final class LockerStatusLegendBar: UIView {
-    // `.occupied` (사용중) and `.reserved` (학생회 사물함, which renders as
-    // `.broken`'s color with no legend entry of its own) are deliberately
-    // excluded. `.pending` (승인 대기중) IS included — once `LockerView`'s
-    // embedded map preview stays visible while the student's own
-    // application is pending (see its `lockerApplicationPreview` comment),
-    // this is the color their own cell shows on this exact legend-bearing
-    // map, so it needs explaining here too.
-    private static let statuses: [LockerCellStatus] = [.empty, .pending, .broken]
+    // Same four entries as the main screen's SwiftUI legend
+    // (`LockerStatusLegend`): `.occupied` stands for every unusable state
+    // (사용중 · 고장 · 학생회 사물함 · 정보 없음 share one "사용 불가" tile —
+    // see `LockerCellStatus.color`), and `.selected` is "내 사물함".
+    private static let statuses: [LockerCellStatus] = [.empty, .pending, .occupied, .selected]
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -460,7 +587,12 @@ private final class LockerStatusLegendBar: UIView {
     private static func makeItem(for status: LockerCellStatus) -> UIView {
         let swatch = UIView()
         swatch.backgroundColor = status.uiColor
-        swatch.layer.cornerRadius = 5
+        // Rounded square, same shape as a grid cell (not a dot).
+        swatch.layer.cornerRadius = 3
+        if status.needsLegendBorder {
+            swatch.layer.borderWidth = 1
+            swatch.layer.borderColor = UIColor(Color.borderLight).cgColor
+        }
         swatch.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             swatch.widthAnchor.constraint(equalToConstant: 10),
@@ -491,6 +623,11 @@ struct LockerMapScreenView: UIViewControllerRepresentable {
     var showsLegend: Bool = false
     /// See `LockerMapViewController.focusLockerNumber`.
     var focusLockerNumber: Int?
+    /// See `LockerMapViewController.warpStyle`.
+    var warpStyle: LockerMapViewController.WarpStyle = .zoomToZone
+    /// See `LockerMapViewController.onFocusedZoneChange`. Delivered on the
+    /// next main-queue turn so a SwiftUI host can update state from it.
+    var onFocusedZoneChange: ((String) -> Void)?
     /// Fired once with the created controller — lets a SwiftUI host (e.g.
     /// `LockerApplicationMapView`) drive `warp(to:)` from its own toolbar,
     /// since `navigationItem` set on a bare UIKit controller pushed via
@@ -503,6 +640,12 @@ struct LockerMapScreenView: UIViewControllerRepresentable {
         controller.initialZoomFit = initialZoomFit
         controller.showsLegend = showsLegend
         controller.focusLockerNumber = focusLockerNumber
+        controller.warpStyle = warpStyle
+        if let onFocusedZoneChange {
+            controller.onFocusedZoneChange = { zoneId in
+                DispatchQueue.main.async { onFocusedZoneChange(zoneId) }
+            }
+        }
         onControllerReady?(controller)
         return controller
     }

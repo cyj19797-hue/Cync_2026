@@ -2,8 +2,11 @@
 //  NoticeRow.swift
 //  test
 //
-//  Figma node `44:269` ("공지사항 글") — one notice list entry: category badge
-//  + title + bookmark on the first line, date (+ optional "마감 D-n") below.
+//  Figma node `44:269` ("공지사항 글") — one notice list entry: title (up to
+//  two lines) + bookmark on top, then "카테고리 · 날짜 · 마감 D-n" below.
+//  Figma puts the category badge in front of the title, but that cut most
+//  titles off after a few characters, so the category moved to the date
+//  line as plain text (and is hidden under a specific category filter).
 //
 //  The hairline divider under each entry (`I44:269;184:1676`, image asset
 //  "Frame 121") is not redrawn as a custom asset — `List` already supplies a
@@ -22,6 +25,10 @@ import SwiftUI
 
 struct NoticeRow: View {
     let notice: Notice
+    /// Shows the category in the date line — the list passes `false` once a
+    /// specific category filter is selected, where every row's category
+    /// would be the same.
+    var showsCategory = true
     let onToggleBookmark: () -> Void
     /// Opens the "2-1 공지글" detail card. `nil` keeps the row static (used
     /// by the standalone preview below).
@@ -32,29 +39,32 @@ struct NoticeRow: View {
             onSelect?()
         } label: {
             VStack(alignment: .leading, spacing: Spacing.xs) {
-                HStack(spacing: Spacing.xs) {
-                    HStack(spacing: Spacing.xs) {
-                        FilterChip(category: notice.category, style: .badge)
-                        Text(notice.title)
-                            .font(.noticeTitle).tracking(Tracking.noticeTitle)
-                            .foregroundStyle(Color.textPrimary)
-                            .lineLimit(1)
-                    }
-
-                    Spacer(minLength: 0)
+                HStack(alignment: .top, spacing: Spacing.xs) {
+                    Text(notice.title)
+                        .font(.noticeTitle).tracking(Tracking.noticeTitle)
+                        .foregroundStyle(Color.textPrimary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
                     BookmarkButton(isBookmarked: notice.isBookmarked, action: onToggleBookmark)
                 }
 
                 HStack(spacing: Spacing.xs) {
-                    Text(notice.dateText)
+                    if showsCategory {
+                        Text(notice.category.label)
+                            .font(.noticeDate).tracking(Tracking.noticeDate)
+                            .foregroundStyle(Color.textSecondary)
+
+                        separatorDot
+                    }
+
+                    Text(notice.listDateText)
                         .font(.noticeDate).tracking(Tracking.noticeDate)
                         .foregroundStyle(Color.textSecondary)
 
                     if let deadlineDays = notice.deadlineDays {
-                        Circle()
-                            .fill(Color.gray400)
-                            .frame(width: 4, height: 4)
+                        separatorDot
 
                         Text(.noticeDeadline(deadlineDays))
                             .font(.noticeDeadline).tracking(Tracking.noticeDeadline)
@@ -66,6 +76,12 @@ struct NoticeRow: View {
         }
         .buttonStyle(.plain)
         .padding(.vertical, Spacing.xxs)
+    }
+
+    private var separatorDot: some View {
+        Circle()
+            .fill(Color.gray400)
+            .frame(width: 4, height: 4)
     }
 }
 

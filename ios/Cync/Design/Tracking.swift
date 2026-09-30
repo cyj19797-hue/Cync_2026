@@ -35,6 +35,7 @@ enum Tracking {
 
     // MARK: - Shared navigation bar
     static let screenNavTitle: CGFloat = standard
+    static let screenNavTitleCentered: CGFloat = standard
 
     // MARK: - "2-1 공지글" (notice detail)
     static let noticeDetailBackLabel: CGFloat = standard
@@ -49,6 +50,8 @@ enum Tracking {
     static let calendarWeekdayLabel: CGFloat = standard
     static let calendarDayNumber: CGFloat = standard
     static let calendarCaption: CGFloat = standard
+    static let calendarSectionTitle: CGFloat = standard
+    static let calendarSectionSubtitle: CGFloat = standard
     static let emptyStateMessage: CGFloat = standard
 
     // MARK: - "4 사물함" (locker)
@@ -58,6 +61,9 @@ enum Tracking {
     static let lockerPeriodText: CGFloat = standard
     static let lockerLocationText: CGFloat = standard
     static let lockerCellNumber: CGFloat = standard
+    static let lockerRoomLabel: CGFloat = standard
+    static let lockerSectionTitle: CGFloat = standard
+    static let lockerZoneButton: CGFloat = standard
     static let lockerCellStatus: CGFloat = standard
 
     // MARK: - Popup dialogs ("4-1-1 사물함 신청 팝업", "4-1-2 사물함 신청 팝업2")

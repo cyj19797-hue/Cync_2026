@@ -123,13 +123,32 @@ extension Font {
     /// component (a calendar grid cell, not a notice row).
     static let calendarDayNumber = Font.appDefault(.regular, size: 14, relativeTo: .subheadline)
 
-    /// Small 12px captions on the schedule card ("8월 10일 화요일", "전체 보기")
-    /// — Pretendard Regular 12.
+    /// Small 12px captions — the "오늘" pill, the "9월 전체 일정" link and the
+    /// month list's holiday names — Pretendard Regular 12.
     static let calendarCaption = Font.appDefault(.regular, size: 12, relativeTo: .caption2)
 
-    /// "등록된 일정이 없습니다." empty-state message — Pretendard Medium 16.
-    /// (Figma: `361:2591` in "3-2 일정 전체보기(일정 없음)".)
-    static let emptyStateMessage = Font.appDefault(.medium, size: 16, relativeTo: .body)
+    /// "등록된 일정" card title and the month list's per-day headers — Bold 17, one step above the 16 Bold event
+    /// titles (`.noticeTitle`) listed under it so the header reads as a
+    /// section title rather than another row.
+    static let calendarSectionTitle = Font.appDefault(.bold, size: 17, relativeTo: .headline)
+
+    /// Selected date ("9월 25일 (금)") and holiday name next to
+    /// `calendarSectionTitle` — Regular 14.
+    static let calendarSectionSubtitle = Font.appDefault(.regular, size: 14, relativeTo: .subheadline)
+
+    /// "이 날은 일정이 없어요." empty-state message — Regular 14 (Figma
+    /// `361:2591` had Medium 16; reduced so it reads as a secondary note
+    /// under the 17 Bold section header rather than competing with it).
+    static let emptyStateMessage = Font.appDefault(.regular, size: 14, relativeTo: .subheadline)
+
+    // MARK: - Shared components
+
+    /// Centered title of `ScreenNavigationBar`'s `.centered` style (e.g.
+    /// "월별 일정") — Semibold 17, matching the iOS navigation bar title.
+    static let screenNavTitleCentered = Font.appDefault(.semibold, size: 17, relativeTo: .headline)
+
+    /// `NavigationChevron` SF Symbol ("<" / ">") — Semibold 14.
+    static let navigationChevron = Font.appDefault(.semibold, size: 14, relativeTo: .subheadline)
 
     // MARK: - "4 사물함" (locker)
 
@@ -147,6 +166,16 @@ extension Font {
 
     /// "센B202 앞" location picker label — Pretendard Medium 12.
     static let lockerLocationText = Font.appDefault(.medium, size: 12, relativeTo: .caption2)
+
+    /// Room ("B201") after MyLockerCard's big locker number — Medium 14 in
+    /// a light gray, so the number itself stays the focus.
+    static let lockerRoomLabel = Font.appDefault(.medium, size: 14, relativeTo: .subheadline)
+
+    /// "전체 사물함" section title — Bold 20.
+    static let lockerSectionTitle = Font.appDefault(.bold, size: 20, relativeTo: .title3)
+
+    /// Room button inside the map card ("B201 ⌄") — Medium 13.
+    static let lockerZoneButton = Font.appDefault(.medium, size: 13, relativeTo: .footnote)
 
     /// Grid cell locker number ("7번") — Pretendard Bold 16.
     static let lockerCellNumber = Font.appDefault(.bold, size: 16, relativeTo: .subheadline)

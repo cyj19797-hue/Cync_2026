@@ -43,6 +43,16 @@ enum NoticeCategory: String, CaseIterable, Identifiable, Codable {
         case .exchange: return .noticeCategoryExchange
         }
     }
+
+    /// Calendar event dot / row accent bar color for this category.
+    var accentColor: Color {
+        switch self {
+        case .all, .academic: return .categoryAcademic
+        case .scholarship: return .categoryScholarship
+        case .studentCouncil: return .categoryStudentCouncil
+        case .exchange: return .categoryExchange
+        }
+    }
 }
 
 /// A single 공지사항 (notice/announcement) list entry.
@@ -61,10 +71,39 @@ struct Notice: Identifiable, Codable {
     var isBookmarked: Bool
     var originalText: String
     var translatedText: String?
+    /// Department-website page for this notice (`SchoolNotice.sourceUrl`).
+    /// `nil` for boards written in-app (student council), which have no
+    /// external original.
+    var sourceURL: URL? = nil
 
+    /// Absolute date in the current locale: "2026.09.01." in Korean,
+    /// "Sep 1, 2026" in English.
     var dateText: String {
-        date.formatted(.dateTime.year().month(.twoDigits).day(.twoDigits))
-            .replacingOccurrences(of: " ", with: "")
+        if Locale.current.language.languageCode == .korean {
+            return date.formatted(.dateTime.year().month(.twoDigits).day(.twoDigits))
+                .replacingOccurrences(of: " ", with: "")
+        }
+        return date.formatted(.dateTime.year().month(.abbreviated).day())
+    }
+
+    /// List-row date: "오늘" / "어제" / "3일 전" ("Today" / "Yesterday" /
+    /// "3 days ago") within the last week, `dateText` beyond that. Counted
+    /// in calendar days since the school board only gives a posting day,
+    /// not a time.
+    var listDateText: String {
+        let calendar = Calendar.current
+        let days = calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: date),
+            to: calendar.startOfDay(for: Date())
+        ).day ?? .max
+
+        guard (0..<7).contains(days) else { return dateText }
+
+        let formatter = RelativeDateTimeFormatter()
+        formatter.dateTimeStyle = .named
+        formatter.formattingContext = .beginningOfSentence
+        return formatter.localizedString(from: DateComponents(day: -days))
     }
 }
 
@@ -138,8 +177,9 @@ extension Notice {
     /// or blank) rather than one of `NoticeCategory`'s fixed cases, so
     /// anything that isn't an exact match falls back to `.academic` — these
     /// are all department-office notices at heart. When the crawler hasn't
-    /// picked up a body (`content` nil/empty), `sourceUrl` is shown instead,
-    /// per `docs/API.md` §7's recommendation.
+    /// picked up a body (`content` nil/empty, e.g. image-only posts),
+    /// `originalText` stays empty and `NoticeDetailView` shows a "check the
+    /// original" message above its original-post link instead.
     init(schoolNotice: SchoolNotice) {
         self.init(
             id: schoolNotice.id + Self.schoolNoticeIDOffset,
@@ -148,8 +188,9 @@ extension Notice {
             date: SpringDate.parseDottedDay(schoolNotice.postedDate) ?? Date(),
             deadlineDays: nil,
             isBookmarked: false,
-            originalText: (schoolNotice.content?.isEmpty == false ? schoolNotice.content : nil) ?? schoolNotice.sourceUrl,
-            translatedText: nil
+            originalText: schoolNotice.content ?? "",
+            translatedText: nil,
+            sourceURL: URL(string: schoolNotice.sourceUrl)
         )
     }
 }
@@ -218,7 +259,8 @@ extension Notice {
                 awarded to the top performers. We look forward to your participation!
 
                 Contact: Student Council (02-000-0000)
-                """
+                """,
+                sourceURL: URL(string: "https://ce.sejong.ac.kr")
             ),
             Notice(
                 id: 4,

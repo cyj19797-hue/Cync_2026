@@ -54,7 +54,7 @@ struct CommunityPostRow: View {
     private func reaction(systemImage: String, count: Int) -> some View {
         HStack(spacing: 2) {
             Image(systemName: systemImage)
-            Text("\(count)")
+            Text(count, format: .number)
         }
         .font(.communityReactionCount).tracking(Tracking.communityReactionCount)
         .foregroundStyle(Color.gray700)

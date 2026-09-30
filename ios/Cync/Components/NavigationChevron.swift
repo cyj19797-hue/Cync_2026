@@ -32,7 +32,7 @@ struct NavigationChevron: View {
 
     var body: some View {
         Image(systemName: direction.systemImage)
-            .font(.system(size: 14, weight: .semibold))
+            .font(.navigationChevron)
             .foregroundStyle(color)
     }
 }

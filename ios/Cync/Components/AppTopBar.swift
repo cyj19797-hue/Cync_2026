@@ -87,7 +87,7 @@ extension AppTopBar where TitleContent == Text {
 #Preview("leading + trailing") {
     VStack(spacing: Spacing.md) {
         AppTopBar(title: "공지사항") {
-            Image(systemName: "checkmark.square")
+            Image(systemName: "megaphone")
         } trailing: {
             Image(systemName: "magnifyingglass")
         }

@@ -42,7 +42,7 @@ struct CommunityPostDetailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScreenNavigationBar(titleKey: "", onBack: { dismiss() })
+            ScreenNavigationBar(titleKey: nil, onBack: { dismiss() })
 
             ZStack {
                 ScrollView {
@@ -181,7 +181,7 @@ struct CommunityPostDetailView: View {
     private func reactionLabel(systemImage: String, count: Int) -> some View {
         HStack(spacing: 2) {
             Image(systemName: systemImage)
-            Text("\(count)")
+            Text(count, format: .number)
         }
         .font(.communityReactionCount).tracking(Tracking.communityReactionCount)
     }

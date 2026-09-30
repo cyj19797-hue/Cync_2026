@@ -11,10 +11,14 @@
 //  Also covers the small category tag in front of each notice title (Figma
 //  node `I44:269;184:1577`, formerly its own `NoticeCategoryBadge`
 //  component) via `Style.badge` — same capsule shape and category label as
-//  the filter chip, just a white fill with a pink hairline border (no fill
-//  color, matching `.unselected`'s outlined look) and no tap action, so it
+//  the filter chip, just a filled accent-blue background
+//  (`categoryBadgeBackground`, no border) and no tap action, so it
 //  was folded into this component instead of duplicating the capsule layout
 //  in a second file.
+//
+//  `.selected` is a brand-blue (`eventAccent`) fill with a white label
+//  instead of Figma's light-gray `surface` fill — the gray was too close to
+//  the unselected chips to tell which filter is active.
 //
 //  `Style.selected`/`.unselected` only ever switch the fill/border/corner-radius
 //  below — Figma specs the same `p-[8px]` on every chip regardless of
@@ -29,7 +33,7 @@ struct FilterChip: View {
     enum Style: Equatable {
         case selected
         case unselected
-        /// The non-interactive notice-category tag (white fill, pink border).
+        /// The non-interactive notice-category tag (filled accent blue).
         case badge
     }
 
@@ -56,7 +60,7 @@ struct FilterChip: View {
     private var label: some View {
         Text(category.label)
             .font(font).tracking(tracking)
-            .foregroundStyle(Color.textPrimary)
+            .foregroundStyle(style == .selected ? Color.white : Color.textPrimary)
             .padding(.horizontal, Self.chipHorizontalPadding)
             .padding(.vertical, Self.chipVerticalPadding)
             .background {
@@ -85,8 +89,9 @@ struct FilterChip: View {
 
     private var fillColor: Color {
         switch style {
-        case .selected: return .surface
-        case .unselected, .badge: return .white
+        case .selected: return .eventAccent
+        case .unselected: return .white
+        case .badge: return .categoryBadgeBackground
         }
     }
 
@@ -94,7 +99,7 @@ struct FilterChip: View {
         switch style {
         case .selected: return nil
         case .unselected: return .borderLight
-        case .badge: return .categoryBadgeBorder
+        case .badge: return nil
         }
     }
 }

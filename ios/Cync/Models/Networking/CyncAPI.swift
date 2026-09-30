@@ -152,6 +152,21 @@ enum CyncAPI {
         return response
     }
 
+    /// Checks the account password by attempting a login with it — there's
+    /// no dedicated verify endpoint. Leaves the stored session token alone
+    /// (the new token in the response is discarded). Returns `false` for any
+    /// HTTP error: the server answers a wrong password with 500, not 401, so
+    /// it can't be told apart from other server errors. Network failures
+    /// (no connection, timeout) still throw.
+    static func verifyPassword(studentId: String, password: String) async throws -> Bool {
+        var request = authorizedRequest(path: "/api/auth/login", method: "POST")
+        request.httpBody = formBody(["id": studentId, "password": password])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { return false }
+        return (200..<300).contains(http.statusCode)
+    }
+
     // MARK: - 1. 닉네임 / 프로필 색상
 
     static func fetchMyProfile() async throws -> UserProfile {
