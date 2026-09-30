@@ -1699,6 +1699,23 @@
         }
       }
     },
+    "locker.resetView" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset view"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "처음 보기로"
+          }
+        }
+      }
+    },
     "locker.status.applicable" : {
       "extractionState" : "manual",
       "localizations" : {

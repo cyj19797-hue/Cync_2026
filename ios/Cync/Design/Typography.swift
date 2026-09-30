@@ -171,9 +171,6 @@ extension Font {
     /// a light gray, so the number itself stays the focus.
     static let lockerRoomLabel = Font.appDefault(.medium, size: 14, relativeTo: .subheadline)
 
-    /// "전체 사물함" section title — Bold 20.
-    static let lockerSectionTitle = Font.appDefault(.bold, size: 20, relativeTo: .title3)
-
     /// Room button inside the map card ("B201 ⌄") — Medium 13.
     static let lockerZoneButton = Font.appDefault(.medium, size: 13, relativeTo: .footnote)
 

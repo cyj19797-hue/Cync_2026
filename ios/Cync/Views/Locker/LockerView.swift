@@ -46,6 +46,8 @@ struct LockerView: View {
     @State private var selectedZoneId: String?
     /// Room the map itself reports as focused (warp or manual scroll).
     @State private var mapFocusedZoneId: String?
+    /// Whether the map has been moved off its first view — shows "◎".
+    @State private var isMapDisplaced = false
 
     init(viewModel: LockerViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -151,8 +153,9 @@ struct LockerView: View {
 
     private var allLockersSection: some View {
         VStack(alignment: .leading, spacing: Spacing.cardInset) {
+            // Same style as MyLockerCard's "나의 사물함" title.
             Text(.lockerAll)
-                .font(.lockerSectionTitle).tracking(Tracking.lockerSectionTitle)
+                .font(.myLockerTitle).tracking(Tracking.myLockerTitle)
                 .foregroundStyle(Color.textPrimary)
 
             // Map card: legend pinned to the very top, then the room
@@ -163,10 +166,15 @@ struct LockerView: View {
             VStack(alignment: .leading, spacing: 0) {
                 LockerStatusLegend()
                     .padding(.bottom, Spacing.md)
-                HStack {
+                HStack(spacing: Spacing.xs) {
                     Spacer(minLength: 0)
+                    if isMapDisplaced {
+                        resetViewButton
+                            .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                    }
                     zoneButton
                 }
+                .animation(.easeOut(duration: 0.2), value: isMapDisplaced)
                 .padding(.bottom, Spacing.xxs)
                 lockerMap
                     .padding(.horizontal, -Spacing.sm)
@@ -215,6 +223,27 @@ struct LockerView: View {
         .anchorPreference(key: ZoneMenuAnchorKey.self, value: .bounds) { $0 }
     }
 
+    /// "◎" — back to the map's first view ("내 사물함"'s room, or the plain
+    /// overview). Only shown once the map has been moved (pan, pinch or a
+    /// room pick), next to the room button it pairs with.
+    private var resetViewButton: some View {
+        Button {
+            selectedZoneId = nil
+            map.controller?.resetView()
+        } label: {
+            Image(systemName: "scope")
+                .font(.lockerZoneButton)
+                .foregroundStyle(Color.textPrimary)
+                .frame(width: 28, height: 28)
+                .overlay {
+                    Circle().strokeBorder(Color.gray400)
+                }
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(.lockerResetView))
+    }
+
     /// The original embedded floor-plan map — browse only (tapping a cell
     /// does nothing here; applying happens on the apply screen). `.id` on
     /// "내 사물함"'s number recreates it once that's loaded, since the
@@ -232,7 +261,13 @@ struct LockerView: View {
                 // A manual scroll overrides the last dropdown pick.
                 if zoneId != selectedZoneId { selectedZoneId = nil }
             },
-            onControllerReady: { map.controller = $0 }
+            onDisplacedChange: { isMapDisplaced = $0 },
+            onControllerReady: { controller in
+                map.controller = controller
+                // A rebuilt map starts on its first view again (deferred:
+                // this runs while SwiftUI is building the view).
+                DispatchQueue.main.async { isMapDisplaced = false }
+            }
         )
         .id(viewModel.myLocker?.lockerNumber)
         // Two rows of rooms at the "내 사물함" warp's scale (~440pt) —

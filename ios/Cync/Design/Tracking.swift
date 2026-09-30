@@ -62,7 +62,6 @@ enum Tracking {
     static let lockerLocationText: CGFloat = standard
     static let lockerCellNumber: CGFloat = standard
     static let lockerRoomLabel: CGFloat = standard
-    static let lockerSectionTitle: CGFloat = standard
     static let lockerZoneButton: CGFloat = standard
     static let lockerCellStatus: CGFloat = standard
 

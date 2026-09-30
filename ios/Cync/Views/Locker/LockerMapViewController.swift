@@ -100,6 +100,25 @@ final class LockerMapViewController: UIViewController {
     private(set) var focusedZoneId: String?
     var onFocusedZoneChange: ((String) -> Void)?
 
+    /// Whether the canvas has been moved (pan, pinch, or a room warp) away
+    /// from where it first settled — reported through `onDisplacedChange`
+    /// so a host can show a "reset view" control only when it's useful.
+    private(set) var isDisplaced = false {
+        didSet { if isDisplaced != oldValue { onDisplacedChange?(isDisplaced) } }
+    }
+    var onDisplacedChange: ((Bool) -> Void)?
+
+    /// The first settled view (after the initial fit/"내 사물함" warp),
+    /// restored by `resetView()`.
+    private struct ViewportState {
+        var zoomScale: CGFloat
+        var contentOffset: CGPoint
+        var contentInset: UIEdgeInsets
+        var minimumZoomScale: CGFloat
+        var focusedZoneId: String?
+    }
+    private var initialViewport: ViewportState?
+
     /// Set *before* the view loads. When set, the initial zoom warps past
     /// the plain fit-to-screen view straight to this locker's zone and
     /// highlights its cell (`.selected`) once statuses load — used by
@@ -150,6 +169,41 @@ final class LockerMapViewController: UIViewController {
         } else {
             updateFocusedZoneFromViewport()
         }
+        initialViewport = ViewportState(
+            zoomScale: scrollView.zoomScale,
+            contentOffset: scrollView.contentOffset,
+            contentInset: scrollView.contentInset,
+            minimumZoomScale: scrollView.minimumZoomScale,
+            focusedZoneId: focusedZoneId
+        )
+        isDisplaced = false
+    }
+
+    /// Animates back to the first settled view (see `initialViewport`).
+    func resetView(animated: Bool = true) {
+        guard let initial = initialViewport else { return }
+        let apply = {
+            self.scrollView.contentInset = initial.contentInset
+            self.scrollView.minimumZoomScale = min(self.scrollView.minimumZoomScale, initial.minimumZoomScale)
+            self.scrollView.zoomScale = initial.zoomScale
+            self.scrollView.contentOffset = initial.contentOffset
+        }
+        if animated {
+            UIView.animate(withDuration: 0.3, animations: apply)
+        } else {
+            apply()
+        }
+        if let zoneId = initial.focusedZoneId { setFocusedZone(zoneId) }
+        isDisplaced = false
+    }
+
+    /// Recomputes `isDisplaced` against the first settled view.
+    fileprivate func updateDisplaced() {
+        guard let initial = initialViewport else { return }
+        let offset = scrollView.contentOffset
+        isDisplaced = abs(scrollView.zoomScale - initial.zoomScale) > 0.01
+            || abs(offset.x - initial.contentOffset.x) > 2
+            || abs(offset.y - initial.contentOffset.y) > 2
     }
 
     private func setUpScrollView() {
@@ -403,9 +457,10 @@ final class LockerMapViewController: UIViewController {
             self.scrollView.contentOffset = CGPoint(x: x, y: y)
         }
         if animated {
-            UIView.animate(withDuration: 0.3, animations: apply)
+            UIView.animate(withDuration: 0.3, animations: apply) { _ in self.updateDisplaced() }
         } else {
             apply()
+            updateDisplaced()
         }
     }
 
@@ -480,15 +535,25 @@ extension LockerMapViewController: UIScrollViewDelegate {
     }
 
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        if !decelerate { updateFocusedZoneFromViewport() }
+        if !decelerate {
+            updateFocusedZoneFromViewport()
+            updateDisplaced()
+        }
     }
 
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         updateFocusedZoneFromViewport()
+        updateDisplaced()
     }
 
     func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
         updateFocusedZoneFromViewport()
+        updateDisplaced()
+    }
+
+    /// End of a programmatic `zoom(to:animated:)` (`.zoomToZone` warps).
+    func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
+        updateDisplaced()
     }
 }
 
@@ -628,6 +693,8 @@ struct LockerMapScreenView: UIViewControllerRepresentable {
     /// See `LockerMapViewController.onFocusedZoneChange`. Delivered on the
     /// next main-queue turn so a SwiftUI host can update state from it.
     var onFocusedZoneChange: ((String) -> Void)?
+    /// See `LockerMapViewController.onDisplacedChange` (same delivery).
+    var onDisplacedChange: ((Bool) -> Void)?
     /// Fired once with the created controller — lets a SwiftUI host (e.g.
     /// `LockerApplicationMapView`) drive `warp(to:)` from its own toolbar,
     /// since `navigationItem` set on a bare UIKit controller pushed via
@@ -644,6 +711,11 @@ struct LockerMapScreenView: UIViewControllerRepresentable {
         if let onFocusedZoneChange {
             controller.onFocusedZoneChange = { zoneId in
                 DispatchQueue.main.async { onFocusedZoneChange(zoneId) }
+            }
+        }
+        if let onDisplacedChange {
+            controller.onDisplacedChange = { isDisplaced in
+                DispatchQueue.main.async { onDisplacedChange(isDisplaced) }
             }
         }
         onControllerReady?(controller)
