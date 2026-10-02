@@ -26,6 +26,20 @@ import SwiftUI
 @MainActor
 final class TabBarVisibility: ObservableObject {
     @Published private(set) var isHidden = true
+    /// A popup is up on a main tab screen: the bar gets the same dim as
+    /// the popup's backdrop (which can't reach it — the bar sits outside
+    /// the screen's view) and stops taking taps.
+    @Published private(set) var isDimmed = false
+
+    private var dimCount = 0 {
+        didSet {
+            let dimmed = dimCount > 0
+            if dimmed != isDimmed { isDimmed = dimmed }
+        }
+    }
+
+    fileprivate func dimStarted() { dimCount += 1 }
+    fileprivate func dimEnded() { dimCount = max(0, dimCount - 1) }
 
     private var visibleRootCount = 0 {
         didSet {
@@ -61,7 +75,36 @@ private struct ShowsTabBarModifier: ViewModifier {
     }
 }
 
+private struct DimsTabBarModifier: ViewModifier {
+    let isActive: Bool
+    @EnvironmentObject private var tabBarVisibility: TabBarVisibility
+    @State private var isDimming = false
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear { setDimming(isActive) }
+            .onChange(of: isActive) { _, active in setDimming(active) }
+            .onDisappear { setDimming(false) }
+    }
+
+    private func setDimming(_ dimming: Bool) {
+        guard dimming != isDimming else { return }
+        isDimming = dimming
+        if dimming {
+            tabBarVisibility.dimStarted()
+        } else {
+            tabBarVisibility.dimEnded()
+        }
+    }
+}
+
 extension View {
+    /// Dims the bottom tab bar while `isActive` — for a main tab screen's
+    /// popups, whose 0.6 black backdrop otherwise stops at the tab bar.
+    func dimsTabBar(_ isActive: Bool) -> some View {
+        modifier(DimsTabBarModifier(isActive: isActive))
+    }
+
     /// Marks a main tab screen's root (inside its `NavigationStack`): the
     /// bottom tab bar shows while this view is on screen and `isActive` is
     /// true. Pass `false` while something covers the root without pushing,

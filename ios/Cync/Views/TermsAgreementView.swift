@@ -82,7 +82,7 @@ struct TermsAgreementView: View {
             PrimaryActionButton(
                 titleKey: .termsStart,
                 isEnabled: canContinue,
-                tint: .eventAccent,
+                tint: .buttonAccent,
                 borderColor: .eventAccentLight,
                 enabledCornerRadius: Radius.agreementCard,
                 isUnderlined: true,

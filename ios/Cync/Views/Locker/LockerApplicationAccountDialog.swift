@@ -23,15 +23,14 @@ struct LockerApplicationAccountDialog: View {
             Text(.lockerAccountTitle)
                 .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.bottom, Spacing.xxs)
+                .dialogTitleGap()
 
             Text(accountInfoText)
                 .font(.dialogBody).tracking(Tracking.dialogBody)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.bottom, Spacing.xxs)
+                .dialogBodyGap()
 
-            HStack(spacing: Spacing.xs) {
-                Spacer(minLength: 0)
+            DialogActionRow {
                 DialogActionButton(titleKey: .commonOk, action: onConfirm)
             }
         }

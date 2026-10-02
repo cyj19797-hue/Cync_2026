@@ -96,7 +96,7 @@ struct CommentInputBar: View {
             }
 
             Button(action: onSubmit) {
-                // Ready: bold `accentStrong` (~5:1). Empty: regular gray
+                // Ready: bold `accentStrong` (~4.5:1). Empty: regular gray
                 // — weight and color both change, so the two states
                 // don't rely on a color difference alone.
                 Text(.commentSubmit)

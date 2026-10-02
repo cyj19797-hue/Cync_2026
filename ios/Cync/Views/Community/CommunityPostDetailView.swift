@@ -87,7 +87,7 @@ struct CommunityPostDetailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScreenNavigationBar(titleKey: .communityBoardFree, onBack: { dismiss() }) {
+            ScreenNavigationBar(titleKey: .tabCommunity, onBack: { dismiss() }) {
                 postMenuButton
             }
 
@@ -103,16 +103,15 @@ struct CommunityPostDetailView: View {
                     .simultaneousGesture(TapGesture().onEnded { requestCloseComposer() })
                 }
                 .scrollDismissesKeyboard(.interactively)
-                // White behind the post, the comments' gray below it: when
-                // the comments are short, the gray runs on down to the
-                // input bar instead of stopping in a white gap.
+                // White above the post (pulling down at the top). The gray
+                // below the comments scrolls with them — see
+                // `commentsSection` — instead of a fixed half-white /
+                // half-gray backdrop, which let white show through under
+                // the comments when the list bounced at the bottom.
                 .background {
-                    VStack(spacing: 0) {
-                        Color.appBackground
-                        Color.calendarSurface
-                    }
-                    // The empty gray below short comments closes it too.
-                    .onTapGesture { requestCloseComposer() }
+                    Color.appBackground
+                        // The empty area below short comments closes it too.
+                        .onTapGesture { requestCloseComposer() }
                 }
                 .safeAreaInset(edge: .bottom, spacing: 0) {
                     CommentInputBar(
@@ -188,7 +187,8 @@ struct CommunityPostDetailView: View {
                 translationButton
             }
 
-            HStack(spacing: Spacing.xs) {
+            // Heart ↔ bubble.
+            HStack(spacing: Spacing.cardInset) {
                 Button {
                     viewModel.togglePostLike()
                 } label: {
@@ -264,7 +264,7 @@ struct CommunityPostDetailView: View {
     /// The next reaction sits right after whatever's there, so a missing
     /// number doesn't leave a gap.
     private func reactionLabel(systemImage: String, count: Int) -> some View {
-        HStack(spacing: 2) {
+        HStack(spacing: Spacing.xxs) {
             // Same fitted square as the comments' icons, so the heart and
             // the bubble come out the same size.
             ReactionIcon(systemName: systemImage, size: reactionIconSize)
@@ -341,6 +341,10 @@ struct CommunityPostDetailView: View {
 
     // MARK: - Comments
 
+    /// How far the comments' gray reaches below their content — more
+    /// than any screen is tall.
+    private static let commentsGrayOverscroll: CGFloat = 2000
+
     private var commentsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             Text(.commentTitleCount(viewModel.visibleCommentCount))
@@ -373,7 +377,13 @@ struct CommunityPostDetailView: View {
         .padding(.top, Spacing.md)
         .padding(.bottom, Spacing.xl)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.calendarSurface)
+        // The gray runs on well past the last comment, so short comments
+        // still fill down to the input bar and a bounce at the bottom
+        // shows gray, not white.
+        .background(alignment: .top) {
+            Color.calendarSurface
+                .padding(.bottom, -Self.commentsGrayOverscroll)
+        }
         .overlay(alignment: .top) {
             Rectangle()
                 .fill(Color.gray300)

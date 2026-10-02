@@ -17,8 +17,8 @@
 //
 //  Changes from Figma (accessibility/UX review): the card heading is a
 //  plain-color "세종대학교 계정으로 로그인" instead of a large accent "로그인"
-//  that repeated the button; the button uses `accentStrong` so its white
-//  label passes 4.5:1; the "not stored" hint moved under the password
+//  that repeated the button; the button is `buttonAccent` (the app accent) with a white
+//  label; the "not stored" hint moved under the password
 //  field; the password field has a show/hide toggle and the focused field
 //  gets an accent border; the card reaches the bottom of the screen.
 //
@@ -154,7 +154,7 @@ struct LoginView: View {
             PrimaryActionButton(
                 titleKey: viewModel.isSubmitting ? .loginSubmitting : .loginSubmit,
                 isEnabled: viewModel.canSubmit && !viewModel.isSubmitting,
-                tint: .accentStrong,
+                tint: .buttonAccent,
                 action: submit
             )
             .id(Self.submitButtonID)

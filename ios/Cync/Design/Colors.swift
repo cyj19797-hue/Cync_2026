@@ -69,11 +69,26 @@ extension Color {
     /// category chips and dialog borders.
     static let gray200 = Color(hex: 0xEAECF0)
 
-    /// Not in Figma — a deeper `eventAccent` for filled buttons with white
-    /// labels and focused-field borders. White on `eventAccent` (#36AFFF)
-    /// is only ~2.4:1; on this it's ~5.2:1, above the 4.5:1 text minimum.
-    /// Used on "1-5 로그인"'s "로그인" button.
-    static let accentStrong = Color(hex: 0x0A6FC2)
+    /// Not in Figma — a deeper `eventAccent` for blue *text* on white
+    /// (댓글 "등록", the "글쓴이" badge) and focused-field borders.
+    /// `eventAccent` text on white is only ~2.4:1; this is the lightest blue
+    /// of the same hue that reaches the 4.5:1 text minimum (~4.52:1).
+    /// Filled buttons don't use it: they're `buttonAccent` with white labels.
+    static let accentStrong = Color(hex: 0x007ACB)
+
+    /// Fill of every filled blue button, with a white label — the app
+    /// accent itself (#36AFFF). White on it is ~2.4:1, below the WCAG text
+    /// minimum; chosen by the team for the brand look.
+    static let buttonAccent = eventAccent
+
+    /// Not in Figma — "on" track of `AppSwitchToggleStyle`. The lightest
+    /// blue of `eventAccent`'s hue that's 3:1 against white (~3.01:1).
+    static let switchOnTrack = Color(hex: 0x0099FE)
+
+    /// Not in Figma — "off" track of `AppSwitchToggleStyle`. `gray400`'s
+    /// hue darkened to 3:1 against white (~3.02:1); iOS's own off track
+    /// is ~1.2:1 and barely shows.
+    static let switchOffTrack = Color(hex: 0x8A95A9)
 
     /// Figma style: `secondaryColor` (#FF4194) — the reply icon of the
     /// comment you're currently replying to on "5-1 게시글" (~3.1:1 on the

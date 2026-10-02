@@ -23,15 +23,14 @@ struct ErrorDialog: View {
             Text(titleKey)
                 .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.bottom, Spacing.xxs)
+                .dialogTitleGap()
 
             Text(message)
                 .font(.dialogBody).tracking(Tracking.dialogBody)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.bottom, Spacing.xxs)
+                .dialogBodyGap()
 
-            HStack(spacing: Spacing.xs) {
-                Spacer(minLength: 0)
+            DialogActionRow {
                 DialogActionButton(titleKey: .commonOk, action: onConfirm)
             }
         }

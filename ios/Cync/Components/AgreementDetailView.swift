@@ -56,7 +56,7 @@ struct AgreementDetailView: View {
 
             PrimaryActionButton(
                 titleKey: .commonOk,
-                tint: .eventAccent,
+                tint: .buttonAccent,
                 borderColor: .eventAccentLight,
                 enabledCornerRadius: Radius.agreementCard,
                 action: onConfirm

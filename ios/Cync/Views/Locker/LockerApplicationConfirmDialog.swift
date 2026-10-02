@@ -26,14 +26,14 @@ struct LockerApplicationConfirmDialog: View {
                     .font(.categoryBadge).tracking(Tracking.categoryBadge)
             }
             .foregroundStyle(Color.textPrimary)
+            .dialogTitleGap()
 
             Text(.lockerConfirmApply)
                 .font(.dialogBody).tracking(Tracking.dialogBody)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.vertical, Spacing.xxs)
+                .dialogBodyGap()
 
-            HStack(spacing: Spacing.xs) {
-                Spacer(minLength: 0)
+            DialogActionRow {
                 DialogActionButton(titleKey: .commonCancel, action: onCancel)
                 DialogActionButton(titleKey: .lockerApplyAction, style: .primary, action: onConfirm)
             }

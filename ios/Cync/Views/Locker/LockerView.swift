@@ -90,6 +90,7 @@ struct LockerView: View {
             // Main tab screen — the bottom tab bar shows only while this
             // root is on screen (see TabBarVisibility.swift).
             .showsTabBar()
+            .dimsTabBar(isGuidePresented || isPasswordVerifyPresented)
             .navigationDestination(isPresented: $isApplying) {
                 applicationScreen
             }

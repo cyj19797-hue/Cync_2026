@@ -1245,6 +1245,23 @@
         }
       }
     },
+    "community.anonymousHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your nickname is hidden and you're shown as anonymous."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "닉네임이 숨겨지고 익명으로 표시돼요"
+          }
+        }
+      }
+    },
     "community.boardFree" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1291,6 +1308,23 @@
         }
       }
     },
+    "community.composeMissingFields" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a title and content."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "제목과 내용을 입력해 주세요"
+          }
+        }
+      }
+    },
     "community.contentPlaceholder" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1321,6 +1355,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "아직 글이 없어요.\n첫 글을 남겨보세요!"
+          }
+        }
+      }
+    },
+    "community.leaveDraftMessage" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leave anyway?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그래도 나가시겠습니까?"
+          }
+        }
+      }
+    },
+    "community.leaveDraftTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your post will be lost if you leave."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나가면 작성글이 사라집니다."
           }
         }
       }
@@ -1384,6 +1452,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "게시글을 등록하지 못했습니다. %@"
+          }
+        }
+      }
+    },
+    "community.postSubmit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Post"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "등록"
           }
         }
       }
@@ -3100,19 +3185,257 @@
         }
       }
     },
+    "notif.all" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All Notifications"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체 알림"
+          }
+        }
+      }
+    },
+    "notif.allHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn off to stop all notifications below"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "끄면 아래 알림을 모두 받지 않아요"
+          }
+        }
+      }
+    },
+    "notif.allow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn On"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알림 켜기"
+          }
+        }
+      }
+    },
+    "notif.comment" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comments"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "댓글 알림"
+          }
+        }
+      }
+    },
+    "notif.commentHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When someone comments on your post"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내 글에 댓글이 달리면 알려줘요"
+          }
+        }
+      }
+    },
+    "notif.cyncNotice" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cync Announcements"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cync 공지 알림"
+          }
+        }
+      }
+    },
+    "notif.cyncNoticeHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintenance, updates and other news from Cync"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "점검·업데이트 같은 Cync 운영 공지를 알려줘요"
+          }
+        }
+      }
+    },
     "notif.deadline" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deadline D-day"
+            "value" : "Upcoming Deadlines"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "마감 D-day"
+            "value" : "마감 임박 알림"
+          }
+        }
+      }
+    },
+    "notif.deadlineHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminds you a day before a deadline"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "마감 하루 전에 알려줘요"
+          }
+        }
+      }
+    },
+    "notif.like" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Likes"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "좋아요 알림"
+          }
+        }
+      }
+    },
+    "notif.likeHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When someone likes your post or comment"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내 글이나 댓글에 좋아요가 눌리면 알려줘요"
+          }
+        }
+      }
+    },
+    "notif.lockerApproved" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Application Approved"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "신청 승인"
+          }
+        }
+      }
+    },
+    "notif.lockerApprovedHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When an admin approves your application"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "관리자가 신청을 승인하면 알려줘요"
+          }
+        }
+      }
+    },
+    "notif.lockerRejected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Application Declined"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "신청 거절"
+          }
+        }
+      }
+    },
+    "notif.lockerRejectedHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When an admin declines your application"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "관리자가 신청을 거절하면 알려줘요"
           }
         }
       }
@@ -3123,13 +3446,64 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Locker Results"
+            "value" : "Locker Application Results"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "사물함 결과"
+            "value" : "사물함 신청 결과 알림"
+          }
+        }
+      }
+    },
+    "notif.lockerResultHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When your locker application is decided"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사물함 신청 결과가 나오면 알려줘요"
+          }
+        }
+      }
+    },
+    "notif.lockerReturn" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Locker Return"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사물함 반납 안내"
+          }
+        }
+      }
+    },
+    "notif.lockerReturnHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When your locker is returned at the end of term"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "학기 말 사물함 반납이 처리되면 알려줘요"
           }
         }
       }
@@ -3146,7 +3520,245 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "새 공지사항 등록"
+            "value" : "새 공지 알림"
+          }
+        }
+      }
+    },
+    "notif.newNoticeHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When a new notice is posted"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새 공지가 올라오면 알려줘요"
+          }
+        }
+      }
+    },
+    "notif.openSettings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Settings"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정 열기"
+          }
+        }
+      }
+    },
+    "notif.permissionDenied" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications are off. Turn them on in Settings."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알림이 꺼져 있어요. 설정에서 알림을 켜 주세요."
+          }
+        }
+      }
+    },
+    "notif.permissionNotDetermined" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow notifications to get these alerts."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알림을 받으려면 알림을 허용해 주세요."
+          }
+        }
+      }
+    },
+    "notif.reply" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replies"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "답글 알림"
+          }
+        }
+      }
+    },
+    "notif.replyHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When someone replies to your comment"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내 댓글에 답글이 달리면 알려줘요"
+          }
+        }
+      }
+    },
+    "notif.reportResult" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Report Results"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "신고 처리 결과"
+          }
+        }
+      }
+    },
+    "notif.reportResultHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When a post or comment you reported is reviewed"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내가 신고한 글이나 댓글이 처리되면 알려줘요"
+          }
+        }
+      }
+    },
+    "notif.restriction" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Community Restrictions"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이용 제한 안내"
+          }
+        }
+      }
+    },
+    "notif.restrictionHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When your community access is restricted or restored"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "커뮤니티 이용이 제한되거나 풀리면 알려줘요"
+          }
+        }
+      }
+    },
+    "notif.saveFailed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't save. Please try again."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장하지 못했어요. 다시 시도해 주세요."
+          }
+        }
+      }
+    },
+    "notif.valueAll" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체"
+          }
+        }
+      }
+    },
+    "notif.valueCount" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld on"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld개"
+          }
+        }
+      }
+    },
+    "notif.valueOff" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "끔"
           }
         }
       }

@@ -289,7 +289,7 @@ struct ProfileEditSheet: View {
         PrimaryActionButton(
             titleKey: isSaving ? .profileEditSaving : .commonSave,
             isEnabled: canSave,
-            tint: .accentStrong,
+            tint: .buttonAccent,
             action: save
         )
     }
@@ -330,15 +330,14 @@ struct ProfileEditSheet: View {
                 Text(.profileEditDiscardTitle)
                     .font(.dialogTitle).tracking(Tracking.dialogTitle)
                     .foregroundStyle(Color.textPrimary)
-                    .padding(.bottom, Spacing.xxs)
+                    .dialogTitleGap()
 
                 Text(.profileEditDiscardMessage)
                     .font(.dialogBody).tracking(Tracking.dialogBody)
                     .foregroundStyle(Color.textSecondary)
-                    .padding(.bottom, Spacing.xs)
+                    .dialogBodyGap()
 
-                HStack(spacing: Spacing.xs) {
-                    Spacer(minLength: 0)
+                DialogActionRow {
                     DialogActionButton(titleKey: .profileEditKeepEditing) {
                         isDiscardConfirmPresented = false
                     }

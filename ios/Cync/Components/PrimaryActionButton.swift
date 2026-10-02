@@ -19,7 +19,10 @@ import SwiftUI
 struct PrimaryActionButton: View {
     let titleKey: LocalizedStringResource
     var isEnabled: Bool = true
-    var tint: Color = .brandPrimary
+    /// Fill when enabled — `buttonAccent` (the app accent), white label.
+    var tint: Color = .buttonAccent
+    /// Label color when enabled.
+    var labelColor: Color = .white
     var font: Font = .primaryButtonLabel
     /// Matches `font`'s default (`.primaryButtonLabel`) — a call site overriding
     /// `font:` to a different token must also override this to
@@ -47,7 +50,7 @@ struct PrimaryActionButton: View {
                 .font(font)
                 .tracking(tracking)
                 .underline(isUnderlined)
-                .foregroundStyle(isEnabled ? Color.white : Color.gray400)
+                .foregroundStyle(isEnabled ? labelColor : Color.gray400)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.button)
                 .background {

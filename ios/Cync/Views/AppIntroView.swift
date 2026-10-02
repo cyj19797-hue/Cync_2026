@@ -56,7 +56,7 @@ struct AppIntroView: View {
 
                 PrimaryActionButton(
                     titleKey: .introConnect,
-                    tint: .eventAccent,
+                    tint: .buttonAccent,
                     borderColor: .eventAccentLight,
                     action: onConnect
                 )

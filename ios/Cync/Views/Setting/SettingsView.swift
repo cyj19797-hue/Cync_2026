@@ -17,7 +17,8 @@
 //  with this few rows there was nothing to filter); "언어 설정" opens
 //  `LanguagePickerDialog`, a custom popup (시스템 설정값 / 한국어 / English)
 //  that switches the app language in place — see AppLanguage.swift. The
-//  logout/withdraw confirmations use native `.confirmationDialog`, and
+//  logout/withdraw confirmations and the error popup are `DialogCard`
+//  popups (취소 / 로그아웃·탈퇴), like every other popup in the app, and
 //  tapping the profile card opens `ProfileEditSheet`, a custom bottom sheet
 //  shown as a full-screen overlay (the tab bar hides meanwhile).
 //
@@ -70,16 +71,21 @@ struct SettingsView: View {
                         ) {
                             isLanguagePickerPresented = true
                         }
+                        .listRowDivider()
                         SettingsRow(systemImage: "bell", titleKey: .settingsNotifications) {
                             isNotificationSettingsPresented = true
                         }
+                        .listRowDivider()
                         SettingsRow(systemImage: "number", titleKey: .settingsCyncNotice) {
                             isCyncNoticePresented = true
                         }
+                        .listRowDivider()
                         SettingsRow(systemImage: "questionmark.circle", titleKey: .settingsInquiry) {
                             openInquiryChat()
                         }
+                        .listRowDivider()
                         SettingsInfoRow(systemImage: "info.circle", titleKey: .settingsAppInfo, value: appVersionText)
+                            .listRowDivider(isLast: true)
                     } header: {
                         // "앱 설정", not "설정" — the screen title is already "설정".
                         ListSectionHeader(titleKey: .settingsAppSection)
@@ -90,9 +96,11 @@ struct SettingsView: View {
                         SettingsRow(systemImage: "rectangle.portrait.and.arrow.right", titleKey: .settingsLogout, showsChevron: false) {
                             isLogoutConfirmPresented = true
                         }
+                        .listRowDivider()
                         SettingsRow(systemImage: "person.crop.circle.badge.xmark", titleKey: .settingsWithdraw, showsChevron: false) {
                             isWithdrawConfirmPresented = true
                         }
+                        .listRowDivider(isLast: true)
                     } header: {
                         ListSectionHeader(titleKey: .settingsAccount)
                     }
@@ -111,35 +119,88 @@ struct SettingsView: View {
             // Main tab screen — the bottom tab bar shows only while this
             // root is on screen (see TabBarVisibility.swift).
             .showsTabBar(!isEditingProfile)
+            .dimsTabBar(
+                isLanguagePickerPresented || isLogoutConfirmPresented
+                    || isWithdrawConfirmPresented || viewModel.errorMessage != nil
+            )
             .task {
                 await viewModel.loadProfile()
             }
-            .alert(
-                Text(.commonError),
-                isPresented: Binding(
-                    get: { viewModel.errorMessage != nil },
-                    set: { isPresented in if !isPresented { viewModel.errorMessage = nil } }
-                )
-            ) {
-                Button(.commonOk, role: .cancel) {}
-            } message: {
-                Text(viewModel.errorMessage ?? "")
-            }
-            .confirmationDialog(Text(.settingsLogoutConfirm), isPresented: $isLogoutConfirmPresented, titleVisibility: .visible) {
-                Button(.settingsLogout, role: .destructive) {
-                    sessionStore.logOut()
-                }
-            }
-            .confirmationDialog(Text(.settingsWithdrawConfirm), isPresented: $isWithdrawConfirmPresented, titleVisibility: .visible) {
-                Button(.settingsWithdraw, role: .destructive) {
-                    // TODO: 실제 회원 탈퇴 API 연동 필요
-                }
-            }
         }
         .overlay { languagePickerOverlay }
+        .overlay { confirmOverlay }
         .overlay { profileEditorOverlay }
         .animation(.easeOut(duration: 0.25), value: isEditingProfile)
         .animation(.easeOut(duration: 0.2), value: isLanguagePickerPresented)
+        .animation(.easeOut(duration: 0.2), value: isLogoutConfirmPresented)
+        .animation(.easeOut(duration: 0.2), value: isWithdrawConfirmPresented)
+        .animation(.easeOut(duration: 0.2), value: viewModel.errorMessage)
+    }
+
+    /// Logout / withdraw confirmation, or an error — one at a time.
+    @ViewBuilder
+    private var confirmOverlay: some View {
+        if isLogoutConfirmPresented {
+            confirmDialog(
+                messageKey: .settingsLogoutConfirm,
+                actionKey: .settingsLogout,
+                onCancel: { isLogoutConfirmPresented = false },
+                onConfirm: {
+                    isLogoutConfirmPresented = false
+                    sessionStore.logOut()
+                }
+            )
+        } else if isWithdrawConfirmPresented {
+            confirmDialog(
+                messageKey: .settingsWithdrawConfirm,
+                actionKey: .settingsWithdraw,
+                onCancel: { isWithdrawConfirmPresented = false },
+                onConfirm: {
+                    isWithdrawConfirmPresented = false
+                    // TODO: 실제 회원 탈퇴 API 연동 필요
+                }
+            )
+        } else if let message = viewModel.errorMessage {
+            dimmed(onTap: { viewModel.errorMessage = nil }) {
+                ErrorDialog(titleKey: .commonError, message: message) {
+                    viewModel.errorMessage = nil
+                }
+            }
+        }
+    }
+
+    private func confirmDialog(
+        messageKey: LocalizedStringResource,
+        actionKey: LocalizedStringResource,
+        onCancel: @escaping () -> Void,
+        onConfirm: @escaping () -> Void
+    ) -> some View {
+        dimmed(onTap: onCancel) {
+            DialogCard {
+                Text(messageKey)
+                    .font(.dialogTitle).tracking(Tracking.dialogTitle)
+                    .foregroundStyle(Color.textPrimary)
+                    .dialogBodyGap()
+
+                DialogActionRow {
+                    DialogActionButton(titleKey: .commonCancel, action: onCancel)
+                    DialogActionButton(titleKey: actionKey, style: .primary, action: onConfirm)
+                }
+            }
+        }
+    }
+
+    /// Dimmed backdrop (tap = cancel) with a popup centered on it.
+    private func dimmed<Content: View>(onTap: @escaping () -> Void, @ViewBuilder content: () -> Content) -> some View {
+        ZStack {
+            Color.black.opacity(0.6)
+                .ignoresSafeArea()
+                .onTapGesture(perform: onTap)
+
+            content()
+                .padding(.horizontal, Spacing.md)
+        }
+        .transition(.opacity)
     }
 
     /// "프로필 수정" — a custom bottom sheet over the whole screen (the tab

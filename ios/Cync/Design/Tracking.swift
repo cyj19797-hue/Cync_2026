@@ -36,6 +36,10 @@ enum Tracking {
     // MARK: - Shared navigation bar
     static let screenNavTitle: CGFloat = standard
     static let screenNavTitleCentered: CGFloat = standard
+    static let headerActionButton: CGFloat = standard
+    static let settingSectionTitle: CGFloat = standard
+    static let settingRowTitle: CGFloat = standard
+    static let settingRowSubtitle: CGFloat = standard
 
     // MARK: - "2-1 공지글" (notice detail)
     static let noticeDetailBackLabel: CGFloat = standard

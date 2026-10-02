@@ -52,7 +52,7 @@ struct ProfileSetupView: View {
             PrimaryActionButton(
                 titleKey: .commonContinue,
                 isEnabled: viewModel.canSubmit && !viewModel.isSubmitting,
-                tint: .eventAccent
+                tint: .buttonAccent
             ) {
                 Task {
                     if await viewModel.submit() {

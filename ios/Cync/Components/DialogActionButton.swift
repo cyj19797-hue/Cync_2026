@@ -12,39 +12,46 @@ import SwiftUI
 enum DialogActionStyle {
     /// Surface (#F0F2F5) fill, `textPrimary` label, 10pt radius — 취소/확인.
     case secondary
-    /// `tint` fill (default `accentStrong`), white label, 10pt radius — the
+    /// `tint` fill (default `buttonAccent`) with a white label, 10pt
+    /// radius — the
     /// dialog's main action (신청, 신고, 삭제, 저장 …).
     case primary
 }
 
 /// A dialog's action button: sized to its label with 10pt of padding all
-/// around (and never under 44×44pt, so it stays easy to hit). Rows put a
-/// `Spacer` first, so the buttons sit together at the dialog's trailing
-/// edge — 취소 then the main action — `Spacing.xs` apart.
+/// around, 40pt tall on screen (`DialogMetrics.buttonHeight`) but 44pt
+/// tall to tap. Put buttons in a `DialogActionRow`, which gathers them at
+/// the dialog's trailing edge.
 struct DialogActionButton: View {
     let titleKey: LocalizedStringResource
     var style: DialogActionStyle = .secondary
-    /// `.primary`'s fill. Defaults to `accentStrong`: white on it is ~5.2:1,
-    /// where the old pink `brandPrimary` (~3:1) and sky `eventAccent`
-    /// (~2.4:1) both fell short of the 4.5:1 text minimum.
-    var tint: Color = .accentStrong
+    /// `.primary`'s fill. Defaults to `buttonAccent` (the app accent), white label.
+    var tint: Color = .buttonAccent
+    /// `.primary`'s label color.
+    var labelColor: Color = .white
     let action: () -> Void
 
     @Environment(\.isEnabled) private var isEnabled
+
+    private static let touchExtension = (44 - DialogMetrics.buttonHeight) / 2
 
     var body: some View {
         Button(action: action) {
             Text(titleKey)
                 .font(.categoryChip).tracking(Tracking.categoryChip)
-                .foregroundStyle(style == .primary ? Color.white : Color.textPrimary)
+                .foregroundStyle(style == .primary ? labelColor : Color.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(10)
-                .frame(minWidth: 44, minHeight: 44)
+                .frame(minWidth: 44, minHeight: DialogMetrics.buttonHeight)
                 .background {
                     RoundedRectangle(cornerRadius: Radius.chipSelected)
                         .fill(style == .primary ? tint : Color.surface)
                 }
-                .contentShape(RoundedRectangle(cornerRadius: Radius.chipSelected))
+                // 40pt to look at, 44pt to tap: the tappable shape reaches
+                // 2pt past the top and bottom without changing the layout.
+                .padding(.vertical, Self.touchExtension)
+                .contentShape(Rectangle())
+                .padding(.vertical, -Self.touchExtension)
         }
         .buttonStyle(.plain)
         .opacity(isEnabled ? 1 : 0.4)
@@ -52,8 +59,7 @@ struct DialogActionButton: View {
 }
 
 #Preview {
-    HStack(spacing: Spacing.xs) {
-        Spacer(minLength: 0)
+    DialogActionRow {
         DialogActionButton(titleKey: "취소") {}
         DialogActionButton(titleKey: "삭제", style: .primary) {}
     }

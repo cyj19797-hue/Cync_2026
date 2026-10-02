@@ -80,7 +80,7 @@ struct CommentRow: View {
     /// square so they look the same size (SF Symbols at one font size
     /// differ — the heart read smaller than the bubble). Scales with the
     /// text size setting.
-    @ScaledMetric(relativeTo: .caption2) private var iconSize: CGFloat = 12
+    @ScaledMetric(relativeTo: .caption2) private var iconSize: CGFloat = 16
 
     /// `PopupMenu` anchor id for this comment's ⋮.
     static func menuAnchorID(for comment: Comment) -> String {
@@ -93,7 +93,7 @@ struct CommentRow: View {
     private static let rowPadding: CGFloat = Spacing.cardInset
     /// Visible height of the author/actions line (about the author text's
     /// line height) — where the reply connector branches off.
-    private static let actionHeight: CGFloat = 18
+    private static let actionHeight: CGFloat = 20
     /// Gap between action icons. Narrower than the 44pt touch areas need
     /// to stay apart, so neighbors' touch areas overlap a little in the
     /// middle (a tap there goes to one of the two).
@@ -176,7 +176,7 @@ struct CommentRow: View {
 
     private var likeButton: some View {
         Button(action: onLike) {
-            HStack(spacing: 2) {
+            HStack(spacing: Spacing.xxs) {
                 ReactionIcon(systemName: comment.isLikedByMe ? "heart.fill" : "heart", size: iconSize)
                 // Same as the post's heart, except 0 is left out.
                 if comment.likeCount > 0 {

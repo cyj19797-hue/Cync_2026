@@ -19,13 +19,16 @@ import SwiftUI
 struct ListSectionHeader: View {
     let titleKey: LocalizedStringResource
     var topPadding: CGFloat = Spacing.md
+    var font: Font = .noticeTitle
+    var tracking: CGFloat = Tracking.noticeTitle
+    var bottomPadding: CGFloat = Spacing.xxs
 
     var body: some View {
         Text(titleKey)
-            .font(.noticeTitle).tracking(Tracking.noticeTitle)
+            .font(font).tracking(tracking)
             .foregroundStyle(Color.textPrimary)
             .padding(.top, topPadding)
-            .padding(.bottom, Spacing.xxs)
+            .padding(.bottom, bottomPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
             .listRowInsets(EdgeInsets(top: 0, leading: Spacing.screenHorizontal, bottom: 0, trailing: Spacing.screenHorizontal))
             .background(Color.appBackground)
@@ -34,6 +37,17 @@ struct ListSectionHeader: View {
 
 extension View {
     /// For a plain `List` using `ListSectionHeader`s — see that file.
+    /// Divider rule for a row in a sectioned `List`: it spans the row's
+    /// content width (16pt in from each screen edge, the same as section
+    /// titles and cards — not indented to the label after an icon), and the
+    /// last row of a section gets none, so sections are separated by their
+    /// titles alone.
+    func listRowDivider(isLast: Bool = false) -> some View {
+        alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+            .listRowSeparator(.hidden, edges: .top)
+            .listRowSeparator(isLast ? .hidden : .visible, edges: .bottom)
+    }
+
     func compactListSections() -> some View {
         environment(\.defaultMinListHeaderHeight, 0)
             .listSectionSpacing(0)

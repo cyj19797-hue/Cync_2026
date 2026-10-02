@@ -76,6 +76,16 @@ struct RootTabView: View {
 
             if !tabBarVisibility.isHidden {
                 tabBar
+                    .overlay {
+                        // Same dim as the popup backdrop above it.
+                        if tabBarVisibility.isDimmed {
+                            Color.black.opacity(0.6)
+                                .ignoresSafeArea(edges: .bottom)
+                                .contentShape(Rectangle())
+                                .transition(.opacity)
+                        }
+                    }
+                    .animation(.easeOut(duration: 0.2), value: tabBarVisibility.isDimmed)
             }
         }
         .animation(.default, value: tabBarVisibility.isHidden)
@@ -111,7 +121,7 @@ struct RootTabView: View {
         // against it. A fixed design-token value (not measured against one
         // specific device) keeps every tab readable on any iPhone size.
         .padding(.horizontal, Spacing.xs)
-        .padding(.top, Spacing.xs)
+        .padding(.top, Spacing.cardInset)
         .padding(.bottom, Spacing.xxs)
         .overlay(alignment: .top) {
             Divider().overlay(Color.borderLight)

@@ -91,6 +91,16 @@ extension Font {
     /// Notice row title — Pretendard Bold 16.
     static var noticeTitle: Font { .appDefault(.bold, size: 16, relativeTo: .body) }
 
+    /// "알림 설정" section titles and "전체 알림" — Pretendard Bold 18, a
+    /// step above the 17pt rows under them.
+    static var settingSectionTitle: Font { .appDefault(.bold, size: 18, relativeTo: .title3) }
+
+    /// "알림 설정" row title (마감 임박 알림 …) — Pretendard Medium 17.
+    static var settingRowTitle: Font { .appDefault(.medium, size: 17, relativeTo: .body) }
+
+    /// "알림 설정" row description and value — Pretendard Regular 14.
+    static var settingRowSubtitle: Font { .appDefault(.regular, size: 14, relativeTo: .subheadline) }
+
     /// Notice row date ("2026.08.18") — Pretendard Regular 14.
     static var noticeDate: Font { .appDefault(.regular, size: 14, relativeTo: .subheadline) }
 
@@ -168,6 +178,10 @@ extension Font {
     /// "월별 일정") — Semibold 17, matching the iOS navigation bar title.
     static var screenNavTitleCentered: Font { .appDefault(.semibold, size: 17, relativeTo: .headline) }
 
+    /// Filled text button in a screen header (글쓰기 "등록") — Pretendard
+    /// SemiBold 15.
+    static var headerActionButton: Font { .appDefault(.semibold, size: 15, relativeTo: .subheadline) }
+
     /// `NavigationChevron` SF Symbol ("<" / ">") — Semibold 14.
     static var navigationChevron: Font { .appDefault(.semibold, size: 14, relativeTo: .subheadline) }
 
@@ -217,8 +231,8 @@ extension Font {
     /// Post body preview (1-line clamp) — Pretendard Medium 16.
     static var communityPostBody: Font { .appDefault(.medium, size: 16, relativeTo: .body) }
 
-    /// Like/comment count next to their icon — Pretendard SemiBold 14.
-    static var communityReactionCount: Font { .appDefault(.semibold, size: 14, relativeTo: .subheadline) }
+    /// Like/comment count next to their icon — Pretendard SemiBold 16.
+    static var communityReactionCount: Font { .appDefault(.semibold, size: 16, relativeTo: .body) }
 
     /// Feed-row title (`CommunityPostRow`) — Pretendard Bold 16, same as the
     /// notice list's `.noticeTitle` so both feeds share one title size.
@@ -241,8 +255,8 @@ extension Font {
 
     static var postDetailTitle: Font { .appDefault(.bold, size: 20, relativeTo: .title3) }
 
-    /// "익명" author name (post header + every comment) — Pretendard SemiBold 14.
-    static var commentAuthor: Font { .appDefault(.semibold, size: 14, relativeTo: .subheadline) }
+    /// "익명" author name (post header + every comment) — Pretendard SemiBold 16.
+    static var commentAuthor: Font { .appDefault(.semibold, size: 16, relativeTo: .body) }
 
     /// "댓글" section title — Pretendard SemiBold 18.
     static var commentsSectionTitle: Font { .appDefault(.semibold, size: 17, relativeTo: .title3) }

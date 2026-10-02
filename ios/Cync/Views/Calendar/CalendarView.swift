@@ -46,9 +46,11 @@ struct CalendarView: View {
             VStack(spacing: 0) {
                 // No search here — the calendar is browsed by month and
                 // category instead.
-                AppTopBar(title: .tabCalendar) {
+                // Labeled `leading:` — a lone trailing closure would land in
+                // the `trailing` slot (the icon showed on the right).
+                AppTopBar(title: .tabCalendar, leading: {
                     Image(systemName: "calendar")
-                }
+                })
 
                 // Same placement as NoticeListView's filter row — pinned
                 // under the top bar (outside the ScrollView) — so the chips

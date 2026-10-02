@@ -154,7 +154,7 @@ struct CommunityView: View {
                 .foregroundStyle(Color.white)
                 .frame(width: Self.composeButtonSize, height: Self.composeButtonSize)
                 .background {
-                    Circle().fill(viewModel.isBanned ? Color.gray300 : Color.accentStrong)
+                    Circle().fill(viewModel.isBanned ? Color.gray300 : Color.buttonAccent)
                 }
                 .shadow(color: Color.textPrimary.opacity(0.18), radius: 8, y: 4)
                 .contentShape(Circle())

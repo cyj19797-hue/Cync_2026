@@ -22,6 +22,10 @@ final class SettingsViewModel: ObservableObject {
             let profile = try await CyncAPI.fetchMyProfile()
             self.profile = profile
             CurrentUserSession.shared.update(profile)
+        } catch is CancellationError {
+            // Leaving the screen mid-load cancels it — not an error.
+        } catch let error as URLError where error.code == .cancelled {
+            // Same, surfaced by URLSession.
         } catch {
             errorMessage = error.localizedDescription
         }

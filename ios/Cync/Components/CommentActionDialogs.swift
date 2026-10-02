@@ -30,7 +30,7 @@ struct CommentDeleteDialog: View {
             Text(titleKey)
                 .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.bottom, Spacing.xxs)
+                .dialogTitleGap()
 
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(messageKey)
@@ -41,10 +41,9 @@ struct CommentDeleteDialog: View {
             .font(.dialogBody).tracking(Tracking.dialogBody)
             .foregroundStyle(Color.textSecondary)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.bottom, Spacing.xs)
+            .dialogBodyGap()
 
-            HStack(spacing: Spacing.xs) {
-                Spacer(minLength: 0)
+            DialogActionRow {
                 DialogActionButton(titleKey: .commonCancel, action: onCancel)
                 DialogActionButton(titleKey: .commentDelete, style: .primary, action: onConfirm)
             }
@@ -64,21 +63,21 @@ struct CommentReportDialog: View {
             Text(titleKey)
                 .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.bottom, Spacing.xxs)
+                .dialogTitleGap()
 
             Text(.commentReportConfirmMessage)
                 .font(.dialogBody).tracking(Tracking.dialogBody)
                 .foregroundStyle(Color.textSecondary)
+                .padding(.bottom, Spacing.xs)
 
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(ReportReason.allCases) { option in
                     reasonRow(option)
                 }
             }
-            .padding(.vertical, Spacing.xs)
+            .dialogBodyGap()
 
-            HStack(spacing: Spacing.xs) {
-                Spacer(minLength: 0)
+            DialogActionRow {
                 DialogActionButton(titleKey: .commonCancel, action: onCancel)
                 DialogActionButton(titleKey: .commentReport, style: .primary) {
                     if let reason { onConfirm(reason) }
@@ -122,7 +121,7 @@ struct ReportConfirmDialog: View {
             Text(.reportConfirmTitle)
                 .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.bottom, Spacing.xxs)
+                .dialogTitleGap()
 
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(.reportConfirmReason(String(appLocalized: reason.label)))
@@ -132,10 +131,9 @@ struct ReportConfirmDialog: View {
             }
             .font(.dialogBody).tracking(Tracking.dialogBody)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.bottom, Spacing.xs)
+            .dialogBodyGap()
 
-            HStack(spacing: Spacing.xs) {
-                Spacer(minLength: 0)
+            DialogActionRow {
                 DialogActionButton(titleKey: .commonCancel, action: onCancel)
                 DialogActionButton(titleKey: .commentReport, style: .primary, action: onConfirm)
             }
@@ -165,7 +163,7 @@ struct CommentEditDialog: View {
             Text(.commentEditTitle)
                 .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.bottom, Spacing.xs)
+                .dialogTitleGap()
 
             TextField(String(appLocalized: .commentPlaceholder), text: $text, axis: .vertical)
                 .lineLimit(3...8)
@@ -177,10 +175,9 @@ struct CommentEditDialog: View {
                     RoundedRectangle(cornerRadius: Radius.inputField)
                         .fill(Color.surface)
                 }
-                .padding(.bottom, Spacing.xs)
+                .dialogBodyGap()
 
-            HStack(spacing: Spacing.xs) {
-                Spacer(minLength: 0)
+            DialogActionRow {
                 DialogActionButton(titleKey: .commonCancel, action: onCancel)
                 DialogActionButton(titleKey: .commonSave, style: .primary) {
                     onSave(text)

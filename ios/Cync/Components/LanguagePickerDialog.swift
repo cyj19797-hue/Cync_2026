@@ -24,17 +24,16 @@ struct LanguagePickerDialog: View {
             Text(.settingsLanguage)
                 .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.bottom, Spacing.xxs)
+                .dialogTitleGap()
 
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(AppLanguage.allCases) { language in
                     row(language)
                 }
             }
-            .padding(.bottom, Spacing.xs)
+            .dialogBodyGap()
 
-            HStack(spacing: Spacing.xs) {
-                Spacer(minLength: 0)
+            DialogActionRow {
                 DialogActionButton(titleKey: .commonCancel, action: onCancel)
             }
         }
