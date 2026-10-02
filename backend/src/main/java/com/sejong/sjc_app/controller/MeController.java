@@ -37,10 +37,7 @@ public class MeController {
             throw new RuntimeException("이미 사용 중인 닉네임입니다.");
         }
 
-        User updated = User.builder()
-                .studentId(user.getStudentId())
-                .name(user.getName())
-                .role(user.getRole())
+        User updated = user.toBuilder()
                 .nickname(nickname)
                 .profileColor(profileColor)
                 .build();

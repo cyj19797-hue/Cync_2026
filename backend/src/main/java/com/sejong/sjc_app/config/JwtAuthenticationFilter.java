@@ -1,5 +1,7 @@
 package com.sejong.sjc_app.config;
 
+import com.sejong.sjc_app.domain.User;
+import com.sejong.sjc_app.repository.UserRepository;
 import com.sejong.sjc_app.service.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,14 +20,18 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        // 요청 헤더에서 토큰 가져오기
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
+
         String token = resolveToken(request);
 
-        // 토큰 유효 시 인증 처리
-        if (token != null && jwtTokenProvider.validateToken(token)) {
+        if (token != null && jwtTokenProvider.validateToken(token)
+                && !isWithdrawn(jwtTokenProvider.getStudentId(token))) {
             String studentId = jwtTokenProvider.getStudentId(token);
             String role = jwtTokenProvider.getRole(token);
 
@@ -39,11 +45,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
-        // 다음 필터로
         filterChain.doFilter(request, response);
     }
 
-    // Authorization 헤더에서 토큰 추출
+    private boolean isWithdrawn(String studentId) {
+        return userRepository.findById(studentId).map(User::isWithdrawn).orElse(false);
+    }
+
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {

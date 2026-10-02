@@ -27,12 +27,7 @@ public class AdminUserController {
 
         LocalDateTime banExpiresAt = (days != null) ? LocalDateTime.now().plusDays(days) : null;
 
-        User updated = User.builder()
-                .studentId(user.getStudentId())
-                .name(user.getName())
-                .role(user.getRole())
-                .nickname(user.getNickname())
-                .profileColor(user.getProfileColor())
+        User updated = user.toBuilder()
                 .banned(true)
                 .banExpiresAt(banExpiresAt)
                 .banReason(reason)
@@ -49,12 +44,7 @@ public class AdminUserController {
         User user = userRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        User updated = User.builder()
-                .studentId(user.getStudentId())
-                .name(user.getName())
-                .role(user.getRole())
-                .nickname(user.getNickname())
-                .profileColor(user.getProfileColor())
+        User updated = user.toBuilder()
                 .banned(false)
                 .banExpiresAt(null)
                 .banReason(null)
