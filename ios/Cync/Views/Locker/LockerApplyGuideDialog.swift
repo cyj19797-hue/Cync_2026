@@ -41,7 +41,8 @@ struct LockerApplyGuideDialog: View {
             }
             .padding(.vertical, Spacing.xxs)
 
-            HStack(spacing: Spacing.cardInset) {
+            HStack(spacing: Spacing.xs) {
+                Spacer(minLength: 0)
                 DialogActionButton(titleKey: .commonOk, action: onClose)
                 if let onApply {
                     DialogActionButton(titleKey: .lockerGuideApply, style: .primary, action: onApply)

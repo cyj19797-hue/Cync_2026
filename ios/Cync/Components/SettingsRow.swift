@@ -16,11 +16,14 @@ struct SettingsRow: View {
     let systemImage: String
     let titleKey: LocalizedStringResource
     var value: String?
+    /// Off for rows that act in place (로그아웃, 회원 탈퇴 — a confirmation)
+    /// rather than open another screen.
+    var showsChevron: Bool = true
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            SettingsRowContent(systemImage: systemImage, titleKey: titleKey, value: value, showsChevron: true)
+            SettingsRowContent(systemImage: systemImage, titleKey: titleKey, value: value, showsChevron: showsChevron)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -65,6 +68,6 @@ struct SettingsRowContent: View {
     List {
         SettingsRow(systemImage: "globe", titleKey: "언어 설정", value: "한국어") {}
         SettingsRow(systemImage: "bell", titleKey: "알림 설정") {}
-        SettingsInfoRow(systemImage: "info.circle", titleKey: "프로그램 정보", value: "1.0.0v")
+        SettingsInfoRow(systemImage: "info.circle", titleKey: "프로그램 정보", value: "v1.0.0")
     }
 }

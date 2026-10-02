@@ -61,16 +61,11 @@ struct LockerView: View {
                 } trailing: {
                     // Always there (unlike the old "신청" button, which hid
                     // once a locker existed) — explains how applying works.
-                    Button {
+                    // "i", not "!" — this opens a how-to guide, and "!"
+                    // reads as a warning or error.
+                    TopBarIconButton(systemImage: "info.circle", labelKey: .lockerGuideAccessibility) {
                         isGuidePresented = true
-                    } label: {
-                        // "i", not "!" — this opens a how-to guide, and "!"
-                        // reads as a warning or error.
-                        Image(systemName: "info.circle")
-                            .foregroundStyle(Color.textPrimary)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Text(.lockerGuideAccessibility))
                 }
 
                 // Two left edges run straight down the page: `Spacing.md`
@@ -84,7 +79,9 @@ struct LockerView: View {
 
                         allLockersSection
                     }
-                    .padding(Spacing.md)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.top, Spacing.screenContentTop)
+                    .padding(.bottom, Spacing.md)
                 }
                 .scrollBounceBehavior(.basedOnSize)
                 .background(Color.appBackground)

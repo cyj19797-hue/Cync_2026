@@ -5,7 +5,7 @@
 //  A settings row that only shows a value — same icon/title/value layout
 //  as `SettingsRow` (via `SettingsRowContent`) but not a button and with
 //  no chevron, so it doesn't look tappable. Used for "프로그램 정보", which
-//  shows the app version ("1.0.0v") right in the row.
+//  shows the app version ("v1.0.0") right in the row.
 //
 
 import SwiftUI
@@ -24,6 +24,6 @@ struct SettingsInfoRow: View {
 
 #Preview {
     List {
-        SettingsInfoRow(systemImage: "info.circle", titleKey: "프로그램 정보", value: "1.0.0v")
+        SettingsInfoRow(systemImage: "info.circle", titleKey: "프로그램 정보", value: "v1.0.0")
     }
 }

@@ -82,6 +82,7 @@ struct LockerApplicationMapView: View {
 
             LockerStatusLegend()
                 .padding(.horizontal, Spacing.md)
+                .padding(.top, Spacing.screenContentTop)
                 .padding(.bottom, Spacing.xs)
 
             LockerMapScreenView(

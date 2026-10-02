@@ -32,7 +32,8 @@ struct LockerApplicationConfirmDialog: View {
                 .foregroundStyle(Color.textPrimary)
                 .padding(.vertical, Spacing.xxs)
 
-            HStack(spacing: Spacing.cardInset) {
+            HStack(spacing: Spacing.xs) {
+                Spacer(minLength: 0)
                 DialogActionButton(titleKey: .commonCancel, action: onCancel)
                 DialogActionButton(titleKey: .lockerApplyAction, style: .primary, action: onConfirm)
             }

@@ -43,7 +43,8 @@ struct CommentDeleteDialog: View {
             .fixedSize(horizontal: false, vertical: true)
             .padding(.bottom, Spacing.xs)
 
-            HStack(spacing: Spacing.cardInset) {
+            HStack(spacing: Spacing.xs) {
+                Spacer(minLength: 0)
                 DialogActionButton(titleKey: .commonCancel, action: onCancel)
                 DialogActionButton(titleKey: .commentDelete, style: .primary, action: onConfirm)
             }
@@ -76,7 +77,8 @@ struct CommentReportDialog: View {
             }
             .padding(.vertical, Spacing.xs)
 
-            HStack(spacing: Spacing.cardInset) {
+            HStack(spacing: Spacing.xs) {
+                Spacer(minLength: 0)
                 DialogActionButton(titleKey: .commonCancel, action: onCancel)
                 DialogActionButton(titleKey: .commentReport, style: .primary) {
                     if let reason { onConfirm(reason) }
@@ -104,6 +106,40 @@ struct CommentReportDialog: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+
+/// Last step of a report (comment or post): after a reason is picked,
+/// "정말 신고할까요?" with the reason restated, since a report can't be
+/// taken back.
+struct ReportConfirmDialog: View {
+    let reason: ReportReason
+    let onCancel: () -> Void
+    let onConfirm: () -> Void
+
+    var body: some View {
+        DialogCard {
+            Text(.reportConfirmTitle)
+                .font(.dialogTitle).tracking(Tracking.dialogTitle)
+                .foregroundStyle(Color.textPrimary)
+                .padding(.bottom, Spacing.xxs)
+
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
+                Text(.reportConfirmReason(String(appLocalized: reason.label)))
+                    .foregroundStyle(Color.textPrimary)
+                Text(.reportConfirmMessage)
+                    .foregroundStyle(Color.textSecondary)
+            }
+            .font(.dialogBody).tracking(Tracking.dialogBody)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.bottom, Spacing.xs)
+
+            HStack(spacing: Spacing.xs) {
+                Spacer(minLength: 0)
+                DialogActionButton(titleKey: .commonCancel, action: onCancel)
+                DialogActionButton(titleKey: .commentReport, style: .primary, action: onConfirm)
+            }
+        }
     }
 }
 
@@ -143,7 +179,8 @@ struct CommentEditDialog: View {
                 }
                 .padding(.bottom, Spacing.xs)
 
-            HStack(spacing: Spacing.cardInset) {
+            HStack(spacing: Spacing.xs) {
+                Spacer(minLength: 0)
                 DialogActionButton(titleKey: .commonCancel, action: onCancel)
                 DialogActionButton(titleKey: .commonSave, style: .primary) {
                     onSave(text)
@@ -161,6 +198,10 @@ struct CommentEditDialog: View {
 
 #Preview("신고") {
     CommentReportDialog(onCancel: {}, onConfirm: { _ in }).padding()
+}
+
+#Preview("신고 확인") {
+    ReportConfirmDialog(reason: .abuse, onCancel: {}, onConfirm: {}).padding()
 }
 
 #Preview("수정") {

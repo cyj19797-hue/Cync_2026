@@ -39,8 +39,9 @@ struct CalendarEventListView: View {
         VStack(spacing: 0) {
             ScreenNavigationBar(titleKey: .calendarMonthlyEvents, onBack: { dismiss() })
 
+            // The row pads its chips by `Spacing.xs` itself.
             CategoryFilterRow(selectedCategory: $viewModel.selectedCategory)
-                .padding(.top, Spacing.xs)
+                .padding(.top, Spacing.screenContentTop - Spacing.xs)
 
             CalendarMonthHeader(
                 month: viewModel.displayedMonth,

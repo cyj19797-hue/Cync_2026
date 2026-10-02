@@ -5,8 +5,9 @@
 //  Figma: "26 2 창학" file, frame `47:928` ("5 커뮤니티").
 //  Top bar (`47:930`) + a feed of `CommunityPostRow` (`139:1657` etc.).
 //  Tapping a row pushes "5-1 게시글" (`CommunityPostDetailView`) via
-//  `.navigationDestination(item:)`; the compose ("Mode") button pushes
-//  "5-2 게시글 등록" (`CommunityPostComposeView`) the same way, prepending
+//  `.navigationDestination(item:)`; the round floating compose button at
+//  the bottom right pushes "5-2 게시글 등록" (`CommunityPostComposeView`)
+//  the same way, prepending
 //  the finished draft to `posts`. The bottom tab bar (`47:931`) is not
 //  built here — it's RootTabView's `TabView`, this is just its "커뮤니티" tab
 //  content.
@@ -18,11 +19,12 @@
 //
 //  Header layout mirrors NoticeListView: the magnifying glass opens the
 //  shared `SearchBar` under the top bar (client-side title/body filter,
-//  `CommunityViewModel.filteredPosts`). The compose button still sits in
-//  the top bar, just left of search, until its final spot is decided —
-//  search takes the rightmost slot so it's in the same place as on the
-//  other tabs. Pull-to-refresh reloads the feed; an empty feed (or an
-//  empty search result) shows a centered message instead of a blank list.
+//  `CommunityViewModel.filteredPosts`) — the top bar holds only search,
+//  like the other tabs. Composing is the floating button
+//  (`composeButton`), disabled (gray) while the user is banned; the list
+//  keeps extra room at the bottom so the last row can scroll out from
+//  under it. Pull-to-refresh reloads the feed; an empty feed (or an empty
+//  search result) shows a centered message instead of a blank list.
 //
 //  Row insets and the list's top padding match NoticeListView, so the gap
 //  under the header and the row density are the same on both tabs.
@@ -60,23 +62,8 @@ struct CommunityView: View {
                 AppTopBar(title: .tabCommunity) {
                     Image(systemName: "face.smiling")
                 } trailing: {
-                    HStack(spacing: Spacing.md) {
-                        Button {
-                            isComposePresented = true
-                        } label: {
-                            Image(systemName: "square.and.pencil")
-                                .foregroundStyle(viewModel.isBanned ? Color.gray400 : Color.textPrimary)
-                        }
-                        .disabled(viewModel.isBanned)
-                        .accessibilityLabel(Text(.communityWrite))
-
-                        Button {
-                            isSearchPresented = true
-                        } label: {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundStyle(Color.textPrimary)
-                        }
-                        .accessibilityLabel(Text(.commonSearch))
+                    TopBarIconButton(systemImage: "magnifyingglass", labelKey: .commonSearch) {
+                        isSearchPresented = true
                     }
                 }
 
@@ -98,12 +85,21 @@ struct CommunityView: View {
                     }
                 }
                 .listStyle(.plain)
-                .padding(.top, Spacing.xxs)
+                // Rows add `Spacing.xs` (inset) + `Spacing.xxs` (their own
+                // padding) above the first post's text.
+                .padding(.top, Spacing.screenContentTop - Spacing.xs - Spacing.xxs)
                 .refreshable { await viewModel.load() }
+                // Room under the last row so it isn't stuck behind the
+                // floating compose button.
+                .contentMargins(.bottom, Self.composeButtonSize + Spacing.md * 2, for: .scrollContent)
                 .overlay {
                     if viewModel.hasLoaded && viewModel.filteredPosts.isEmpty {
                         emptyState
                     }
+                }
+                .overlay(alignment: .bottomTrailing) {
+                    composeButton
+                        .padding(Spacing.md)
                 }
             }
             .animation(.default, value: isSearchPresented)
@@ -142,6 +138,30 @@ struct CommunityView: View {
                 Text(viewModel.errorMessage ?? "")
             }
         }
+    }
+
+    private static let composeButtonSize: CGFloat = 56
+
+    /// Floating "글쓰기" — a round accent button at the bottom right of the
+    /// feed (it used to be a pencil in the top bar). Gray and disabled
+    /// while the user is banned from the community.
+    private var composeButton: some View {
+        Button {
+            isComposePresented = true
+        } label: {
+            Image(systemName: "pencil")
+                .font(.noticeNavTitle)
+                .foregroundStyle(Color.white)
+                .frame(width: Self.composeButtonSize, height: Self.composeButtonSize)
+                .background {
+                    Circle().fill(viewModel.isBanned ? Color.gray300 : Color.accentStrong)
+                }
+                .shadow(color: Color.textPrimary.opacity(0.18), radius: 8, y: 4)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.isBanned)
+        .accessibilityLabel(Text(.communityWrite))
     }
 
     private var emptyState: some View {

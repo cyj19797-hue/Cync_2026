@@ -195,9 +195,9 @@ enum CyncAPI {
     }
 
     /// One post — and the only call that bumps its view count (by 1 per
-    /// call; the list doesn't count). The response already carries the new
-    /// `viewCount` and this user's `likedByMe` (the token is sent, so the
-    /// server knows who's asking). Call once per opening of the detail.
+    /// call; the list doesn't count). Not called anywhere right now: the
+    /// app doesn't use 조회수, so the detail screen shows the list's copy.
+    /// Kept for when a single fresh post is needed.
     static func fetchPostDetail(id: Int) async throws -> CommunityPost {
         try await send(authorizedRequest(path: "/api/posts/\(id)", method: "GET"))
     }

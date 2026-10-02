@@ -9,8 +9,8 @@
 //  built here — it's RootTabView's `TabView`, this is just its "캘린더" tab
 //  content.
 //
-//  No UIKit anywhere on this screen (search reuses the existing
-//  Components/SearchBar.swift). The month grid looks like it might want
+//  No UIKit anywhere on this screen, and no search (unlike 공지사항 /
+//  커뮤니티 — events are found by month and category). The month grid looks like it might want
 //  `UICalendarView`, but that system component enforces its own selection
 //  chrome and can't reproduce this design's specific selected-day pill +
 //  per-day event dot, so a plain `LazyVGrid` of `CalendarDayCell` is both
@@ -34,7 +34,6 @@ enum MonthSlideDirection {
 
 struct CalendarView: View {
     @StateObject private var viewModel = CalendarViewModel()
-    @State private var isSearchPresented = false
     @State private var slideDirection: MonthSlideDirection = .forward
     @GestureState private var dragTranslation: CGFloat = 0
 
@@ -45,33 +44,18 @@ struct CalendarView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                // No search here — the calendar is browsed by month and
+                // category instead.
                 AppTopBar(title: .tabCalendar) {
                     Image(systemName: "calendar")
-                } trailing: {
-                    Button {
-                        isSearchPresented = true
-                    } label: {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(Color.textPrimary)
-                    }
-                    .accessibilityLabel(Text(.commonSearch))
                 }
 
-                // Same placement as NoticeListView's filter/search row —
-                // pinned under the top bar (outside the ScrollView) with the
-                // same `Spacing.xs` top padding — so the chips don't jump when
-                // switching between the 공지사항 and 캘린더 tabs.
-                if isSearchPresented {
-                    // UIKit UISearchBar — see Components/SearchBar.swift for why.
-                    SearchBar(text: $viewModel.searchText, isActive: $isSearchPresented)
-                        .padding(.horizontal, Spacing.xs)
-                        .padding(.top, Spacing.xs)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                } else {
-                    CategoryFilterRow(selectedCategory: $viewModel.selectedCategory)
-                        .padding(.top, Spacing.xs)
-                        .transition(.opacity)
-                }
+                // Same placement as NoticeListView's filter row — pinned
+                // under the top bar (outside the ScrollView) — so the chips
+                // don't jump when switching between the 공지사항 and 캘린더
+                // tabs. The row pads its chips by `Spacing.xs` itself.
+                CategoryFilterRow(selectedCategory: $viewModel.selectedCategory)
+                    .padding(.top, Spacing.screenContentTop - Spacing.xs)
 
                 ScrollView {
                     // Every visible gap is `Spacing.md`: filter → calendar
@@ -88,7 +72,6 @@ struct CalendarView: View {
                 }
             }
             .background(Color.appBackground)
-            .animation(.default, value: isSearchPresented)
             .toolbar(.hidden, for: .navigationBar)
             // Main tab screen — the bottom tab bar shows only while this
             // root is on screen (see TabBarVisibility.swift).

@@ -31,9 +31,7 @@ struct NotificationSettingsView: View {
                         // TODO: 공지사항 알림 세부 설정 화면 연동 필요
                     }
                 } header: {
-                    Text(.tabNotices)
-                        .font(.noticeTitle).tracking(Tracking.noticeTitle)
-                        .foregroundStyle(Color.textPrimary)
+                    ListSectionHeader(titleKey: .tabNotices, topPadding: Spacing.screenContentTop)
                 }
 
                 Section {
@@ -41,20 +39,17 @@ struct NotificationSettingsView: View {
                         // TODO: 사물함 결과 알림 세부 설정 화면 연동 필요
                     }
                 } header: {
-                    Text(.tabLockers)
-                        .font(.noticeTitle).tracking(Tracking.noticeTitle)
-                        .foregroundStyle(Color.textPrimary)
+                    ListSectionHeader(titleKey: .tabLockers)
                 }
 
                 Section {
                     NotificationSettingRow(titleKey: .commentTitle, isOn: $viewModel.preferences.commentAlerts)
                 } header: {
-                    Text(.tabCommunity)
-                        .font(.noticeTitle).tracking(Tracking.noticeTitle)
-                        .foregroundStyle(Color.textPrimary)
+                    ListSectionHeader(titleKey: .tabCommunity)
                 }
             }
             .listStyle(.plain)
+            .compactListSections()
             .background(Color.appBackground)
         }
         .background(Color.appBackground)

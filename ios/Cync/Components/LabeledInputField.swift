@@ -24,6 +24,10 @@ struct LabeledInputField: View {
     var textContentType: UITextContentType? = nil
     var submitLabel: SubmitLabel = .done
     var onSubmit: () -> Void = {}
+    /// ⓧ at the trailing edge (while there's text) to clear the field.
+    var showsClearButton: Bool = false
+    /// Focus the field as soon as it appears, so the keyboard comes up.
+    var focusesOnAppear: Bool = false
 
     /// Which of the two underlying fields has focus — a secure field swaps
     /// between `SecureField` and `TextField` when revealed, and focus is
@@ -57,6 +61,8 @@ struct LabeledInputField: View {
 
             if isSecure {
                 revealButton
+            } else if showsClearButton && !text.isEmpty {
+                clearButton
             }
         }
         .font(.loginFieldValue).tracking(Tracking.loginFieldValue)
@@ -67,6 +73,26 @@ struct LabeledInputField: View {
                 .strokeBorder(isFocused ? Color.accentStrong : Color.borderLight, lineWidth: isFocused ? 1.5 : 1)
         }
         .animation(.easeOut(duration: 0.15), value: isFocused)
+        .task {
+            guard focusesOnAppear else { return }
+            // A beat after appearing — focusing in the same instant can be
+            // dropped while the view is still animating in.
+            try? await Task.sleep(for: .milliseconds(150))
+            focusedField = isSecure ? .secure : .plain
+        }
+    }
+
+    private var clearButton: some View {
+        Button {
+            text = ""
+        } label: {
+            Image(systemName: "xmark.circle.fill")
+                .foregroundStyle(Color.gray400)
+                .frame(width: 24, height: 24)
+        }
+        .buttonStyle(.plain)
+        .minimumHitTarget(inset: 10)
+        .accessibilityLabel(Text(.commonClearText))
     }
 
     private var revealButton: some View {

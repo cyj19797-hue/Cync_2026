@@ -39,6 +39,21 @@ enum ProfileColor: String, CaseIterable, Codable {
         case .gray: return .profileGray
         }
     }
+
+    /// Spoken name for VoiceOver ("빨강, 선택됨").
+    var nameKey: LocalizedStringResource {
+        switch self {
+        case .red: return .profileColorRed
+        case .orange: return .profileColorOrange
+        case .yellow: return .profileColorYellow
+        case .green: return .profileColorGreen
+        case .mint: return .profileColorMint
+        case .blue: return .profileColorBlue
+        case .purple: return .profileColorPurple
+        case .pink: return .profileColorPink
+        case .gray: return .profileColorGray
+        }
+    }
 }
 
 extension UserProfile {

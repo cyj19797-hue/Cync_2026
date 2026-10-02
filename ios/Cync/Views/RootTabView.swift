@@ -125,8 +125,12 @@ struct RootTabView: View {
             selectedTab = tab
         } label: {
             VStack(spacing: Spacing.xxs) {
+                // Fixed icon box: SF Symbols differ in height (the calendar
+                // is shorter than the megaphone), and without this each
+                // label sat at a different height.
                 Image(systemName: tab.systemImage)
                     .font(.system(size: 22))
+                    .frame(width: 28, height: 26)
                 Text(tab.title)
                     .font(.tabItemLabel).tracking(Tracking.tabItemLabel)
             }

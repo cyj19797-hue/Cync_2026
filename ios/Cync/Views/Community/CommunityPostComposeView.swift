@@ -46,7 +46,7 @@ struct CommunityPostComposeView: View {
                 placeholderColor: .gray400,
                 textColor: .textPrimary
             )
-            .padding(.horizontal, Spacing.sm)
+            .padding(.horizontal, Spacing.screenHorizontal)
         }
         .background(Color.appBackground)
         .toolbar(.hidden, for: .navigationBar)
@@ -71,7 +71,9 @@ struct CommunityPostComposeView: View {
 
             CheckboxToggle(isChecked: $viewModel.isAnonymous, titleKey: .commonAnonymous)
         }
-        .padding(Spacing.sm)
+        .padding(.horizontal, Spacing.screenHorizontal)
+        .padding(.top, Spacing.screenContentTop)
+        .padding(.bottom, Spacing.cardInset)
     }
 
     private var submitButton: some View {

@@ -15,7 +15,6 @@ import Foundation
 @MainActor
 final class SettingsViewModel: ObservableObject {
     @Published var profile: UserProfile?
-    @Published var searchText: String = ""
     @Published var errorMessage: String?
 
     func loadProfile() async {
@@ -28,16 +27,23 @@ final class SettingsViewModel: ObservableObject {
         }
     }
 
-    func updateProfile(nickname: String, color: ProfileColor) async {
+    /// Saves via `PUT /api/me/profile`. Returns `nil` on success (and
+    /// `profile` — so the settings card — updates right away), or the
+    /// message the editor shows inside itself on failure. The server
+    /// doesn't say *why* a nickname was refused (taken vs. not allowed), so
+    /// those share one message; a network failure gets its own.
+    func updateProfile(nickname: String, color: ProfileColor) async -> String? {
         let trimmed = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
         do {
             let profile = try await CyncAPI.updateMyProfile(nickname: trimmed, color: color)
             self.profile = profile
             CurrentUserSession.shared.update(profile)
             NicknameSetupStore.markCompleted(for: profile.studentId)
+            return nil
+        } catch is URLError {
+            return String(appLocalized: .profileEditNetworkError)
         } catch {
-            errorMessage = String(appLocalized: .profileSaveFailedMessage)
+            return String(appLocalized: .profileEditServerError)
         }
     }
 }

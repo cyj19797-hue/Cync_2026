@@ -17,10 +17,10 @@ enum DialogActionStyle {
     case primary
 }
 
-/// A dialog's action button. Every button in a row stretches to the same
-/// width and is at least 44pt tall, so 취소 and a destructive 삭제 are both
-/// easy to hit and hard to mix up (rows put `Spacing.cardInset` between
-/// them). A lone button (e.g. 확인) spans the whole dialog.
+/// A dialog's action button: sized to its label with 10pt of padding all
+/// around (and never under 44×44pt, so it stays easy to hit). Rows put a
+/// `Spacer` first, so the buttons sit together at the dialog's trailing
+/// edge — 취소 then the main action — `Spacing.xs` apart.
 struct DialogActionButton: View {
     let titleKey: LocalizedStringResource
     var style: DialogActionStyle = .secondary
@@ -38,9 +38,8 @@ struct DialogActionButton: View {
                 .font(.categoryChip).tracking(Tracking.categoryChip)
                 .foregroundStyle(style == .primary ? Color.white : Color.textPrimary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, Spacing.xs)
-                .padding(.vertical, Spacing.cardInset)
-                .frame(maxWidth: .infinity, minHeight: 44)
+                .padding(10)
+                .frame(minWidth: 44, minHeight: 44)
                 .background {
                     RoundedRectangle(cornerRadius: Radius.chipSelected)
                         .fill(style == .primary ? tint : Color.surface)
@@ -53,7 +52,8 @@ struct DialogActionButton: View {
 }
 
 #Preview {
-    HStack(spacing: Spacing.cardInset) {
+    HStack(spacing: Spacing.xs) {
+        Spacer(minLength: 0)
         DialogActionButton(titleKey: "취소") {}
         DialogActionButton(titleKey: "삭제", style: .primary) {}
     }

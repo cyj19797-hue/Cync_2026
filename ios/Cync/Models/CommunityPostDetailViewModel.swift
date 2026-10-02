@@ -48,27 +48,12 @@ final class CommunityPostDetailViewModel: ObservableObject {
     /// here once the server has one.
     private static let moderatorRoles: Set<String> = ["ADMIN"]
 
-    /// The detail request (which bumps the view count) has been made for
-    /// this opening — never again, even if the view's task re-runs.
-    private var hasRecordedView = false
     /// A like request is in flight — further taps wait for it.
     private var isTogglingLike = false
 
     init(post: CommunityPost) {
         self.post = post
         self.currentUser = CurrentUserSession.shared.profile
-    }
-
-    /// `GET /api/posts/{id}`: counts this opening as one view and swaps in
-    /// the fresh post (new `viewCount`, current `likeCount`/`likedByMe`).
-    /// Once per detail screen. On failure the list's copy stays on screen
-    /// — nothing the user needs to act on.
-    func recordViewAndRefresh() async {
-        guard !hasRecordedView else { return }
-        hasRecordedView = true
-        if let fresh = try? await CyncAPI.fetchPostDetail(id: post.id) {
-            post = fresh
-        }
     }
 
     func loadComments() async {
@@ -192,6 +177,11 @@ final class CommunityPostDetailViewModel: ObservableObject {
         } catch {
             errorMessage = String(appLocalized: .commentActionFailed(error.localizedDescription))
         }
+    }
+
+    /// Written by the signed-in user (false until `/api/me` loads).
+    func isMine(_ comment: Comment) -> Bool {
+        comment.authorId == currentUser?.studentId
     }
 
     func actions(for comment: Comment) -> [CommentAction] {

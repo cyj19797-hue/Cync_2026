@@ -42,7 +42,7 @@ struct CyncNoticeDetailView: View {
                     }
                 }
                 .padding(.horizontal, Spacing.screenHorizontal)
-                .padding(.top, Spacing.xs)
+                .padding(.top, Spacing.screenContentTop)
                 .padding(.bottom, Spacing.md)
             }
         }

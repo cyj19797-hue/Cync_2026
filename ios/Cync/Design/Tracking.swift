@@ -79,6 +79,7 @@ enum Tracking {
 
     // MARK: - "5-1 게시글" (post detail)
     static let postDetailTitle: CGFloat = standard
+    static let communityPostDetailTitle: CGFloat = standard
     static let commentAuthor: CGFloat = standard
     static let commentsSectionTitle: CGFloat = standard
     static let commentReplyButton: CGFloat = standard

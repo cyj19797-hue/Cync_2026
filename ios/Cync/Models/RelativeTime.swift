@@ -3,14 +3,17 @@
 //  Cync
 //
 //  Shared timestamp formatting for the community feed, post detail, and
-//  comments: "방금" under a minute, then "N분 전" / "N시간 전" / "N일 전"
-//  ("Just now" / "N minutes ago" / …) up to a week, and past that the same
-//  absolute date the notice board shows ("2026.09.04." in Korean,
-//  "Sep 4, 2026" in English) — `Notice.dateText` uses `absoluteDateText`
-//  below so the two boards can't drift apart.
+//  comments:
+//    - under a minute: "방금" / "Just now"
+//    - under an hour: "N분 전" / "N minutes ago"
+//    - under a day: "N시간 전" / "N hours ago"
+//    - older, same year: month/day — "9/15"
+//    - older, earlier year: two-digit year too — "25/9/15" in Korean,
+//      "9/15/25" in English (each language's own order)
 //
 //  Thresholds are elapsed time, not calendar days (a post from 23:50
-//  yesterday reads "N분 전" at 00:10, not "1일 전").
+//  yesterday reads "N분 전" at 00:10). The notice boards keep their full
+//  date (`absoluteDateText`, "2026.09.04.") — `Notice.dateText` uses it.
 //
 
 import Foundation
@@ -30,11 +33,25 @@ enum RelativeTime {
             return String(appLocalized: .timeMinutesAgo(Int(seconds / minute)))
         case ..<day:
             return String(appLocalized: .timeHoursAgo(Int(seconds / hour)))
-        case ..<(7 * day):
-            return String(appLocalized: .timeDaysAgo(Int(seconds / day)))
         default:
-            return absoluteDateText(for: date)
+            return shortDateText(for: date, now: now)
         }
+    }
+
+    /// "9/15" this year, "25/9/15" (Korean) / "9/15/25" (English) for an
+    /// earlier year — no leading zeros on month or day. The order per
+    /// language lives in Localizable.xcstrings (`time.monthDay`,
+    /// `time.yearMonthDay`), not here.
+    static func shortDateText(for date: Date, now: Date = Date()) -> String {
+        let calendar = Calendar.current
+        let parts = calendar.dateComponents([.year, .month, .day], from: date)
+        guard let year = parts.year, let month = parts.month, let day = parts.day else { return "" }
+
+        if year == calendar.component(.year, from: now) {
+            return String(appLocalized: .timeMonthDay(month, day))
+        }
+        let shortYear = String(format: "%02d", year % 100)
+        return String(appLocalized: .timeYearMonthDay(shortYear, month, day))
     }
 
     /// Absolute date in the current locale: "2026.09.01." in Korean,

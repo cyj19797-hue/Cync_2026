@@ -72,8 +72,8 @@ struct ScreenNavigationBar<Trailing: View>: View {
                     .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { trailingWidth = $0 }
             }
         }
+        // Exactly 44pt tall, the same as `AppTopBar`.
         .frame(minHeight: 44)
-        .padding(.vertical, Spacing.xxs)
         .padding(.horizontal, Spacing.md)
         .background(Color.appBackground)
     }

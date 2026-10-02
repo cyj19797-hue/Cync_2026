@@ -235,6 +235,10 @@ extension Font {
     // MARK: - "5-1 게시글" (post detail)
 
     /// Post detail title ("뿌릿 이햣 듀듀") — Pretendard Bold 20.
+    /// "5-1 게시글" post title — Bold 18, a step under `.postDetailTitle`
+    /// (20) so the title doesn't overpower the body right below it.
+    static var communityPostDetailTitle: Font { .appDefault(.bold, size: 18, relativeTo: .headline) }
+
     static var postDetailTitle: Font { .appDefault(.bold, size: 20, relativeTo: .title3) }
 
     /// "익명" author name (post header + every comment) — Pretendard SemiBold 14.

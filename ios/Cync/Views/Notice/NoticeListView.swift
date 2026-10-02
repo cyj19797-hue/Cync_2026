@@ -53,13 +53,9 @@ struct NoticeListView: View {
                 AppTopBar(title: .tabNotices) {
                     Image(systemName: "megaphone")
                 } trailing: {
-                    Button {
+                    TopBarIconButton(systemImage: "magnifyingglass", labelKey: .commonSearch) {
                         isSearchPresented = true
-                    } label: {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(Color.textPrimary)
                     }
-                    .accessibilityLabel(Text(.commonSearch))
                 }
 
                 if isSearchPresented {
@@ -68,8 +64,9 @@ struct NoticeListView: View {
                         .padding(.top, Spacing.xs)
                         .transition(.move(edge: .top).combined(with: .opacity))
                 } else {
+                    // The row pads its chips by `Spacing.xs` itself.
                     CategoryFilterRow(selectedCategory: $viewModel.selectedCategory)
-                        .padding(.top, Spacing.xs)
+                        .padding(.top, Spacing.screenContentTop - Spacing.xs)
                         .transition(.opacity)
                 }
 

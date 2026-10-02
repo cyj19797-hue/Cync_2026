@@ -75,6 +75,11 @@ extension Color {
     /// Used on "1-5 로그인"'s "로그인" button.
     static let accentStrong = Color(hex: 0x0A6FC2)
 
+    /// Figma style: `secondaryColor` (#FF4194) — the reply icon of the
+    /// comment you're currently replying to on "5-1 게시글" (~3.1:1 on the
+    /// comments' gray, above the 3:1 minimum for icons).
+    static let secondaryAccent = Color(hex: 0xFF4194)
+
     /// Not in Figma — border of an unchecked checkbox. `borderLight` was
     /// ~1.3:1 against the card behind it (nearly invisible); this clears
     /// the 3:1 minimum for control outlines on white/`gray50`.
@@ -167,7 +172,9 @@ extension Color {
     static let profileMint = Color(hex: 0x00C7BE)
     static let profileBlue = Color(hex: 0x007AFF)
     static let profilePurple = Color(hex: 0xAF52DE)
-    static let profilePink = Color(hex: 0xFF2D55)
+    /// Lighter, bluer pink than the system's #FF2D55, which read almost the
+    /// same as `profileRed` (#FF3B30) in the picker. Still saved as PINK.
+    static let profilePink = Color(hex: 0xFF5FB4)
     static let profileGray = Color(hex: 0x8E8E93)
 }
 

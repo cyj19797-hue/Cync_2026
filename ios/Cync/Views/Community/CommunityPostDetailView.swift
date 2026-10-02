@@ -53,8 +53,21 @@ struct CommunityPostDetailView: View {
     /// The comment whose ⋮ menu is open.
     @State private var menuComment: Comment?
     @State private var draft = ""
-    /// Default checked — comments are anonymous unless the user opts out.
-    @State private var isAnonymous = true
+    /// "익명으로 작성" — on by default, then whatever the user last chose
+    /// (kept across posts and launches).
+    @AppStorage("commentPostsAnonymously") private var isAnonymous = true
+    @ScaledMetric(relativeTo: .subheadline) private var reactionIconSize: CGFloat = 17
+
+    /// The comment input is showing.
+    @State private var isComposing = false
+    /// Whose comment `draft` was typed for: a comment's id when replying,
+    /// `postDraftOwner` for a comment on the post itself. Closing the input
+    /// keeps the draft; opening it for someone else starts a fresh one.
+    @State private var draftOwnerID = Self.postDraftOwner
+    /// Set for a moment when a reply/comment icon opens or retargets the
+    /// input, so the "tap anywhere to close" gesture firing for the same
+    /// tap doesn't immediately close it again.
+    @State private var isOpeningComposer = false
     @State private var replyTarget: Comment?
     @State private var dialog: Dialog?
     @FocusState private var isInputFocused: Bool
@@ -74,7 +87,9 @@ struct CommunityPostDetailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScreenNavigationBar(titleKey: .communityBoardFree, onBack: { dismiss() })
+            ScreenNavigationBar(titleKey: .communityBoardFree, onBack: { dismiss() }) {
+                postMenuButton
+            }
 
             ScrollViewReader { proxy in
                 ScrollView {
@@ -82,19 +97,37 @@ struct CommunityPostDetailView: View {
                         postHeader
                         commentsSection
                     }
+                    // Tap anywhere above the input to close it (the draft
+                    // stays). Simultaneous, so buttons still work.
+                    .contentShape(Rectangle())
+                    .simultaneousGesture(TapGesture().onEnded { requestCloseComposer() })
                 }
                 .scrollDismissesKeyboard(.interactively)
-                .background(Color.appBackground)
+                // White behind the post, the comments' gray below it: when
+                // the comments are short, the gray runs on down to the
+                // input bar instead of stopping in a white gap.
+                .background {
+                    VStack(spacing: 0) {
+                        Color.appBackground
+                        Color.calendarSurface
+                    }
+                    // The empty gray below short comments closes it too.
+                    .onTapGesture { requestCloseComposer() }
+                }
                 .safeAreaInset(edge: .bottom, spacing: 0) {
                     CommentInputBar(
                         text: $draft,
                         isAnonymous: $isAnonymous,
-                        replyingTo: replyTarget.map { viewModel.authorLabel(for: $0).text },
+                        isComposing: $isComposing,
                         isSubmitting: viewModel.isSubmittingComment,
                         isFocused: $isInputFocused,
-                        onCancelReply: { replyTarget = nil },
                         onSubmit: submitComment
                     )
+                }
+                .animation(.easeOut(duration: 0.2), value: isComposing)
+                // Keyboard swiped away → input closes too (draft kept).
+                .onChange(of: isInputFocused) { _, isFocused in
+                    if !isFocused && !isOpeningComposer { closeComposer() }
                 }
                 .onChange(of: viewModel.lastPostedCommentId) { _, id in
                     guard let id else { return }
@@ -111,11 +144,10 @@ struct CommunityPostDetailView: View {
             onResult: { viewModel.finishTranslation($0) }
         )
         .task {
-            // `.task`, not `.onAppear`: closing a popup here mustn't count
-            // another view (the view model also guards against repeats).
-            async let view: Void = viewModel.recordViewAndRefresh()
-            async let comments: Void = viewModel.loadComments()
-            _ = await (view, comments)
+            // No `GET /api/posts/{id}` here: that call bumps the view count,
+            // and 조회수 isn't used. The list's copy (with `likedByMe`) is
+            // what this screen shows.
+            await viewModel.loadComments()
         }
         .onChange(of: viewModel.post) { _, post in
             onPostChanged(post)
@@ -139,34 +171,14 @@ struct CommunityPostDetailView: View {
 
     private var postHeader: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
-            HStack(alignment: .top, spacing: Spacing.xs) {
-                AuthorLine(authorName: viewModel.post.displayAuthorName, createdAt: viewModel.post.createdAt)
-
-                Spacer(minLength: 0)
-
-                // Figma: "더보기(케밥) 버튼" — opens `postMenuItems` beneath
-                // it. Hidden until `/api/me` says whose post this is.
-                if !viewModel.postActions.isEmpty {
-                    Button {
-                        isInputFocused = false
-                        openMenuID = openMenuID == Self.postMenuID ? nil : Self.postMenuID
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .rotationEffect(.degrees(90))
-                            .foregroundStyle(Color.textPrimary)
-                            .frame(width: 24, height: 24)
-                    }
-                    .buttonStyle(.plain)
-                    .minimumHitTarget(inset: 10)
-                    .accessibilityLabel(Text(.communityMore))
-                    .popupMenuAnchor(id: Self.postMenuID)
-                }
-            }
+            AuthorLine(authorName: viewModel.post.displayAuthorName, createdAt: viewModel.post.createdAt)
 
             Text(viewModel.displayedTitle)
-                .font(.postDetailTitle).tracking(Tracking.postDetailTitle)
+                .font(.communityPostDetailTitle).tracking(Tracking.communityPostDetailTitle)
                 .foregroundStyle(Color.textPrimary)
                 .padding(.top, Spacing.xxs)
+                // 12pt to the body (stack spacing 8 + 4).
+                .padding(.bottom, Spacing.xxs)
 
             Text(viewModel.displayedContent)
                 .font(.communityPostBody).tracking(Tracking.communityPostBody)
@@ -184,31 +196,40 @@ struct CommunityPostDetailView: View {
                         systemImage: viewModel.post.likedByMe ? "heart.fill" : "heart",
                         count: viewModel.post.likeCount
                     )
-                    .frame(minHeight: 20)
+                    // ≥20pt visible box so the 12pt inset reaches 44×44,
+                    // even with no number next to the icon.
+                    .frame(minWidth: 20, minHeight: 20)
                     .minimumHitTarget()
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text(.commentLike))
-                .accessibilityValue(Text(viewModel.post.likeCount, format: .number))
+                .accessibilityValue(viewModel.post.likeCount > 0 ? Text(viewModel.post.likeCount, format: .number) : Text(verbatim: ""))
                 .accessibilityAddTraits(viewModel.post.likedByMe ? .isSelected : [])
                 .foregroundStyle(viewModel.post.likedByMe ? Color.eventAccent : Color.textSecondary)
 
                 // Comments still on screen as comments — replies included,
-                // "삭제된 댓글입니다" placeholders not.
-                reactionLabel(systemImage: "bubble.right", count: viewModel.visibleCommentCount)
-                    .foregroundStyle(Color.textSecondary)
-
-                Spacer(minLength: 0)
-
-                // 조회수 — counted by the detail request on opening this screen.
-                reactionLabel(systemImage: "eye", count: viewModel.post.viewCount)
-                    .foregroundStyle(Color.textSecondary)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(Text(.communityViewCount(viewModel.post.viewCount)))
+                // "삭제된 댓글입니다" placeholders not. Tapping opens the
+                // comment input (a new comment, not a reply).
+                Button {
+                    startComposing(replyingTo: nil)
+                } label: {
+                    reactionLabel(systemImage: "bubble.right", count: viewModel.visibleCommentCount)
+                        .frame(minWidth: 20, minHeight: 20)
+                        .minimumHitTarget()
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Color.textSecondary)
+                .accessibilityLabel(Text(.commentWrite))
+                .accessibilityValue(viewModel.visibleCommentCount > 0 ? Text(viewModel.visibleCommentCount, format: .number) : Text(verbatim: ""))
             }
             .padding(.top, Spacing.xs)
         }
-        .padding(Spacing.md)
+        .padding(.horizontal, Spacing.md)
+        .padding(.top, Spacing.screenContentTop)
+        .padding(.bottom, Spacing.md)
+        // Its own white, so a long post never shows the scroll view's gray
+        // lower half behind it.
+        .background(Color.appBackground)
     }
 
     private var translationButton: some View {
@@ -238,15 +259,45 @@ struct CommunityPostDetailView: View {
         .padding(.top, Spacing.xxs)
     }
 
+    /// Icon + count, with no number at 0 (an unliked post shows just the
+    /// heart; liking it shows "1", unliking goes back to the bare heart).
+    /// The next reaction sits right after whatever's there, so a missing
+    /// number doesn't leave a gap.
     private func reactionLabel(systemImage: String, count: Int) -> some View {
         HStack(spacing: 2) {
-            Image(systemName: systemImage)
-            Text(count, format: .number)
+            // Same fitted square as the comments' icons, so the heart and
+            // the bubble come out the same size.
+            ReactionIcon(systemName: systemImage, size: reactionIconSize)
+            if count > 0 {
+                Text(count, format: .number)
+            }
         }
         .font(.communityReactionCount).tracking(Tracking.communityReactionCount)
     }
 
     private static let postMenuID = "post"
+
+    /// Figma's "더보기(케밥) 버튼", in the nav bar's trailing slot — opens
+    /// `postMenuItems` beneath it. Empty until `/api/me` says whose post
+    /// this is (the slot just stays blank).
+    @ViewBuilder
+    private var postMenuButton: some View {
+        if !viewModel.postActions.isEmpty {
+            Button {
+                isInputFocused = false
+                openMenuID = openMenuID == Self.postMenuID ? nil : Self.postMenuID
+            } label: {
+                Image(systemName: "ellipsis")
+                    .rotationEffect(.degrees(90))
+                    .foregroundStyle(Color.textPrimary)
+                    .frame(width: 44, height: 44, alignment: .trailing)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text(.communityMore))
+            .popupMenuAnchor(id: Self.postMenuID)
+        }
+    }
 
     private var openMenuItems: [PopupMenuItem] {
         if openMenuID == Self.postMenuID { return postMenuItems }
@@ -292,24 +343,29 @@ struct CommunityPostDetailView: View {
 
     private var commentsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text(.commentTitle)
+            Text(.commentTitleCount(viewModel.visibleCommentCount))
                 .font(.commentsSectionTitle).tracking(Tracking.commentsSectionTitle)
                 .foregroundStyle(Color.textPrimary)
 
             CommentListView(
                 threads: viewModel.commentThreads,
                 authorLabel: { viewModel.authorLabel(for: $0) },
+                postAuthorName: viewModel.post.displayAuthorName,
+                isMine: { viewModel.isMine($0) },
+                replyTargetID: replyTarget?.id,
                 actions: { viewModel.actions(for: $0) },
                 onLike: { viewModel.toggleCommentLike($0) },
                 onReply: { comment in
-                    replyTarget = comment
-                    isInputFocused = true
+                    startComposing(replyingTo: comment)
                 },
                 onMore: { comment in
                     isInputFocused = false
                     let id = CommentRow.menuAnchorID(for: comment)
                     menuComment = comment
                     openMenuID = openMenuID == id ? nil : id
+                },
+                onAction: { comment, action in
+                    handle(comment, action)
                 }
             )
         }
@@ -335,9 +391,50 @@ struct CommunityPostDetailView: View {
             )
             if didPost {
                 draft = ""
-                replyTarget = nil
-                isInputFocused = false
+                closeComposer()
             }
+        }
+    }
+
+    /// Opens the comment input — the composer focuses its own field as it
+    /// appears, so the keyboard always comes up.
+    private static let postDraftOwner = -1
+
+    private func startComposing(replyingTo comment: Comment?) {
+        openMenuID = nil
+        isOpeningComposer = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { isOpeningComposer = false }
+
+        let owner = comment?.id ?? Self.postDraftOwner
+        if owner != draftOwnerID {
+            // A different post/comment than the draft was for — start over.
+            draft = ""
+            draftOwnerID = owner
+        }
+        replyTarget = comment
+        if isComposing {
+            // Already open (retargeting): keep the keyboard up.
+            isInputFocused = true
+        } else {
+            isComposing = true
+        }
+    }
+
+    /// Closes the input, keeping `draft` (and whom it was for) so reopening
+    /// it for the same target picks up where the user left off.
+    private func closeComposer() {
+        guard isComposing else { return }
+        isInputFocused = false
+        replyTarget = nil
+        isComposing = false
+    }
+
+    /// From the "tap anywhere" gestures — deferred a turn so a tap that
+    /// also hit a reply/comment icon (which opens it) wins.
+    private func requestCloseComposer() {
+        DispatchQueue.main.async {
+            guard !isOpeningComposer else { return }
+            closeComposer()
         }
     }
 
@@ -357,6 +454,9 @@ struct CommunityPostDetailView: View {
         case report(Comment)
         case edit(Comment)
         case reportPost
+        /// "정말 신고할까요?" after a reason was picked — `nil` comment means
+        /// the post itself.
+        case confirmReport(Comment?, ReportReason)
         case deletePost
         case reportDone(ReportTargetKind)
         case error(String)
@@ -367,6 +467,7 @@ struct CommunityPostDetailView: View {
             case .report(let comment): return "report-\(comment.id)"
             case .edit(let comment): return "edit-\(comment.id)"
             case .reportPost: return "reportPost"
+            case .confirmReport(let comment, let reason): return "confirmReport-\(comment?.id ?? -1)-\(reason.rawValue)"
             case .deletePost: return "deletePost"
             case .reportDone: return "reportDone"
             case .error(let message): return "error-\(message)"
@@ -400,8 +501,7 @@ struct CommunityPostDetailView: View {
             }
         case .report(let comment):
             CommentReportDialog(onCancel: dismissDialog) { reason in
-                dismissDialog()
-                Task { await viewModel.reportComment(comment, reason: reason) }
+                self.dialog = .confirmReport(comment, reason)
             }
         case .edit(let comment):
             CommentEditDialog(initialText: comment.content, onCancel: dismissDialog) { text in
@@ -410,8 +510,18 @@ struct CommunityPostDetailView: View {
             }
         case .reportPost:
             CommentReportDialog(titleKey: .postReportConfirmTitle, onCancel: dismissDialog) { reason in
+                self.dialog = .confirmReport(nil, reason)
+            }
+        case .confirmReport(let comment, let reason):
+            ReportConfirmDialog(reason: reason, onCancel: dismissDialog) {
                 dismissDialog()
-                Task { await viewModel.reportPost(reason: reason) }
+                Task {
+                    if let comment {
+                        await viewModel.reportComment(comment, reason: reason)
+                    } else {
+                        await viewModel.reportPost(reason: reason)
+                    }
+                }
             }
         case .deletePost:
             CommentDeleteDialog(

@@ -63,7 +63,8 @@ struct LockerPasswordVerifyDialog: View {
                     .foregroundStyle(Color.accentRed)
             }
 
-            HStack(spacing: Spacing.cardInset) {
+            HStack(spacing: Spacing.xs) {
+                Spacer(minLength: 0)
                 DialogActionButton(titleKey: .commonCancel, action: onClose)
                 // "비밀번호 보기" says what happens, unlike "확인".
                 DialogActionButton(
@@ -96,7 +97,8 @@ struct LockerPasswordVerifyDialog: View {
             .foregroundStyle(Color.textPrimary)
             .padding(.vertical, Spacing.xxs)
 
-            HStack(spacing: Spacing.cardInset) {
+            HStack(spacing: Spacing.xs) {
+                Spacer(minLength: 0)
                 DialogActionButton(titleKey: .commonOk, action: onClose)
             }
         }

@@ -2,7 +2,7 @@
 //  LanguagePickerDialog.swift
 //  Cync
 //
-//  설정 > "언어 설정" popup: 기기 설정 따르기 / 한국어 / English. Picking one
+//  설정 > "언어 설정" popup: 시스템 설정값 / 한국어 / English. Picking one
 //  applies it immediately (see AppLanguage.swift) and closes the popup.
 //  Same `DialogCard` chrome and radio rows as `CommentReportDialog`.
 //
@@ -33,7 +33,8 @@ struct LanguagePickerDialog: View {
             }
             .padding(.bottom, Spacing.xs)
 
-            HStack(spacing: Spacing.cardInset) {
+            HStack(spacing: Spacing.xs) {
+                Spacer(minLength: 0)
                 DialogActionButton(titleKey: .commonCancel, action: onCancel)
             }
         }

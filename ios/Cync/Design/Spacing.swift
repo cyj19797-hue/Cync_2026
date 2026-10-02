@@ -30,6 +30,11 @@ enum Spacing {
     /// body, list rows) so every block on the screen starts at the same x.
     /// Same 16pt as `md`, and as `ScreenNavigationBar`'s own side padding.
     static let screenHorizontal: CGFloat = md
+    /// Gap from the bottom of a screen's top bar (`AppTopBar` /
+    /// `ScreenNavigationBar`) to the top of its first content element —
+    /// the same on every screen, so content never starts at a different
+    /// height from one screen to the next.
+    static let screenContentTop: CGFloat = cardInset
 }
 
 /// Corner radius tokens.

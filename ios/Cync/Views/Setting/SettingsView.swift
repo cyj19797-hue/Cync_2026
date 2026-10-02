@@ -13,13 +13,13 @@
 //  `TabView`, this is just its "설정" tab content.
 //
 //  No UIKit here — the top bar reuses Components/AppTopBar.swift (shared
-//  with NoticeListView/CommunityView/LockerView) and search reuses the
-//  existing Components/SearchBar.swift (pure SwiftUI); "언어 설정" opens
-//  `LanguagePickerDialog`, a custom popup (기기 설정 따르기 / 한국어 / English)
+//  with NoticeListView/CommunityView/LockerView), titled "설정" (no search:
+//  with this few rows there was nothing to filter); "언어 설정" opens
+//  `LanguagePickerDialog`, a custom popup (시스템 설정값 / 한국어 / English)
 //  that switches the app language in place — see AppLanguage.swift. The
 //  logout/withdraw confirmations use native `.confirmationDialog`, and
-//  the nickname editor uses a native `.alert` with a `TextField` (supported
-//  directly by SwiftUI since iOS 16) instead of a hand-built prompt.
+//  tapping the profile card opens `ProfileEditSheet`, a custom bottom sheet
+//  shown as a full-screen overlay (the tab bar hides meanwhile).
 //
 
 import SwiftUI
@@ -28,7 +28,6 @@ import UIKit
 struct SettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
     @EnvironmentObject private var sessionStore: SessionStore
-    @State private var isSearchPresented = false
     @State private var isEditingProfile = false
     @State private var isLogoutConfirmPresented = false
     @State private var isWithdrawConfirmPresented = false
@@ -40,23 +39,12 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                AppTopBar(title: .settingsTitle, trailing: {
-                    Button {
-                        isSearchPresented = true
-                    } label: {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(Color.textPrimary)
-                    }
-                    .accessibilityLabel(Text(.commonSearch))
+                // Same tab icon as the other four tabs' bars. Labeled
+                // `leading:` — a lone trailing closure would land in the
+                // `trailing` slot.
+                AppTopBar(title: .settingsTitle, leading: {
+                    Image(systemName: "gearshape")
                 })
-
-                if isSearchPresented {
-                    // TODO: 설정 항목이 적어 실제 필터링은 아직 구현하지 않음 — 검색 UI만 제공
-                    SearchBar(text: $viewModel.searchText, isActive: $isSearchPresented)
-                        .padding(.horizontal, Spacing.xs)
-                        .padding(.top, Spacing.xs)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
 
                 List {
                     Section {
@@ -66,9 +54,12 @@ struct SettingsView: View {
                         ) {
                             isEditingProfile = true
                         }
-                        .listRowInsets(EdgeInsets())
+                        .listRowInsets(EdgeInsets(top: Spacing.xs, leading: Spacing.md, bottom: Spacing.xs, trailing: Spacing.md))
                         .listRowSeparator(.hidden)
-                        .padding(.vertical, Spacing.xs)
+                    } header: {
+                        // First header — same distance under the top bar as
+                        // every screen's first content.
+                        ListSectionHeader(titleKey: .settingsMyProfile, topPadding: Spacing.screenContentTop)
                     }
 
                     Section {
@@ -90,25 +81,24 @@ struct SettingsView: View {
                         }
                         SettingsInfoRow(systemImage: "info.circle", titleKey: .settingsAppInfo, value: appVersionText)
                     } header: {
-                        Text(.tabSettings)
-                            .font(.noticeTitle).tracking(Tracking.noticeTitle)
-                            .foregroundStyle(Color.textPrimary)
+                        // "앱 설정", not "설정" — the screen title is already "설정".
+                        ListSectionHeader(titleKey: .settingsAppSection)
                     }
 
                     Section {
-                        SettingsRow(systemImage: "rectangle.portrait.and.arrow.right", titleKey: .settingsLogout) {
+                        // No chevron: these open a confirmation, not a screen.
+                        SettingsRow(systemImage: "rectangle.portrait.and.arrow.right", titleKey: .settingsLogout, showsChevron: false) {
                             isLogoutConfirmPresented = true
                         }
-                        SettingsRow(systemImage: "person.crop.circle.badge.xmark", titleKey: .settingsWithdraw) {
+                        SettingsRow(systemImage: "person.crop.circle.badge.xmark", titleKey: .settingsWithdraw, showsChevron: false) {
                             isWithdrawConfirmPresented = true
                         }
                     } header: {
-                        Text(.settingsAccount)
-                            .font(.noticeTitle).tracking(Tracking.noticeTitle)
-                            .foregroundStyle(Color.textPrimary)
+                        ListSectionHeader(titleKey: .settingsAccount)
                     }
                 }
                 .listStyle(.plain)
+                .compactListSections()
             }
             .navigationDestination(isPresented: $isNotificationSettingsPresented) {
                 NotificationSettingsView()
@@ -117,21 +107,12 @@ struct SettingsView: View {
                 CyncNoticeListView()
             }
             .background(Color.appBackground)
-            .animation(.default, value: isSearchPresented)
             .toolbar(.hidden, for: .navigationBar)
             // Main tab screen — the bottom tab bar shows only while this
             // root is on screen (see TabBarVisibility.swift).
-            .showsTabBar()
+            .showsTabBar(!isEditingProfile)
             .task {
                 await viewModel.loadProfile()
-            }
-            .sheet(isPresented: $isEditingProfile) {
-                ProfileEditSheet(
-                    currentNickname: viewModel.profile?.nickname ?? "",
-                    currentColor: viewModel.profile?.profileColor ?? .blue
-                ) { nickname, color in
-                    Task { await viewModel.updateProfile(nickname: nickname, color: color) }
-                }
             }
             .alert(
                 Text(.commonError),
@@ -156,7 +137,26 @@ struct SettingsView: View {
             }
         }
         .overlay { languagePickerOverlay }
+        .overlay { profileEditorOverlay }
+        .animation(.easeOut(duration: 0.25), value: isEditingProfile)
         .animation(.easeOut(duration: 0.2), value: isLanguagePickerPresented)
+    }
+
+    /// "프로필 수정" — a custom bottom sheet over the whole screen (the tab
+    /// bar hides while it's up, see `.showsTabBar`).
+    @ViewBuilder
+    private var profileEditorOverlay: some View {
+        if isEditingProfile {
+            ProfileEditSheet(
+                currentNickname: viewModel.profile?.nickname ?? "",
+                currentColor: viewModel.profile?.profileColor ?? .blue,
+                onSave: { nickname, color in
+                    await viewModel.updateProfile(nickname: nickname, color: color)
+                },
+                onClose: { isEditingProfile = false }
+            )
+            .transition(.opacity)
+        }
     }
 
     @ViewBuilder
@@ -181,11 +181,14 @@ struct SettingsView: View {
         }
     }
 
-    /// "프로그램 정보" value, e.g. "1.0.0v" — the app's version
-    /// (`MARKETING_VERSION` in the Xcode project, read from the bundle).
+    /// "프로그램 정보" value, e.g. "v1.0.0" — the app's version
+    /// (`MARKETING_VERSION` in the Xcode project, read from the bundle),
+    /// always shown as major.minor.patch ("1.0" → "1.0.0").
     private var appVersionText: String {
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
-        return String(appLocalized: .settingsAppVersion(version))
+        let raw = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        var parts = raw.split(separator: ".").map(String.init)
+        while !parts.isEmpty && parts.count < 3 { parts.append("0") }
+        return String(appLocalized: .settingsAppVersion(parts.joined(separator: ".")))
     }
 
     /// "오류 및 문의" — opens the team's KakaoTalk open-chat link. A plain

@@ -2,11 +2,17 @@
 //  AppTopBar.swift
 //  Cync
 //
-//  Shared top bar for NoticeListView / CommunityView / LockerView. All
-//  three built a near-identical `HStack { icon; Text(title) }` inside
-//  `ToolbarItem(placement: .topBarLeading)`, only differing in the icon and
-//  in what (if anything) sits in the trailing slot — see each screen's own
-//  comment header for what moved where.
+//  Shared top bar for the five main tabs (공지사항 / 캘린더 / 사물함 /
+//  커뮤니티 / 설정): tab icon + bold title on the left, icon buttons on the
+//  right.
+//
+//  The bar fixes the geometry so every tab lines up exactly, whatever
+//  symbols it uses: the leading icon is drawn at the title's size in a
+//  fixed square (so the title always starts at the same x — SF Symbols
+//  differ in width), the bar is at least 44pt tall, and trailing actions
+//  are `TopBarIconButton`s (44×44pt each, icons at the same size as the
+//  leading one), with the bar's trailing padding trimmed so the last
+//  icon's edge lines up with the screen's 16pt margin.
 //
 //  Deliberately NOT built on `.toolbar` / `ToolbarItem(placement: .topBarLeading/.topBarTrailing)`:
 //  those placements hand layout over to the system navigation bar, which is
@@ -47,17 +53,55 @@ struct AppTopBar<TitleContent: View, Leading: View, Trailing: View>: View {
         self.trailing = trailing()
     }
 
+    /// Square the leading tab icon is fitted into.
+    @ScaledMetric(relativeTo: .headline) private var leadingIconBox: CGFloat = 28
+
     var body: some View {
         HStack(spacing: Spacing.xs) {
             leading
+                .font(.noticeNavTitle)
+                .fontWeight(.regular)
+                .frame(width: leadingIconBox, height: leadingIconBox)
             titleContent
             Spacer(minLength: Spacing.xs)
-            trailing
+            HStack(spacing: 0) {
+                trailing
+            }
         }
         .foregroundStyle(Color.textPrimary)
-        .padding(.horizontal, Spacing.md)
-        .padding(.vertical, Spacing.xs)
+        .frame(minHeight: TopBarIconButton.size)
+        .padding(.leading, Spacing.md)
+        // A 44pt button centers its ~20pt icon, leaving ~12pt on its right;
+        // trimming that much keeps the icon itself 16pt from the edge.
+        .padding(.trailing, Spacing.md - 12)
+        // Exactly 44pt tall, the same as `ScreenNavigationBar`, so a tab
+        // screen and the screens pushed from it start their content at the
+        // same height.
         .background(Color.appBackground)
+    }
+}
+
+/// An icon action in `AppTopBar`'s trailing slot — 44×44pt to tap, with
+/// the icon at the bar's title size (Regular), so every tab's actions look
+/// and sit the same.
+struct TopBarIconButton: View {
+    static let size: CGFloat = 44
+
+    let systemImage: String
+    let labelKey: LocalizedStringResource
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.noticeNavTitle)
+                .fontWeight(.regular)
+                .foregroundStyle(Color.textPrimary)
+                .frame(width: Self.size, height: Self.size)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(labelKey))
     }
 }
 
@@ -89,18 +133,12 @@ extension AppTopBar where TitleContent == Text {
         AppTopBar(title: "공지사항") {
             Image(systemName: "megaphone")
         } trailing: {
-            Image(systemName: "magnifyingglass")
+            TopBarIconButton(systemImage: "magnifyingglass", labelKey: "검색") {}
         }
 
-        AppTopBar(title: "커뮤니티") {
-            Image(systemName: "face.smiling")
-        } trailing: {
-            Image(systemName: "square.and.pencil")
+        AppTopBar(title: "설정") {
+            Image(systemName: "gearshape")
         }
-
-        AppTopBar(title: "사물함", trailing:  {
-            Image(systemName: "shippingbox")
-        })
     }
 }
 
