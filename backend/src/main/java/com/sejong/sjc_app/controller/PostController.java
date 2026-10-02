@@ -3,17 +3,21 @@ package com.sejong.sjc_app.controller;
 import com.sejong.sjc_app.domain.Post;
 import com.sejong.sjc_app.domain.PostLike;
 import com.sejong.sjc_app.domain.User;
+import com.sejong.sjc_app.dto.PostResponse;
 import com.sejong.sjc_app.repository.CommentRepository;
 import com.sejong.sjc_app.repository.PostLikeRepository;
 import com.sejong.sjc_app.repository.PostRepository;
 import com.sejong.sjc_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -25,15 +29,25 @@ public class PostController {
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
 
-    // 목록 조회 (누구나)
+    // 목록 조회 (누구나, 로그인했으면 likedByMe 반영)
     @GetMapping
-    public List<Post> getPosts() {
-        return postRepository.findAll();
+    public List<PostResponse> getPosts(Authentication authentication) {
+        String studentId = currentStudentId(authentication);
+
+        Set<Long> likedPostIds = (studentId == null)
+                ? Set.of()
+                : postLikeRepository.findByStudentId(studentId).stream()
+                .map(PostLike::getPostId)
+                .collect(Collectors.toSet());
+
+        return postRepository.findAll().stream()
+                .map(post -> PostResponse.from(post, likedPostIds.contains(post.getId())))
+                .collect(Collectors.toList());
     }
 
-    // 상세 조회 + 조회수 증가 (누구나)
+    // 상세 조회 + 조회수 증가 (누구나, 로그인했으면 likedByMe 반영)
     @GetMapping("/{id}")
-    public Post getPost(@PathVariable Long id) {
+    public PostResponse getPost(Authentication authentication, @PathVariable Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
 
@@ -53,17 +67,18 @@ public class PostController {
                 .updatedAt(post.getUpdatedAt())
                 .build();
 
-        return postRepository.save(updated);
+        Post saved = postRepository.save(updated);
+        return PostResponse.from(saved, isLikedBy(id, currentStudentId(authentication)));
     }
 
     // 작성 (로그인 필요)
     @PostMapping
-    public Post createPost(Authentication authentication,
-                           @RequestParam String title,
-                           @RequestParam String content,
-                           @RequestParam(required = false) String nickname,
-                           @RequestParam(required = false) User.ProfileColor color,
-                           @RequestParam(defaultValue = "false") boolean isAnonymous) {
+    public PostResponse createPost(Authentication authentication,
+                                   @RequestParam String title,
+                                   @RequestParam String content,
+                                   @RequestParam(required = false) String nickname,
+                                   @RequestParam(required = false) User.ProfileColor color,
+                                   @RequestParam(defaultValue = "false") boolean isAnonymous) {
 
         String studentId = authentication.getName();
 
@@ -87,15 +102,15 @@ public class PostController {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        return postRepository.save(post);
+        return PostResponse.from(postRepository.save(post), false);
     }
 
     // 수정 (본인만)
     @PutMapping("/{id}")
-    public Post updatePost(Authentication authentication,
-                           @PathVariable Long id,
-                           @RequestParam String title,
-                           @RequestParam String content) {
+    public PostResponse updatePost(Authentication authentication,
+                                   @PathVariable Long id,
+                                   @RequestParam String title,
+                                   @RequestParam String content) {
 
         String studentId = authentication.getName();
 
@@ -127,7 +142,8 @@ public class PostController {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        return postRepository.save(updated);
+        Post saved = postRepository.save(updated);
+        return PostResponse.from(saved, isLikedBy(id, studentId));
     }
 
     // 삭제 (본인 or ADMIN)
@@ -204,6 +220,19 @@ public class PostController {
                 .updatedAt(post.getUpdatedAt())
                 .build();
         postRepository.save(updated);
+    }
+
+    // 로그인 안 한 요청이면 null
+    private String currentStudentId(Authentication authentication) {
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+        return authentication.getName();
+    }
+
+    private boolean isLikedBy(Long postId, String studentId) {
+        return studentId != null
+                && postLikeRepository.findByPostIdAndStudentId(postId, studentId).isPresent();
     }
 
     private void checkNotBanned(User user) {
