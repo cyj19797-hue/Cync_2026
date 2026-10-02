@@ -30,8 +30,7 @@ struct LockerApplicationAccountDialog: View {
                 .foregroundStyle(Color.textPrimary)
                 .padding(.bottom, Spacing.xxs)
 
-            HStack {
-                Spacer(minLength: 0)
+            HStack(spacing: Spacing.cardInset) {
                 DialogActionButton(titleKey: .commonOk, action: onConfirm)
             }
         }

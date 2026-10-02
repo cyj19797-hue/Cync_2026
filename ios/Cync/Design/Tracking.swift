@@ -73,6 +73,9 @@ enum Tracking {
     static let communityPostTitle: CGFloat = standard
     static let communityPostBody: CGFloat = standard
     static let communityReactionCount: CGFloat = standard
+    static let communityRowTitle: CGFloat = standard
+    static let communityRowPreview: CGFloat = standard
+    static let communityRowMeta: CGFloat = standard
 
     // MARK: - "5-1 게시글" (post detail)
     static let postDetailTitle: CGFloat = standard
@@ -103,5 +106,6 @@ enum Tracking {
 
     // MARK: - "6-2 Cync 공지" / "6-2-1 공지사항 내용"
     static let cyncNoticeRowTitle: CGFloat = standard
+    static let cyncNoticeRowTitleRead: CGFloat = standard
     static let cyncNoticeDetailDate: CGFloat = standard
 }

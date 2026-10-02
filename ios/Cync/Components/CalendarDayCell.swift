@@ -82,10 +82,10 @@ struct CalendarDayCell: View {
     }
 
     private var accessibilityText: String {
-        var parts = [day.date.formatted(.dateTime.month(.wide).day().weekday(.wide))]
-        if isToday { parts.append(String(localized: .calendarToday)) }
-        if let holiday { parts.append(String(localized: holiday.name)) }
-        if eventCount > 0 { parts.append(String(localized: .calendarEventCount(eventCount))) }
+        var parts = [day.date.formatted(.dateTime.month(.wide).day().weekday(.wide).locale(AppLanguage.currentLocale))]
+        if isToday { parts.append(String(appLocalized: .calendarToday)) }
+        if let holiday { parts.append(String(appLocalized: holiday.name)) }
+        if eventCount > 0 { parts.append(String(appLocalized: .calendarEventCount(eventCount))) }
         return parts.joined(separator: ", ")
     }
 }

@@ -24,6 +24,11 @@
 //  처리방침세부사항/알림 설정 세부사항) as a full-screen overlay — see that
 //  file's header for why an overlay instead of a `NavigationStack` push.
 //
+//  Left edges: the screen's 16pt padding is the outer edge (agreement cards,
+//  bottom button); text and checkboxes all start 12pt further in, at the
+//  same x as "전체 동의"'s checkbox — the cards' own 12pt inner padding puts
+//  their checkboxes on that line too.
+//
 //  No UIKit anywhere on this screen.
 //
 
@@ -83,7 +88,7 @@ struct TermsAgreementView: View {
                 isUnderlined: true,
                 action: onContinue
             )
-            .padding(Spacing.xs)
+            .padding(.vertical, Spacing.xs)
         }
         .padding(Spacing.md)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -139,6 +144,7 @@ struct TermsAgreementView: View {
             Text(.termsRequiredSection)
                 .font(.postDetailTitle).tracking(Tracking.postDetailTitle)
                 .foregroundStyle(Color.textPrimary)
+                .padding(.horizontal, Spacing.cardInset)
 
             VStack(spacing: 0) {
                 AgreementItemRow(titleKey: .termsRequiredTerms, isAgreed: $isTermsAgreed) {
@@ -157,7 +163,7 @@ struct TermsAgreementView: View {
                     .strokeBorder(Color.borderLight)
             }
         }
-        .padding(Spacing.cardInset)
+        .padding(.vertical, Spacing.cardInset)
     }
 
     private var optionalSection: some View {
@@ -165,6 +171,7 @@ struct TermsAgreementView: View {
             Text(.termsOptionalSection)
                 .font(.postDetailTitle).tracking(Tracking.postDetailTitle)
                 .foregroundStyle(Color.textPrimary)
+                .padding(.horizontal, Spacing.cardInset)
 
             AgreementItemRow(titleKey: .termsOptionalNotification, isAgreed: $isMarketingAgreed) {
                 presentedDetail = .notification
@@ -175,7 +182,7 @@ struct TermsAgreementView: View {
                     .strokeBorder(Color.borderLight)
             }
         }
-        .padding(Spacing.cardInset)
+        .padding(.vertical, Spacing.cardInset)
     }
 
     private var agreeAllRow: some View {
@@ -191,7 +198,10 @@ struct TermsAgreementView: View {
             titleKey: .termsAgreeAll,
             style: .accent,
             font: .termsAgreeAllLabel,
-            tracking: Tracking.termsAgreeAllLabel
+            tracking: Tracking.termsAgreeAllLabel,
+            // Same checkbox-to-label gap as `AgreementItemRow`, so "전체 동의"
+            // lines up with the agreement labels above it.
+            spacing: Spacing.xs
         )
         .padding(Spacing.button)
     }

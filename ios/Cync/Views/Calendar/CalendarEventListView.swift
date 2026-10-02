@@ -19,8 +19,8 @@
 //    so the month, category filter and bookmark toggles stay in sync in
 //    both directions.
 //
-//  The nav bar is `ScreenNavigationBar`'s `.centered` style (iOS-like
-//  centered Semibold title, back chevron aligned with the filter chips),
+//  The nav bar is `ScreenNavigationBar` (iOS-like centered Semibold
+//  title, back chevron aligned with the filter chips),
 //  not the system `NavigationStack` bar — this view is pushed via
 //  `NavigationLink` from CalendarView, and `dismiss()` pops it.
 //
@@ -37,7 +37,7 @@ struct CalendarEventListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScreenNavigationBar(titleKey: .calendarMonthlyEvents, style: .centered, onBack: { dismiss() })
+            ScreenNavigationBar(titleKey: .calendarMonthlyEvents, onBack: { dismiss() })
 
             CategoryFilterRow(selectedCategory: $viewModel.selectedCategory)
                 .padding(.top, Spacing.xs)

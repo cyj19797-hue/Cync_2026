@@ -69,6 +69,17 @@ extension Color {
     /// category chips and dialog borders.
     static let gray200 = Color(hex: 0xEAECF0)
 
+    /// Not in Figma — a deeper `eventAccent` for filled buttons with white
+    /// labels and focused-field borders. White on `eventAccent` (#36AFFF)
+    /// is only ~2.4:1; on this it's ~5.2:1, above the 4.5:1 text minimum.
+    /// Used on "1-5 로그인"'s "로그인" button.
+    static let accentStrong = Color(hex: 0x0A6FC2)
+
+    /// Not in Figma — border of an unchecked checkbox. `borderLight` was
+    /// ~1.3:1 against the card behind it (nearly invisible); this clears
+    /// the 3:1 minimum for control outlines on white/`gray50`.
+    static let controlBorder = Color(hex: 0x858FA1)
+
     // MARK: - "3 캘린더" (calendar)
 
     /// Figma style: `gray300` (#D0D5DD) — neutral gray for disabled/broken

@@ -57,10 +57,20 @@ private enum RootTab: CaseIterable, Hashable {
 struct RootTabView: View {
     @State private var selectedTab: RootTab = .notices
     @StateObject private var tabBarVisibility = TabBarVisibility()
+    @ObservedObject private var languageSettings = LanguageSettings.shared
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         VStack(spacing: 0) {
             selectedContent
+                // Rebuilt on a language change so strings a screen computed
+                // once and kept in state (view models, loaded lists) come
+                // back in the new language. The selected tab lives outside
+                // this, so the user stays on the 설정 tab they changed it from.
+                // Same for the system 글자 크기 setting: every font token is
+                // scaled when it's read (see Typography.swift), so a rebuild
+                // re-reads them all at the new size.
+                .id(ContentIdentity(language: languageSettings.language, dynamicTypeSize: dynamicTypeSize))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .environmentObject(tabBarVisibility)
 
@@ -120,11 +130,21 @@ struct RootTabView: View {
                 Text(tab.title)
                     .font(.tabItemLabel).tracking(Tracking.tabItemLabel)
             }
-            .foregroundStyle(isSelected ? Color.textPrimary : Color.gray400)
-            .frame(maxWidth: .infinity)
+            // Unselected labels use `textSecondary` (~5:1 on the bar), not
+            // `gray400` (~2.6:1), to clear the 4.5:1 text contrast minimum.
+            .foregroundStyle(isSelected ? Color.textPrimary : Color.textSecondary)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
+}
+
+/// What `selectedContent` is rebuilt on — see the `.id` there.
+private struct ContentIdentity: Hashable {
+    let language: AppLanguage
+    let dynamicTypeSize: DynamicTypeSize
 }
 
 #Preview {

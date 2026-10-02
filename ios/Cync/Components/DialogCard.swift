@@ -18,6 +18,10 @@ struct DialogCard<Content: View>: View {
         VStack(alignment: .leading, spacing: Spacing.xxs) {
             content
         }
+        // Always as wide as the space the host gives it (screen minus its
+        // side padding), so a message wraps at the card's inner edge
+        // instead of at whatever width the button row happened to need.
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Spacing.sm)
         .background(Color.appBackground)
         .overlay {

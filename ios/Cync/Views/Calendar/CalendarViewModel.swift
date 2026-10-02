@@ -22,7 +22,7 @@ extension FormatStyle where Self == Date.FormatStyle {
     /// Short day label shared by the calendar card header and the monthly
     /// list's day headers — "9월 2일 (수)" in Korean, "Wed, Sep 2" in English.
     static var calendarDay: Date.FormatStyle {
-        .dateTime.month(.abbreviated).day().weekday(.abbreviated)
+        .dateTime.month(.abbreviated).day().weekday(.abbreviated).locale(AppLanguage.currentLocale)
     }
 }
 
@@ -152,15 +152,15 @@ final class CalendarViewModel: ObservableObject {
     /// specific chip is on ("이 날은 장학 일정이 없어요.").
     var emptyDayMessage: LocalizedStringResource {
         guard selectedCategory != .all else { return .calendarEmpty }
-        return .calendarEmptyDayCategory(String(localized: selectedCategory.label))
+        return .calendarEmptyDayCategory(String(appLocalized: selectedCategory.label))
     }
 
     /// Empty-state copy for the monthly list ("9월 장학 일정이 없어요.").
     var emptyMonthMessage: LocalizedStringResource {
         guard selectedCategory != .all else { return .calendarEmptyMonth }
         return .calendarEmptyMonthCategory(
-            displayedMonth.formatted(.dateTime.month(.wide)),
-            String(localized: selectedCategory.label)
+            displayedMonth.formatted(.dateTime.month(.wide).locale(AppLanguage.currentLocale)),
+            String(appLocalized: selectedCategory.label)
         )
     }
 

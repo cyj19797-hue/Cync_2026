@@ -6,15 +6,15 @@
 //  is RootTabView's; this is just the "사물함" tab content:
 //
 //  - Header: the shared `AppTopBar` (box icon + bold "사물함", like
-//    공지사항/캘린더), with a "!" button on the right opening the
+//    공지사항/캘린더), with an "i" (info) button on the right opening the
 //    "사물함 신청 방법" guide (`LockerApplyGuideDialog`), which — for
 //    students without a locker — also links to the existing apply screen
 //    (`LockerApplicationMapView`, unchanged).
 //  - "나의 사물함" card (`MyLockerCard`). "사물함 비밀번호 찾기" first asks
 //    for the account password (`LockerPasswordVerifyDialog`) and only then
 //    reveals the locker password.
-//  - "전체 사물함": title, then the map card — legend on top, then (right-
-//    aligned) a "B201 ⌄" button names the room the map is on (it follows
+//  - "전체 사물함": title row with, on its right, a "B201 ⌄" button that
+//    names the room the map is on (it follows
 //    manual scrolling too — the map reports its focused room and tints
 //    that room's title) and opens a small dropdown of rooms beneath it
 //    (name order: B201, B202, B203(1) …; tap outside to close); picking one
@@ -64,7 +64,9 @@ struct LockerView: View {
                     Button {
                         isGuidePresented = true
                     } label: {
-                        Image(systemName: "exclamationmark.circle")
+                        // "i", not "!" — this opens a how-to guide, and "!"
+                        // reads as a warning or error.
+                        Image(systemName: "info.circle")
                             .foregroundStyle(Color.textPrimary)
                     }
                     .buttonStyle(.plain)
@@ -88,6 +90,9 @@ struct LockerView: View {
                 .background(Color.appBackground)
             }
             .toolbar(.hidden, for: .navigationBar)
+            // Main tab screen — the bottom tab bar shows only while this
+            // root is on screen (see TabBarVisibility.swift).
+            .showsTabBar()
             .navigationDestination(isPresented: $isApplying) {
                 applicationScreen
             }
@@ -95,14 +100,14 @@ struct LockerView: View {
                 await viewModel.load()
             }
             .overlay { popups }
-            .overlayPreferenceValue(ZoneMenuAnchorKey.self) { anchor in
-                zoneDropdown(anchor: anchor)
+            .lockerZoneDropdown(isPresented: $isZonePickerPresented, currentZoneId: currentZoneId) { zoneId in
+                selectedZoneId = zoneId
+                map.controller?.warp(to: zoneId)
             }
-            .animation(.easeOut(duration: 0.15), value: isZonePickerPresented)
             .alert(Text(.lockerPasswordAlertTitle), isPresented: $isPasswordAlertPresented) {
                 Button(.commonOk, role: .cancel) {}
             } message: {
-                Text(viewModel.myLocker?.password ?? String(localized: .lockerNoPassword))
+                Text(viewModel.myLocker?.password ?? String(appLocalized: .lockerNoPassword))
             }
             .alert(
                 Text(.commonError),
@@ -153,29 +158,34 @@ struct LockerView: View {
 
     private var allLockersSection: some View {
         VStack(alignment: .leading, spacing: Spacing.cardInset) {
-            // Same style as MyLockerCard's "나의 사물함" title.
-            Text(.lockerAll)
-                .font(.myLockerTitle).tracking(Tracking.myLockerTitle)
-                .foregroundStyle(Color.textPrimary)
+            // Title row doubles as the map's control row: the room button
+            // (and "◎" once the map has moved) sit right of the title, so
+            // the card doesn't spend a whole line on them.
+            HStack(spacing: Spacing.xs) {
+                // Same style as MyLockerCard's "나의 사물함" title.
+                Text(.lockerAll)
+                    .font(.myLockerTitle).tracking(Tracking.myLockerTitle)
+                    .foregroundStyle(Color.textPrimary)
 
-            // Map card: legend pinned to the very top, then the room
-            // button, then the map — all on the card's `Spacing.sm` inner
-            // edge (the map's rooms too, via `fitMargin`).
-            // Legend → room button gets more air (`md`); the button sits
-            // right-aligned just above the map it controls (`xxs`).
+                Spacer(minLength: 0)
+
+                if isMapDisplaced {
+                    LockerResetViewButton {
+                        selectedZoneId = nil
+                        map.controller?.resetView()
+                    }
+                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                }
+                LockerZoneButton(zoneId: currentZoneId, isPresented: $isZonePickerPresented)
+            }
+            .animation(.easeOut(duration: 0.2), value: isMapDisplaced)
+
+            // Map card: legend pinned to the very top, then the map — both
+            // on the card's `Spacing.sm` inner edge (the map's rooms too,
+            // via `fitMargin`).
             VStack(alignment: .leading, spacing: 0) {
                 LockerStatusLegend()
-                    .padding(.bottom, Spacing.md)
-                HStack(spacing: Spacing.xs) {
-                    Spacer(minLength: 0)
-                    if isMapDisplaced {
-                        resetViewButton
-                            .transition(.opacity.combined(with: .scale(scale: 0.8)))
-                    }
-                    zoneButton
-                }
-                .animation(.easeOut(duration: 0.2), value: isMapDisplaced)
-                .padding(.bottom, Spacing.xxs)
+                    .padding(.bottom, Spacing.xs)
                 lockerMap
                     .padding(.horizontal, -Spacing.sm)
             }
@@ -193,55 +203,6 @@ struct LockerView: View {
     /// reports it's focused (starts on "내 사물함"'s room).
     private var currentZoneId: String? {
         selectedZoneId ?? mapFocusedZoneId
-    }
-
-    /// "B201 ⌄" at the top-right inside the map card — names the room the
-    /// map is on (updates as the student scrolls it) and opens the room
-    /// dropdown, so the control visibly belongs to the map.
-    private var zoneButton: some View {
-        Button {
-            isZonePickerPresented.toggle()
-        } label: {
-            HStack(spacing: Spacing.xxs) {
-                Text(verbatim: currentZoneId ?? LockerMapViewController.zoneIdsInOrder.first ?? "")
-                    .font(.lockerZoneButton).tracking(Tracking.lockerZoneButton)
-                    .foregroundStyle(Color.textPrimary)
-                Image(systemName: "chevron.down")
-                    .font(.lockerZoneButton)
-                    .foregroundStyle(Color.gray400)
-            }
-            .padding(.horizontal, Spacing.cardInset)
-            .padding(.vertical, Spacing.xxs + 2)
-            // Gray outline, same gray as the chevron.
-            .overlay {
-                Capsule().strokeBorder(Color.gray400)
-            }
-            .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint(Text(.lockerChooseZone))
-        .anchorPreference(key: ZoneMenuAnchorKey.self, value: .bounds) { $0 }
-    }
-
-    /// "◎" — back to the map's first view ("내 사물함"'s room, or the plain
-    /// overview). Only shown once the map has been moved (pan, pinch or a
-    /// room pick), next to the room button it pairs with.
-    private var resetViewButton: some View {
-        Button {
-            selectedZoneId = nil
-            map.controller?.resetView()
-        } label: {
-            Image(systemName: "scope")
-                .font(.lockerZoneButton)
-                .foregroundStyle(Color.textPrimary)
-                .frame(width: 28, height: 28)
-                .overlay {
-                    Circle().strokeBorder(Color.gray400)
-                }
-                .contentShape(Circle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(Text(.lockerResetView))
     }
 
     /// The original embedded floor-plan map — browse only (tapping a cell
@@ -303,79 +264,6 @@ struct LockerView: View {
             }
         }
     }
-
-    /// Rooms in name order (B201, B202, B203(1), B203(2) …) for the
-    /// dropdown — not the floor-plan order the map lays them out in.
-    private static let sortedZoneIds = LockerMapViewController.zoneIdsInOrder.sorted {
-        $0.localizedStandardCompare($1) == .orderedAscending
-    }
-
-    /// Small dropdown anchored under "전체 사물함 ⌄" (like a pull-down
-    /// menu, but in the design system's style) — tapping outside closes
-    /// it, tapping a room moves the map there.
-    @ViewBuilder
-    private func zoneDropdown(anchor: Anchor<CGRect>?) -> some View {
-        if isZonePickerPresented, let anchor {
-            GeometryReader { proxy in
-                let rect = proxy[anchor]
-                ZStack(alignment: .topLeading) {
-                    Color.clear
-                        .contentShape(Rectangle())
-                        .onTapGesture { isZonePickerPresented = false }
-
-                    // Right-aligned with the (right-aligned) room button.
-                    zoneList
-                        .frame(width: 160)
-                        .offset(x: rect.maxX - 160, y: rect.maxY + Spacing.xxs)
-                }
-            }
-            .transition(.opacity)
-        }
-    }
-
-    private var zoneList: some View {
-        let current = currentZoneId
-        return ScrollView {
-            VStack(spacing: 0) {
-                ForEach(Self.sortedZoneIds, id: \.self) { zoneId in
-                    Button {
-                        isZonePickerPresented = false
-                        selectedZoneId = zoneId
-                        map.controller?.warp(to: zoneId)
-                    } label: {
-                        Text(verbatim: zoneId)
-                            .font(.categoryFilterChipLabel).tracking(Tracking.categoryFilterChipLabel)
-                            .foregroundStyle(zoneId == current ? Color.eventAccent : Color.textPrimary)
-                            .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
-                            .padding(.horizontal, Spacing.md)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-
-                    if zoneId != Self.sortedZoneIds.last {
-                        Divider().overlay(Color.borderLight)
-                    }
-                }
-            }
-        }
-        .scrollBounceBehavior(.basedOnSize)
-        .frame(maxHeight: 40 * 6.5)
-        .background(Color.appBackground, in: RoundedRectangle(cornerRadius: Radius.scheduleCard))
-        .overlay {
-            RoundedRectangle(cornerRadius: Radius.scheduleCard)
-                .strokeBorder(Color.borderLight)
-        }
-        .shadow(color: Color.textPrimary.opacity(0.12), radius: 12, y: 4)
-    }
-}
-
-/// Bounds of the "전체 사물함 ⌄" button, so the room dropdown can open
-/// right beneath it from the screen-level overlay.
-private struct ZoneMenuAnchorKey: PreferenceKey {
-    static var defaultValue: Anchor<CGRect>?
-    static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) {
-        value = value ?? nextValue()
-    }
 }
 
 /// Weak handle on the embedded map's controller so the room picker can
@@ -386,4 +274,5 @@ private final class MapControllerHolder {
 
 #Preview {
     LockerView(viewModel: LockerViewModel())
+        .environmentObject(TabBarVisibility())
 }

@@ -15,7 +15,7 @@
 import Foundation
 
 enum LegalDocumentContent {
-    static var termsOfService: String { String(localized: .legalTermsOfService) }
-    static var privacyPolicy: String { String(localized: .legalPrivacyPolicy) }
-    static var notificationInfo: String { String(localized: .legalNotificationInfo) }
+    static var termsOfService: String { String(appLocalized: .legalTermsOfService) }
+    static var privacyPolicy: String { String(appLocalized: .legalPrivacyPolicy) }
+    static var notificationInfo: String { String(appLocalized: .legalNotificationInfo) }
 }

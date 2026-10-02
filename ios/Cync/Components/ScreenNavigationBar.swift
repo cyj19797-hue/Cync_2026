@@ -11,63 +11,56 @@
 //  real bar underneath. The leading icon reuses `NavigationChevron` rather
 //  than the empty icon-instance placeholder Figma's export left behind.
 //
+//  One layout for every pushed screen: title centered (Semibold 17, like
+//  iOS), back chevron pinned to the leading edge so it lines up with the
+//  content below. There used to be a second, left-aligned "title next to
+//  the back button" style; screens mixed the two, so it was removed.
+//  The title keeps clear of the trailing slot by reserving the same width
+//  on both sides (at least the 44pt back button, or the trailing view's
+//  width if that's wider), so it stays truly centered without overlapping.
+//
 
 import SwiftUI
 
 struct ScreenNavigationBar<Trailing: View>: View {
-    enum Style {
-        /// Title right after the back button, Medium 15 (the original look).
-        case standard
-        /// iOS-style: title centered, Semibold 17, and the back chevron
-        /// pinned to the leading edge so it lines up with content below
-        /// (e.g. filter chips) instead of sitting centered in its 44pt box.
-        case centered
-    }
-
     /// `nil` shows the back button alone (e.g. community post detail).
     let titleKey: LocalizedStringResource?
-    var style: Style = .standard
     let onBack: () -> Void
     private let trailing: Trailing
 
+    @State private var trailingWidth: CGFloat = 0
+
     /// `trailing` defaults to nothing — most pushed screens only need the
-    /// back button + title, but a few (e.g. a "완료" submit button, a "이동"
-    /// zone menu) need a slot on the right that isn't a system
-    /// `ToolbarItem` — putting it there is exactly what triggers iOS 26's
-    /// Liquid Glass button chrome, which this component exists to avoid.
+    /// back button + title, but a few (e.g. a "완료" submit button, a room
+    /// picker) need a slot on the right that isn't a system `ToolbarItem` —
+    /// putting it there is exactly what triggers iOS 26's Liquid Glass
+    /// button chrome, which this component exists to avoid.
     init(
         titleKey: LocalizedStringResource?,
-        style: Style = .standard,
         onBack: @escaping () -> Void,
-        @ViewBuilder trailing: () -> Trailing = { EmptyView() }
+        @ViewBuilder trailing: () -> Trailing
     ) {
         self.titleKey = titleKey
-        self.style = style
         self.onBack = onBack
         self.trailing = trailing()
     }
 
-    var body: some View {
-        switch style {
-        case .standard: standardBody
-        case .centered: centeredBody
-        }
-    }
+    private static var backButtonWidth: CGFloat { 44 }
 
-    private var centeredBody: some View {
+    var body: some View {
         ZStack {
             if let titleKey {
                 Text(titleKey)
                     .font(.screenNavTitleCentered).tracking(Tracking.screenNavTitleCentered)
                     .foregroundStyle(Color.textPrimary)
                     .lineLimit(1)
-                    .padding(.horizontal, 44)
+                    .padding(.horizontal, max(Self.backButtonWidth, trailingWidth) + Spacing.xs)
             }
 
             HStack(spacing: 0) {
                 Button(action: onBack) {
                     NavigationChevron(direction: .left, color: .textPrimary)
-                        .frame(width: 44, height: 44, alignment: .leading)
+                        .frame(width: Self.backButtonWidth, height: 44, alignment: .leading)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -76,40 +69,22 @@ struct ScreenNavigationBar<Trailing: View>: View {
                 Spacer(minLength: 0)
 
                 trailing
+                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { trailingWidth = $0 }
             }
         }
-        .frame(height: 44)
+        .frame(minHeight: 44)
         .padding(.vertical, Spacing.xxs)
         .padding(.horizontal, Spacing.md)
         .background(Color.appBackground)
     }
+}
 
-    private var standardBody: some View {
-        HStack(spacing: 0) {
-            Button(action: onBack) {
-                NavigationChevron(direction: .left, color: .textPrimary)
-                    .frame(width: 20, height: 20)
-            }
-            .buttonStyle(.plain)
-            .padding(Spacing.xs)
-            .frame(width: 44, height: 44)
-            .accessibilityLabel(Text(.commonBack))
-
-            if let titleKey {
-                Text(titleKey)
-                    .font(.screenNavTitle).tracking(Tracking.screenNavTitle)
-                    .foregroundStyle(Color.textPrimary)
-                    .padding(Spacing.xs)
-                    .frame(height: 44)
-            }
-
-            Spacer(minLength: 0)
-
-            trailing
-        }
-        .padding(.vertical, Spacing.xxs)
-        .padding(.horizontal, Spacing.md)
-        .background(Color.appBackground)
+extension ScreenNavigationBar where Trailing == EmptyView {
+    /// No trailing slot — back button + title only. A constrained init
+    /// instead of a `= { EmptyView() }` default on the generic parameter,
+    /// which Swift warns will become an error in a future language mode.
+    init(titleKey: LocalizedStringResource?, onBack: @escaping () -> Void) {
+        self.init(titleKey: titleKey, onBack: onBack) { EmptyView() }
     }
 }
 

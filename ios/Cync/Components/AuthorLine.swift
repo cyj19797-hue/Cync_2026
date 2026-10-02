@@ -2,9 +2,14 @@
 //  AuthorLine.swift
 //  test
 //
-//  Figma node `236:2150` ("닉네임") — "익명 · 08/21 17:04". Appears once on
-//  the post header and once per comment/reply on "5-1 게시글", so it's a
+//  Figma node `236:2150` ("닉네임") — "익명 · 3분 전". Appears once on the
+//  post header and once per comment/reply on "5-1 게시글", so it's a
 //  shared small component rather than duplicated 5×.
+//
+//  The time is relative (`RelativeTime`, same as the community feed), not
+//  the old fixed "MM/dd HH:mm" — that didn't match the notice board's
+//  "2026.09.01." style. `nameColor` lets a comment by the post's author
+//  ("글쓴이") stand out in the accent color.
 //
 
 import SwiftUI
@@ -12,30 +17,32 @@ import SwiftUI
 struct AuthorLine: View {
     let authorName: String
     let createdAt: Date
-
-    // Fixed "MM/dd HH:mm" — a timestamp format like this is conventionally
-    // shown the same way regardless of locale (compare Twitter/Instagram),
-    // so `en_US_POSIX` pins the digits/24h format rather than reformatting
-    // per-locale like the rest of the app's user-facing text.
-    private static let formatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "MM/dd HH:mm"
-        return formatter
-    }()
+    var nameColor: Color = .textPrimary
 
     var body: some View {
         HStack(spacing: Spacing.xxs) {
             Text(authorName)
                 .font(.commentAuthor).tracking(Tracking.commentAuthor)
-            Text(Self.formatter.string(from: createdAt))
+                .foregroundStyle(nameColor)
+                .lineLimit(1)
+
+            // Separator is punctuation, identical in every language.
+            Text(verbatim: "·")
                 .font(.calendarCaption).tracking(Tracking.calendarCaption)
+                .foregroundStyle(Color.gray400)
+
+            Text(RelativeTime.text(for: createdAt))
+                .font(.calendarCaption).tracking(Tracking.calendarCaption)
+                .foregroundStyle(Color.textSecondary)
+                .lineLimit(1)
         }
-        .foregroundStyle(Color.textPrimary)
     }
 }
 
 #Preview {
-    AuthorLine(authorName: "익명", createdAt: Date())
-        .padding()
+    VStack(alignment: .leading) {
+        AuthorLine(authorName: "익명1", createdAt: Date().addingTimeInterval(-180))
+        AuthorLine(authorName: "글쓴이", createdAt: Date().addingTimeInterval(-7200), nameColor: .eventAccent)
+    }
+    .padding()
 }

@@ -17,14 +17,14 @@
 
 ## 다국어(한국어/영어) 텍스트 규칙 (항상 지킬 것)
 
-앱은 기기 언어(iOS 설정 / 앱별 언어)를 따라 한국어 또는 영어로 표시된다. 앱 안에 언어 전환 스위치는 두지 않는다.
+앱은 한국어 또는 영어로 표시된다. 처음 실행 시에는 기기 언어(iOS 설정 / 앱별 언어)를 따르고, 앱 안의 설정 > 언어 설정에서 "기기 설정 따르기 / 한국어 / English"로 바꿀 수 있다 (바로 적용, 재시작 불필요 — `Models/AppLanguage.swift` 참고).
 
 화면에 보이는 텍스트를 새로 쓰거나 고칠 때는 반드시:
 1. `ios/Cync/Localization/Localizable.xcstrings`에 **ko와 en 값을 모두** 넣은 키를 추가/수정한다. 둘 중 하나만 있는 키를 남기지 않는다.
 2. 키는 문장이 아니라 의미 기반 이름으로 짓는다 (예: `login.rememberId`, `notice.viewOriginal`). 한국어 문구를 바꿔도 키는 바뀌지 않게 하기 위함이다. 각 키에는 `"extractionState" : "manual"`을 넣는다.
-3. 코드에서는 Xcode가 생성하는 심볼로 참조한다 (`Text(.loginRememberId)`, `titleKey: .noticeViewOriginal`, `String(localized: .commonSearch)`). `Text("학번 기억하기")`, `titleKey: "..."`, `let title = "..."`처럼 한국어/영어 문자열을 직접 하드코딩하지 않는다.
+3. 코드에서는 Xcode가 생성하는 심볼로 참조한다 (`Text(.loginRememberId)`, `titleKey: .noticeViewOriginal`, `String(appLocalized: .commonSearch)`). 코드에서 문자열을 만들 때는 `String(localized:)`가 아니라 반드시 `String(appLocalized:)`를 쓴다 — `String(localized:)`는 앱 내 언어 설정을 무시하고 기기 언어로 나온다. `Text("학번 기억하기")`, `titleKey: "..."`, `let title = "..."`처럼 한국어/영어 문자열을 직접 하드코딩하지 않는다.
 4. 값이 들어가는 문구는 xcstrings의 치환자(`%lld`, `%@`)를 쓰고, 문자열을 이어 붙여서 만들지 않는다 (어순이 언어마다 다르기 때문).
 5. 접근성 라벨(`accessibilityLabel`), placeholder, 버튼·팝업·에러 메시지도 모두 대상이다.
-6. 날짜/숫자는 `ko_KR` 같은 로케일을 하드코딩하지 말고 현재 로케일(`Locale.current`)을 따라 포맷한다.
+6. 날짜/숫자는 `ko_KR` 같은 로케일을 하드코딩하지 말고 앱 언어 로케일(`AppLanguage.currentLocale`)로 포맷한다. 코드에서 `.formatted(...)`로 문자열을 만들 때는 `.locale(AppLanguage.currentLocale)`을 붙이고, `Locale.current`는 쓰지 않는다 (앱 내 언어 설정이 반영되지 않음).
 
 예외 (번역하지 않음): 서버에서 받은 콘텐츠(공지·게시글 본문, 닉네임 등), `#Preview`/목업 전용 데이터, 로그·디버그 문자열, 코드 주석.

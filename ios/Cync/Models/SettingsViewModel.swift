@@ -37,7 +37,7 @@ final class SettingsViewModel: ObservableObject {
             CurrentUserSession.shared.update(profile)
             NicknameSetupStore.markCompleted(for: profile.studentId)
         } catch {
-            errorMessage = String(localized: .profileSaveFailedMessage)
+            errorMessage = String(appLocalized: .profileSaveFailedMessage)
         }
     }
 }

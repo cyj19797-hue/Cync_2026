@@ -31,11 +31,11 @@ enum LockerDataError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .fileNotFound(let name):
-            return String(localized: .lockerDataFileNotFound(name))
+            return String(appLocalized: .lockerDataFileNotFound(name))
         case .unreadable:
-            return String(localized: .lockerDataUnreadable)
+            return String(appLocalized: .lockerDataUnreadable)
         case .decoding:
-            return String(localized: .lockerDataInvalid)
+            return String(appLocalized: .lockerDataInvalid)
         }
     }
 }

@@ -79,11 +79,7 @@ struct Notice: Identifiable, Codable {
     /// Absolute date in the current locale: "2026.09.01." in Korean,
     /// "Sep 1, 2026" in English.
     var dateText: String {
-        if Locale.current.language.languageCode == .korean {
-            return date.formatted(.dateTime.year().month(.twoDigits).day(.twoDigits))
-                .replacingOccurrences(of: " ", with: "")
-        }
-        return date.formatted(.dateTime.year().month(.abbreviated).day())
+        RelativeTime.absoluteDateText(for: date)
     }
 
     /// List-row date: "오늘" / "어제" / "3일 전" ("Today" / "Yesterday" /
@@ -103,6 +99,7 @@ struct Notice: Identifiable, Codable {
         let formatter = RelativeDateTimeFormatter()
         formatter.dateTimeStyle = .named
         formatter.formattingContext = .beginningOfSentence
+        formatter.locale = AppLanguage.currentLocale
         return formatter.localizedString(from: DateComponents(day: -days))
     }
 }

@@ -25,10 +25,14 @@ struct CommunityPost: Identifiable, Codable, Hashable {
     var commentCount: Int
     private var createdAtRaw: String
     private var updatedAtRaw: String
+    /// Whether the signed-in user has liked this post — fills the heart.
+    /// Only right when the request carried the login token (the server
+    /// answers `false` for anonymous requests).
+    var likedByMe: Bool = false
 
     enum CodingKeys: String, CodingKey {
         case id, title, content, authorId, authorName, authorNickname, authorColor
-        case anonymous, viewCount, likeCount, commentCount
+        case anonymous, viewCount, likeCount, commentCount, likedByMe
         case createdAtRaw = "createdAt"
         case updatedAtRaw = "updatedAt"
     }
@@ -36,11 +40,52 @@ struct CommunityPost: Identifiable, Codable, Hashable {
     var createdAt: Date { SpringDate.parse(createdAtRaw) }
     var updatedAt: Date { SpringDate.parse(updatedAtRaw) }
 
-    /// The name to show in the UI. `authorName` is the real name and comes
-    /// back from the server even for anonymous posts, but must never be
-    /// rendered when `anonymous == true` (`docs/API.md` §2).
+    /// Same rule as `Comment.isShownAsAnonymous`: posted with "익명"
+    /// checked, or the author still has the server's generated default
+    /// nickname ("익명123456", see `DefaultNickname`), or has no nickname
+    /// at all (the only fallback would be the real `authorName`, which must
+    /// never be rendered — `docs/API.md` §2).
+    var isShownAsAnonymous: Bool {
+        guard !anonymous, let nickname = authorNickname else { return true }
+        return DefaultNickname.matches(nickname)
+    }
+
     var displayAuthorName: String {
-        anonymous ? (authorNickname ?? String(localized: .commonAnonymous)) : (authorNickname ?? authorName)
+        isShownAsAnonymous ? String(appLocalized: .commonAnonymous) : (authorNickname ?? "")
+    }
+
+    /// Feed-row / detail timestamp — see `RelativeTime`.
+    var listTimeText: String {
+        RelativeTime.text(for: createdAt)
+    }
+
+    /// Case-insensitive match against title and body, for the feed's search.
+    func matches(_ query: String) -> Bool {
+        title.localizedCaseInsensitiveContains(query) || content.localizedCaseInsensitiveContains(query)
+    }
+}
+
+extension CommunityPost {
+    /// Decoded by hand (in an extension, so the memberwise init stays) for
+    /// two fields the server may leave out: `commentCount` comes back
+    /// `null` on a post with no comments, and `likedByMe` is newer than
+    /// some responses. Both fall back instead of failing the whole feed.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(Int.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        content = try container.decode(String.self, forKey: .content)
+        authorId = try container.decode(String.self, forKey: .authorId)
+        authorName = try container.decode(String.self, forKey: .authorName)
+        authorNickname = try container.decodeIfPresent(String.self, forKey: .authorNickname)
+        authorColor = try container.decodeIfPresent(String.self, forKey: .authorColor)
+        anonymous = try container.decode(Bool.self, forKey: .anonymous)
+        viewCount = try container.decode(Int.self, forKey: .viewCount)
+        likeCount = try container.decode(Int.self, forKey: .likeCount)
+        commentCount = try container.decodeIfPresent(Int.self, forKey: .commentCount) ?? 0
+        createdAtRaw = try container.decode(String.self, forKey: .createdAtRaw)
+        updatedAtRaw = try container.decode(String.self, forKey: .updatedAtRaw)
+        likedByMe = try container.decodeIfPresent(Bool.self, forKey: .likedByMe) ?? false
     }
 }
 

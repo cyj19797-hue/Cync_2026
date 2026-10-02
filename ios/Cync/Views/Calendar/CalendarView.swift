@@ -90,6 +90,9 @@ struct CalendarView: View {
             .background(Color.appBackground)
             .animation(.default, value: isSearchPresented)
             .toolbar(.hidden, for: .navigationBar)
+            // Main tab screen — the bottom tab bar shows only while this
+            // root is on screen (see TabBarVisibility.swift).
+            .showsTabBar()
             .task {
                 await viewModel.load()
             }
@@ -219,7 +222,7 @@ struct CalendarView: View {
                     CalendarEventListView(viewModel: viewModel)
                 } label: {
                     HStack(spacing: 2) {
-                        Text(.calendarViewMonth(viewModel.displayedMonth.formatted(.dateTime.month(.wide))))
+                        Text(.calendarViewMonth(viewModel.displayedMonth.formatted(.dateTime.month(.wide).locale(AppLanguage.currentLocale))))
                             .font(.calendarCaption).tracking(Tracking.calendarCaption)
                             .foregroundStyle(Color.gray400)
                         NavigationChevron()
@@ -264,4 +267,5 @@ struct CalendarCardSurface: ViewModifier {
 
 #Preview {
     CalendarView()
+        .environmentObject(TabBarVisibility())
 }

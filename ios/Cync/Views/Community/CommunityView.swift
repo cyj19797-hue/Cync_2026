@@ -16,10 +16,21 @@
 //  the 공유/저장/신고 action menu that used to live behind it
 //  (`.communityPostActionMenu(target:)`) has been removed.
 //
+//  Header layout mirrors NoticeListView: the magnifying glass opens the
+//  shared `SearchBar` under the top bar (client-side title/body filter,
+//  `CommunityViewModel.filteredPosts`). The compose button still sits in
+//  the top bar, just left of search, until its final spot is decided —
+//  search takes the rightmost slot so it's in the same place as on the
+//  other tabs. Pull-to-refresh reloads the feed; an empty feed (or an
+//  empty search result) shows a centered message instead of a blank list.
+//
+//  Row insets and the list's top padding match NoticeListView, so the gap
+//  under the header and the row density are the same on both tabs.
+//
 //  Figma node `257:6758` ("프로필 설정") gates first-time entry: while
 //  `viewModel.needsNicknameSetup` is true, `ProfileSetupView` replaces this
-//  screen's whole content (bottom tab bar included, same as
-//  `NoticeDetailView`'s full-screen takeover) instead of the normal feed.
+//  screen's whole content (bottom tab bar included — the feed root, which
+//  carries `.showsTabBar()`, is off screen) instead of the normal feed.
 //
 
 import SwiftUI
@@ -28,7 +39,7 @@ struct CommunityView: View {
     @StateObject private var viewModel = CommunityViewModel()
     @State private var selectedPost: CommunityPost?
     @State private var isComposePresented = false
-    @EnvironmentObject private var tabBarVisibility: TabBarVisibility
+    @State private var isSearchPresented = false
 
     var body: some View {
         Group {
@@ -41,12 +52,6 @@ struct CommunityView: View {
             }
         }
         .task { await viewModel.load() }
-        .onChange(of: viewModel.needsNicknameSetup) { _, needsSetup in
-            tabBarVisibility.isHidden = needsSetup
-        }
-        .onDisappear {
-            tabBarVisibility.isHidden = false
-        }
     }
 
     private var feed: some View {
@@ -55,30 +60,65 @@ struct CommunityView: View {
                 AppTopBar(title: .tabCommunity) {
                     Image(systemName: "face.smiling")
                 } trailing: {
-                    Button {
-                        isComposePresented = true
-                    } label: {
-                        Image(systemName: "square.and.pencil")
-                            .foregroundStyle(viewModel.isBanned ? Color.gray400 : Color.textPrimary)
+                    HStack(spacing: Spacing.md) {
+                        Button {
+                            isComposePresented = true
+                        } label: {
+                            Image(systemName: "square.and.pencil")
+                                .foregroundStyle(viewModel.isBanned ? Color.gray400 : Color.textPrimary)
+                        }
+                        .disabled(viewModel.isBanned)
+                        .accessibilityLabel(Text(.communityWrite))
+
+                        Button {
+                            isSearchPresented = true
+                        } label: {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundStyle(Color.textPrimary)
+                        }
+                        .accessibilityLabel(Text(.commonSearch))
                     }
-                    .disabled(viewModel.isBanned)
-                    .accessibilityLabel(Text(.communityWrite))
+                }
+
+                if isSearchPresented {
+                    SearchBar(text: $viewModel.searchText, isActive: $isSearchPresented)
+                        .padding(.horizontal, Spacing.xs)
+                        .padding(.top, Spacing.xs)
+                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
 
                 List {
-                    ForEach(viewModel.posts) { post in
+                    ForEach(viewModel.filteredPosts) { post in
                         CommunityPostRow(
                             post: post,
                             onSelect: { selectedPost = post }
                         )
                         .listRowSeparatorTint(Color.borderLight)
-                        .listRowInsets(EdgeInsets(top: Spacing.md, leading: Spacing.md, bottom: Spacing.xs, trailing: Spacing.md))
+                        .listRowInsets(EdgeInsets(top: Spacing.xs, leading: Spacing.md, bottom: Spacing.xs, trailing: Spacing.md))
                     }
                 }
                 .listStyle(.plain)
+                .padding(.top, Spacing.xxs)
+                .refreshable { await viewModel.load() }
+                .overlay {
+                    if viewModel.hasLoaded && viewModel.filteredPosts.isEmpty {
+                        emptyState
+                    }
+                }
             }
+            .animation(.default, value: isSearchPresented)
             .navigationDestination(item: $selectedPost) { post in
-                CommunityPostDetailView(post: post)
+                CommunityPostDetailView(
+                    post: post,
+                    onPostDeleted: { deletedId in
+                        viewModel.posts.removeAll { $0.id == deletedId }
+                    },
+                    onPostChanged: { updated in
+                        if let index = viewModel.posts.firstIndex(where: { $0.id == updated.id }) {
+                            viewModel.posts[index] = updated
+                        }
+                    }
+                )
             }
             .navigationDestination(isPresented: $isComposePresented) {
                 CommunityPostComposeView { newPost in
@@ -87,6 +127,9 @@ struct CommunityView: View {
             }
             .background(Color.appBackground)
             .toolbar(.hidden, for: .navigationBar)
+            // Main tab screen — the bottom tab bar shows only while this
+            // root is on screen (see TabBarVisibility.swift).
+            .showsTabBar()
             .alert(
                 Text(.commonError),
                 isPresented: Binding(
@@ -99,6 +142,16 @@ struct CommunityView: View {
                 Text(viewModel.errorMessage ?? "")
             }
         }
+    }
+
+    private var emptyState: some View {
+        Text(viewModel.isSearching ? .communitySearchEmpty : .communityEmpty)
+            .font(.emptyStateMessage).tracking(Tracking.emptyStateMessage)
+            .foregroundStyle(Color.textSecondary)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, Spacing.md)
+            // Taps and pull-to-refresh drags go through to the list.
+            .allowsHitTesting(false)
     }
 }
 

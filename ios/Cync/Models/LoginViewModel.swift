@@ -49,12 +49,17 @@ final class LoginViewModel: ObservableObject {
 
         do {
             _ = try await CyncAPI.login(studentId: studentId, password: password, persistToken: autoLogin)
+        } catch is URLError {
+            // No connection / timeout — the request never got an answer, so
+            // "check your id/password" would send the user the wrong way.
+            errorMessage = String(appLocalized: .loginNetworkError)
+            return false
         } catch {
-            // Always this exact wording, regardless of the underlying
-            // `CyncAPIError` case — a login screen shouldn't surface raw
-            // HTTP/decoding failure detail to the user, and any failure here
-            // reads the same to them either way: wrong id/password.
-            errorMessage = String(localized: .loginFailedMessage)
+            // Any answer from the server — a login screen shouldn't surface
+            // raw HTTP/decoding detail, and the server reports a wrong
+            // password as a plain error status, so it all reads as wrong
+            // id/password to the user.
+            errorMessage = String(appLocalized: .loginFailedMessage)
             return false
         }
 

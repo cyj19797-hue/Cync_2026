@@ -52,7 +52,7 @@ struct CheckboxSquare: View {
             .frame(width: 20, height: 20)
             .overlay {
                 RoundedRectangle(cornerRadius: 6)
-                    .strokeBorder(isChecked ? style.checkedBorderColor : Color.borderLight, lineWidth: 1.2)
+                    .strokeBorder(isChecked ? style.checkedBorderColor : Color.controlBorder, lineWidth: 1.2)
             }
             .overlay {
                 if isChecked {

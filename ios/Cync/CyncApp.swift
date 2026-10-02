@@ -20,6 +20,9 @@ struct CyncApp: App {
 /// `LoginView` — matching Figma's own 1-3 → 1-4 → 1-5 screen numbering.
 private struct RootView: View {
     @EnvironmentObject private var sessionStore: SessionStore
+    /// 설정 > 언어 설정 — its locale is injected below so every `Text(.key)`
+    /// in the app switches language immediately (see AppLanguage.swift).
+    @ObservedObject private var languageSettings = LanguageSettings.shared
     @State private var isShowingLaunchScreen = true
     @State private var hasSeenIntro = false
     @State private var hasAgreedToTerms = false
@@ -55,6 +58,7 @@ private struct RootView: View {
                     .transition(.opacity)
             }
         }
+        .environment(\.locale, languageSettings.locale)
         .task {
             try? await Task.sleep(for: Self.launchScreenDuration)
             withAnimation {

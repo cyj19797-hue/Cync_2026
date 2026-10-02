@@ -145,7 +145,7 @@ final class LockerMapViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = String(localized: .lockerMapTitle)
+        title = String(appLocalized: .lockerMapTitle)
         view.backgroundColor = .systemBackground
         setUpScrollView()
         setUpNavigationBar()
@@ -245,8 +245,8 @@ final class LockerMapViewController: UIViewController {
             }
         }
         navigationItem.rightBarButtonItem = UIBarButtonItem(
-            title: String(localized: .lockerMove),
-            menu: UIMenu(title: String(localized: .lockerMoveZone), children: warpActions)
+            title: String(appLocalized: .lockerMove),
+            menu: UIMenu(title: String(appLocalized: .lockerMoveZone), children: warpActions)
         )
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             image: UIImage(systemName: "arrow.clockwise"),
@@ -577,7 +577,7 @@ private final class LockerMapStatusErrorView: UIView {
         messageLabel.font = .systemFont(ofSize: 14)
 
         let retryButton = UIButton(type: .system)
-        retryButton.setTitle(String(localized: .commonRetry), for: .normal)
+        retryButton.setTitle(String(appLocalized: .commonRetry), for: .normal)
         retryButton.addTarget(self, action: #selector(handleRetryTap), for: .touchUpInside)
 
         let stack = UIStackView(arrangedSubviews: [messageLabel, retryButton])

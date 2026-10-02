@@ -26,9 +26,10 @@ enum Spacing {
     /// token exists so the login screen isn't forced to inherit that bug.
     static let cardInset: CGFloat = 12
     static let button: CGFloat = 12
-
-
-
+    /// Shared left/right inset for a pushed screen's content (title, meta,
+    /// body, list rows) so every block on the screen starts at the same x.
+    /// Same 16pt as `md`, and as `ScreenNavigationBar`'s own side padding.
+    static let screenHorizontal: CGFloat = md
 }
 
 /// Corner radius tokens.

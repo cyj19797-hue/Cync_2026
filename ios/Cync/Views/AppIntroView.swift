@@ -6,11 +6,8 @@
 //  `LaunchScreenView` fades out, before `LoginView` — `CyncApp`'s `RootView`
 //  keeps this up until "연결하기" is tapped, then switches to `LoginView`.
 //
-//  Logo reuses the same `CyncLogoLockup` asset as `LaunchScreenView` (the
-//  vertically-stacked mark + wordmark) rather than pulling in yet another
-//  export — Figma's `logo_all` node here is the same flattened artwork at a
-//  different crop/size, same as the launch screen's `logo_image`/
-//  `logo_text` nodes were.
+//  Logo reuses the same mark-only `Image` asset as `LaunchScreenView`
+//  (the "C" + blue dot, same art as the app icon).
 //
 //  "연결하기" reuses `PrimaryActionButton` with the login screen's own
 //  accent (`eventAccent`, Figma's `primary` style, #36AFFF) plus its
@@ -33,7 +30,7 @@ struct AppIntroView: View {
         ZStack {
             // 로고 + 소개 문구는 버튼 높이와 무관하게 화면 중앙 기준으로 배치.
             VStack(spacing: Spacing.xs) {
-                Image("CyncLogoLockup")
+                Image("Image")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 100, height: 100)

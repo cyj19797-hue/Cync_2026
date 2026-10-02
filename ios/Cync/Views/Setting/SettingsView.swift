@@ -7,16 +7,17 @@
 //  rows) + "계정" section (2 rows), all built from the shared `SettingsRow`.
 //  "알림 설정" pushes "6-1 알림 설정" (`NotificationSettingsView`); "Cync 공지"
 //  pushes "6-2 Cync 공지" (`CyncNoticeListView`), which in turn pushes
-//  "6-2-1 공지사항 내용" (`CyncNoticeDetailView`) when a row is tapped.
+//  "6-2-1 공지사항 내용" (`CyncNoticeDetailView`) when a row is tapped. Those
+//  pushed screens have no bottom tab bar — see TabBarVisibility.swift.
 //  The bottom tab bar (`47:1086`) is not built here — it's RootTabView's
 //  `TabView`, this is just its "설정" tab content.
 //
 //  No UIKit here — the top bar reuses Components/AppTopBar.swift (shared
 //  with NoticeListView/CommunityView/LockerView) and search reuses the
-//  existing Components/SearchBar.swift (pure SwiftUI); "언어 설정" opens the
-//  app's own page in iOS Settings (per-app language — the app follows the
-//  device/app language rather than an in-app picker), the logout/withdraw
-//  confirmations use native `.confirmationDialog`, and
+//  existing Components/SearchBar.swift (pure SwiftUI); "언어 설정" opens
+//  `LanguagePickerDialog`, a custom popup (기기 설정 따르기 / 한국어 / English)
+//  that switches the app language in place — see AppLanguage.swift. The
+//  logout/withdraw confirmations use native `.confirmationDialog`, and
 //  the nickname editor uses a native `.alert` with a `TextField` (supported
 //  directly by SwiftUI since iOS 16) instead of a hand-built prompt.
 //
@@ -33,6 +34,8 @@ struct SettingsView: View {
     @State private var isWithdrawConfirmPresented = false
     @State private var isNotificationSettingsPresented = false
     @State private var isCyncNoticePresented = false
+    @State private var isLanguagePickerPresented = false
+    @ObservedObject private var languageSettings = LanguageSettings.shared
 
     var body: some View {
         NavigationStack {
@@ -69,8 +72,12 @@ struct SettingsView: View {
                     }
 
                     Section {
-                        SettingsRow(systemImage: "globe", titleKey: .settingsLanguage, value: currentLanguageName) {
-                            openAppLanguageSettings()
+                        SettingsRow(
+                            systemImage: "globe",
+                            titleKey: .settingsLanguage,
+                            value: LanguagePickerDialog.name(of: languageSettings.language)
+                        ) {
+                            isLanguagePickerPresented = true
                         }
                         SettingsRow(systemImage: "bell", titleKey: .settingsNotifications) {
                             isNotificationSettingsPresented = true
@@ -81,9 +88,7 @@ struct SettingsView: View {
                         SettingsRow(systemImage: "questionmark.circle", titleKey: .settingsInquiry) {
                             openInquiryChat()
                         }
-                        SettingsRow(systemImage: "info.circle", titleKey: .settingsAppInfo) {
-                            // TODO: 프로그램 정보 화면 연동 필요
-                        }
+                        SettingsInfoRow(systemImage: "info.circle", titleKey: .settingsAppInfo, value: appVersionText)
                     } header: {
                         Text(.tabSettings)
                             .font(.noticeTitle).tracking(Tracking.noticeTitle)
@@ -114,6 +119,9 @@ struct SettingsView: View {
             .background(Color.appBackground)
             .animation(.default, value: isSearchPresented)
             .toolbar(.hidden, for: .navigationBar)
+            // Main tab screen — the bottom tab bar shows only while this
+            // root is on screen (see TabBarVisibility.swift).
+            .showsTabBar()
             .task {
                 await viewModel.loadProfile()
             }
@@ -147,6 +155,37 @@ struct SettingsView: View {
                 }
             }
         }
+        .overlay { languagePickerOverlay }
+        .animation(.easeOut(duration: 0.2), value: isLanguagePickerPresented)
+    }
+
+    @ViewBuilder
+    private var languagePickerOverlay: some View {
+        if isLanguagePickerPresented {
+            ZStack {
+                Color.black.opacity(0.6)
+                    .ignoresSafeArea()
+                    .onTapGesture { isLanguagePickerPresented = false }
+
+                LanguagePickerDialog(
+                    selected: languageSettings.language,
+                    onSelect: { language in
+                        isLanguagePickerPresented = false
+                        languageSettings.select(language)
+                    },
+                    onCancel: { isLanguagePickerPresented = false }
+                )
+                .padding(.horizontal, Spacing.md)
+            }
+            .transition(.opacity)
+        }
+    }
+
+    /// "프로그램 정보" value, e.g. "1.0.0v" — the app's version
+    /// (`MARKETING_VERSION` in the Xcode project, read from the bundle).
+    private var appVersionText: String {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        return String(appLocalized: .settingsAppVersion(version))
     }
 
     /// "오류 및 문의" — opens the team's KakaoTalk open-chat link. A plain
@@ -156,22 +195,6 @@ struct SettingsView: View {
     /// domain as an associated/universal link), and falls back to opening it
     /// in Safari when the app isn't installed — no separate custom-scheme
     /// check needed.
-    /// The language the app is actually displaying right now (`ko`/`en`
-    /// from the String Catalog), named in that same language — e.g. "한국어"
-    /// or "English".
-    private var currentLanguageName: String {
-        let code = Bundle.main.preferredLocalizations.first ?? "ko"
-        return Locale(identifier: code).localizedString(forLanguageCode: code) ?? code
-    }
-
-    /// "언어 설정" — the app follows the device language, so this opens the
-    /// app's page in iOS Settings, where iOS shows a per-app "Language"
-    /// option once the app ships more than one localization.
-    private func openAppLanguageSettings() {
-        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-        UIApplication.shared.open(url)
-    }
-
     private func openInquiryChat() {
         guard let url = URL(string: "https://open.kakao.com/o/shz9nZMi") else { return }
         UIApplication.shared.open(url)

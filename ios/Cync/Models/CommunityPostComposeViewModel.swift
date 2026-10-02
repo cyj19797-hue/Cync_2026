@@ -31,7 +31,7 @@ final class CommunityPostComposeViewModel: ObservableObject {
         do {
             return try await CyncAPI.createPost(title: title, content: content, isAnonymous: isAnonymous)
         } catch {
-            errorMessage = String(localized: .communityPostFailed(error.localizedDescription))
+            errorMessage = String(appLocalized: .communityPostFailed(error.localizedDescription))
             return nil
         }
     }

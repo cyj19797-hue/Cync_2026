@@ -48,6 +48,9 @@ struct NoticeDetailNavigationBar: View {
                 }
             }
             .foregroundStyle(action == nil ? Color.gray400 : Color.textPrimary)
+            // Tappable across the pill's full height, not just the text.
+            .frame(maxHeight: .infinity)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(action == nil)

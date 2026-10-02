@@ -65,7 +65,7 @@ struct CommunityPostComposeView: View {
 
     private var titleRow: some View {
         HStack(spacing: Spacing.xs) {
-            TextField(String(localized: .communityTitlePlaceholder), text: $viewModel.title)
+            TextField(String(appLocalized: .communityTitlePlaceholder), text: $viewModel.title)
                 .font(.postDetailTitle).tracking(Tracking.postDetailTitle)
                 .foregroundStyle(Color.textPrimary)
 
@@ -90,7 +90,7 @@ struct CommunityPostComposeView: View {
                 .padding(.vertical, Spacing.xs)
                 .background {
                     RoundedRectangle(cornerRadius: Radius.chipSelected)
-                        .fill(viewModel.canSubmit ? Color.brandPrimary : Color.surface)
+                        .fill(viewModel.canSubmit ? Color.eventAccent : Color.surface)
                 }
         }
         .buttonStyle(.plain)

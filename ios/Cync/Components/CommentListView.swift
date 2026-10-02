@@ -8,13 +8,20 @@
 //  followed by its replies, each reply indented via `CommentRow`'s own
 //  `isReply` flag.
 //
+//  Each row carries `.id(comment.id)` so the detail screen can scroll to a
+//  comment the user just posted.
+//
 
 import SwiftUI
 
 struct CommentListView: View {
     let threads: [CommentThread]
+    let authorLabel: (Comment) -> CommentAuthorLabel
+    let actions: (Comment) -> [CommentAction]
     let onLike: (Comment) -> Void
     let onReply: (Comment) -> Void
+    /// A comment's ⋮ was tapped — the screen opens its menu for it.
+    let onMore: (Comment) -> Void
 
     var body: some View {
         if threads.isEmpty {
@@ -24,39 +31,54 @@ struct CommentListView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.vertical, Spacing.xl)
         } else {
-            VStack(alignment: .leading, spacing: Spacing.xs) {
+            VStack(alignment: .leading, spacing: 0) {
                 ForEach(threads) { thread in
-                    VStack(alignment: .leading, spacing: Spacing.xs) {
-                        CommentRow(
-                            comment: thread.comment,
-                            onLike: { onLike(thread.comment) },
-                            onReply: { onReply(thread.comment) }
-                        )
+                    row(for: thread.comment, isReply: false)
 
-                        ForEach(thread.replies) { reply in
-                            CommentRow(
-                                comment: reply,
-                                isReply: true,
-                                onLike: { onLike(reply) }
-                            )
-                        }
+                    ForEach(thread.replies) { reply in
+                        row(for: reply, isReply: true)
                     }
                 }
             }
         }
     }
+
+    private func row(for comment: Comment, isReply: Bool) -> some View {
+        CommentRow(
+            comment: comment,
+            authorLabel: authorLabel(comment),
+            isReply: isReply,
+            actions: actions(comment),
+            onLike: { onLike(comment) },
+            // Replies can't be replied to — the server allows one level.
+            onReply: isReply ? nil : { onReply(comment) },
+            onMore: { onMore(comment) }
+        )
+        .id(comment.id)
+    }
 }
 
 #Preview("댓글 없음") {
-    CommentListView(threads: [], onLike: { _ in }, onReply: { _ in })
-        .padding()
+    CommentListView(
+        threads: [],
+        authorLabel: { _ in .anonymous(number: 1) },
+        actions: { _ in [] },
+        onLike: { _ in },
+        onReply: { _ in },
+        onMore: { _ in }
+    )
+    .padding()
 }
 
 #Preview("댓글 + 대댓글") {
-    CommentListView(
+    let labels = CommentAuthorLabel.labels(for: Comment.mockList, postAuthorId: "20231012")
+    return CommentListView(
         threads: CommentThread.threads(from: Comment.mockList),
+        authorLabel: { labels[$0.id] ?? .anonymous(number: 0) },
+        actions: { _ in [.report] },
         onLike: { _ in },
-        onReply: { _ in }
+        onReply: { _ in },
+        onMore: { _ in }
     )
     .padding()
 }

@@ -43,7 +43,7 @@ struct ProfileEditSheet: View {
                 Text(.commonNickname)
                     .font(.categoryBadge).tracking(Tracking.categoryBadge)
                     .foregroundStyle(Color.textSecondary)
-                TextField(String(localized: .commonNickname), text: $nickname)
+                TextField(String(appLocalized: .commonNickname), text: $nickname)
                     .font(.noticeTitle).tracking(Tracking.noticeTitle)
                     .foregroundStyle(Color.textPrimary)
                     .padding(Spacing.xs)

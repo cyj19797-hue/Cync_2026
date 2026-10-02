@@ -10,16 +10,14 @@
 //
 //  No UIKit anywhere on this screen — the toggle rows are native `Toggle`.
 //
-//  Hides `RootTabView`'s bottom tab bar while pushed — see
-//  `TabBarVisibility`'s header comment for why a plain
-//  `.toolbar(_:for: .tabBar)` can't do this here.
+//  No bottom tab bar here: only the five main tab screens show it — see
+//  TabBarVisibility.swift.
 //
 
 import SwiftUI
 
 struct NotificationSettingsView: View {
     @StateObject private var viewModel = NotificationSettingsViewModel()
-    @EnvironmentObject private var tabBarVisibility: TabBarVisibility
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -61,8 +59,6 @@ struct NotificationSettingsView: View {
         }
         .background(Color.appBackground)
         .toolbar(.hidden, for: .navigationBar)
-        .onAppear { tabBarVisibility.isHidden = true }
-        .onDisappear { tabBarVisibility.isHidden = false }
     }
 }
 

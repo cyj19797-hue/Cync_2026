@@ -25,11 +25,11 @@ enum CyncAPIError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unauthorized:
-            return String(localized: .apiUnauthorized)
+            return String(appLocalized: .apiUnauthorized)
         case .badStatus(let code):
-            return String(localized: .apiServerError(code))
+            return String(appLocalized: .apiServerError(code))
         case .decoding:
-            return String(localized: .apiDecoding)
+            return String(appLocalized: .apiDecoding)
         }
     }
 }
@@ -133,6 +133,13 @@ enum CyncAPI {
         try checkStatus(response)
     }
 
+    /// For endpoints that answer with plain text instead of JSON.
+    private static func sendText(_ request: URLRequest) async throws -> String {
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try checkStatus(response)
+        return String(data: data, encoding: .utf8) ?? ""
+    }
+
     // MARK: - 0. 로그인
 
     /// `persistToken` is `LoginView`'s "자동 로그인" checkbox: `true` keeps
@@ -187,11 +194,35 @@ enum CyncAPI {
         try await send(authorizedRequest(path: "/api/posts", method: "GET"))
     }
 
+    /// One post — and the only call that bumps its view count (by 1 per
+    /// call; the list doesn't count). The response already carries the new
+    /// `viewCount` and this user's `likedByMe` (the token is sent, so the
+    /// server knows who's asking). Call once per opening of the detail.
+    static func fetchPostDetail(id: Int) async throws -> CommunityPost {
+        try await send(authorizedRequest(path: "/api/posts/\(id)", method: "GET"))
+    }
+
+    /// Toggles this user's like: likes it if they hadn't, unlikes it if
+    /// they had. The server answers in plain text ("좋아요 완료" /
+    /// "좋아요 취소") with no updated count — returns `true` when it's now
+    /// liked. Fails for a banned user or a missing post.
+    @discardableResult
+    static func togglePostLike(id: Int) async throws -> Bool {
+        let message = try await sendText(authorizedRequest(path: "/api/posts/\(id)/like", method: "POST"))
+        return message.contains("완료")
+    }
+
     static func createPost(title: String, content: String, isAnonymous: Bool) async throws -> CommunityPost {
         var request = authorizedRequest(path: "/api/posts", method: "POST")
         request.httpBody = formBody(["title": title, "content": content, "isAnonymous": String(isAnonymous)])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         return try await send(request)
+    }
+
+    /// Hard delete — the server removes the post's comments and likes with
+    /// it. Allowed for the post's author or an ADMIN.
+    static func deletePost(id: Int) async throws {
+        try await send(authorizedRequest(path: "/api/posts/\(id)", method: "DELETE"))
     }
 
     static func fetchComments(postId: Int) async throws -> [Comment] {
@@ -211,6 +242,47 @@ enum CyncAPI {
         request.httpBody = formBody(params)
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         return try await send(request)
+    }
+
+    /// Soft delete — the server keeps the row with `deleted = true` (so
+    /// replies under it survive) and answers with a plain-text body.
+    /// Allowed for the comment's author or an ADMIN.
+    static func deleteComment(id: Int) async throws {
+        try await send(authorizedRequest(path: "/api/comments/\(id)", method: "DELETE"))
+    }
+
+    /// Moderator edit. NOT on the server yet — `CommentController` has no
+    /// update endpoint; this follows the same shape as `PUT /api/posts/{id}`
+    /// and fails (404/405) until the backend adds it.
+    static func updateComment(id: Int, content: String) async throws -> Comment {
+        var request = authorizedRequest(path: "/api/comments/\(id)", method: "PUT")
+        request.httpBody = formBody(["content": content])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        return try await send(request)
+    }
+
+    // MARK: - 9. 신고
+
+    /// One endpoint for both posts and comments — `targetType` says which.
+    /// The server rejects a second report of the same target by the same
+    /// user, and reports of already-deleted targets.
+    private static func report(targetType: String, targetId: Int, reason: ReportReason) async throws {
+        var request = authorizedRequest(path: "/api/reports", method: "POST")
+        request.httpBody = formBody([
+            "targetType": targetType,
+            "targetId": String(targetId),
+            "reason": reason.rawValue
+        ])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        try await send(request)
+    }
+
+    static func reportComment(id: Int, reason: ReportReason) async throws {
+        try await report(targetType: "COMMENT", targetId: id, reason: reason)
+    }
+
+    static func reportPost(id: Int, reason: ReportReason) async throws {
+        try await report(targetType: "POST", targetId: id, reason: reason)
     }
 
     // MARK: - 3. 학생회공지

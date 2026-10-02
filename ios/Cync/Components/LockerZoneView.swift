@@ -192,10 +192,13 @@ extension LockerCellStatus {
     /// Label shown next to this status's swatch in `LockerStatusLegendBar`.
     var legendLabel: String {
         switch self {
-        case .empty: return String(localized: .lockerStatusApplicable)
-        case .pending: return String(localized: .lockerStatusPending)
-        case .occupied, .broken, .reserved, .unknown: return String(localized: .lockerStatusUnavailable)
-        case .selected: return String(localized: .lockerMine)
+        // Legend-only keys: English needs short words here ("Open /
+        // Pending / Taken / Mine") so all four fit on one line; the longer
+        // `locker.status.*` wording stays for everywhere else.
+        case .empty: return String(appLocalized: .lockerLegendOpen)
+        case .pending: return String(appLocalized: .lockerLegendPending)
+        case .occupied, .broken, .reserved, .unknown: return String(appLocalized: .lockerLegendTaken)
+        case .selected: return String(appLocalized: .lockerLegendMine)
         }
     }
 }

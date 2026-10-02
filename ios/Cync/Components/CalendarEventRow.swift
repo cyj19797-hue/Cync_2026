@@ -75,10 +75,10 @@ struct CalendarEventRow: View {
     /// nothing — the meta line then shows just the category.
     private var whenText: String? {
         if event.isMultiDay {
-            return (event.startDate..<event.endDate).formatted(.interval.month().day())
+            return (event.startDate..<event.endDate).formatted(.interval.month().day().locale(AppLanguage.currentLocale))
         }
         if event.hasTime {
-            return event.startDate.formatted(date: .omitted, time: .shortened)
+            return event.startDate.formatted(.dateTime.hour().minute().locale(AppLanguage.currentLocale))
         }
         return nil
     }

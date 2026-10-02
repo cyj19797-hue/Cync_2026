@@ -33,7 +33,7 @@ struct SearchBar: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(Color.gray400)
 
-                TextField(String(localized: .commonSearch), text: $text)
+                TextField(String(appLocalized: .commonSearch), text: $text)
                     .font(.categoryChip).tracking(Tracking.categoryChip)
                     .foregroundStyle(Color.textPrimary)
                     .focused($isFocused)
