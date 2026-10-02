@@ -21,3 +21,7 @@ azure:
   storage:
     connection-string: ${AZURE_STORAGE_CONNECTION_STRING}
     container-name: notice-images
+
+admin:
+  login-id: ${ADMIN_LOGIN_ID:}
+  password-hash: ${ADMIN_PASSWORD_HASH:}

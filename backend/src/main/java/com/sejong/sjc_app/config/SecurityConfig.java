@@ -31,7 +31,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/api/auth/login", "/api/notices/school/**").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/admin-login", "/api/notices/school/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/notices/council/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/app-notices/**").permitAll()
