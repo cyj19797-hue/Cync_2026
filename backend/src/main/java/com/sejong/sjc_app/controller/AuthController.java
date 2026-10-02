@@ -4,6 +4,7 @@ import com.sejong.sjc_app.domain.User;
 import com.sejong.sjc_app.dto.SejongMemberInfo;
 import com.sejong.sjc_app.dto.TokenResponse;
 import com.sejong.sjc_app.repository.UserRepository;
+import com.sejong.sjc_app.service.AdminLoginService;
 import com.sejong.sjc_app.service.JwtTokenProvider;
 import com.sejong.sjc_app.service.SejongPortalLoginService;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +20,16 @@ public class AuthController {
     private final SejongPortalLoginService loginService;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final AdminLoginService adminLoginService;
 
     @PostMapping("/login")
     public TokenResponse login(@RequestParam String id,
                                @RequestParam String password) throws Exception {
+
+        // 관리자 아이디면 세종 포털을 거치지 않고 관리자 비밀번호로 검증
+        if (adminLoginService.isAdminId(id)) {
+            return adminLoginService.login(id, password);
+        }
 
         SejongMemberInfo memberInfo = loginService.getMemberInfo(id, password);
 

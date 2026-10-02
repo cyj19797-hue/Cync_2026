@@ -1,24 +1,19 @@
-package com.sejong.sjc_app.controller;
+package com.sejong.sjc_app.service;
 
 import com.sejong.sjc_app.domain.User;
 import com.sejong.sjc_app.dto.SejongMemberInfo;
 import com.sejong.sjc_app.dto.TokenResponse;
 import com.sejong.sjc_app.repository.UserRepository;
-import com.sejong.sjc_app.service.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-
-@RestController
-@RequestMapping("/api/auth")
+@Service
 @RequiredArgsConstructor
-public class AdminAuthController {
+public class AdminLoginService {
 
     private static final String ADMIN_NAME = "운영진";
 
@@ -32,23 +27,15 @@ public class AdminAuthController {
     @Value("${admin.password-hash:}")
     private String adminPasswordHash;
 
-    // 관리자 전용 로그인 (세종 포털을 거치지 않음)
-    @PostMapping("/admin-login")
-    public TokenResponse adminLogin(@RequestParam String id,
-                                    @RequestParam String password) {
+    // 설정이 있고 입력한 아이디가 관리자 아이디일 때만 관리자 경로로 처리
+    public boolean isAdminId(String id) {
+        return !adminLoginId.isBlank()
+                && !adminPasswordHash.isBlank()
+                && adminLoginId.equals(id);
+    }
 
-        // 설정이 없으면 이 기능 자체가 꺼진 것으로 취급
-        if (adminLoginId.isBlank() || adminPasswordHash.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-
-        // 아이디와 비밀번호를 항상 둘 다 검사해서 응답 시간 차이로 추측하기 어렵게 함
-        boolean idMatches = MessageDigest.isEqual(
-                adminLoginId.getBytes(StandardCharsets.UTF_8),
-                id.getBytes(StandardCharsets.UTF_8));
-        boolean passwordMatches = passwordEncoder.matches(password, adminPasswordHash);
-
-        if (!idMatches || !passwordMatches) {
+    public TokenResponse login(String id, String password) {
+        if (!passwordEncoder.matches(password, adminPasswordHash)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다.");
         }
 
