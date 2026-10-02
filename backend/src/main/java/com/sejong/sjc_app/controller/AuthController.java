@@ -38,6 +38,11 @@ public class AuthController {
                     return userRepository.save(newUser);
                 });
 
+        // 탈퇴했던 계정이 다시 로그인하면 되살림 (정지 기록은 그대로 승계)
+        if (user.isWithdrawn()) {
+            user = userRepository.save(user.rejoin(memberInfo.getName(), generateUniqueNickname()));
+        }
+
         String token = jwtTokenProvider.generateToken(memberInfo, user.getRole().name());
 
         return TokenResponse.builder()

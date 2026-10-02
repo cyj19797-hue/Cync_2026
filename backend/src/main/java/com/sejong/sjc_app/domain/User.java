@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users")
 @Getter
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -35,6 +35,11 @@ public class User {
 
     private String banReason;
 
+    @Builder.Default
+    private boolean withdrawn = false;
+
+    private LocalDateTime withdrawnAt;
+
     public enum Role {
         USER, ADMIN
     }
@@ -51,5 +56,27 @@ public class User {
             return true; // 영구 정지
         }
         return banExpiresAt.isAfter(LocalDateTime.now());
+    }
+
+    // 탈퇴 처리: 개인정보는 비우고 정지 기록은 유지
+    public User withdraw() {
+        return this.toBuilder()
+                .name(null)
+                .nickname(null)
+                .profileColor(ProfileColor.GRAY)
+                .role(Role.USER)
+                .withdrawn(true)
+                .withdrawnAt(LocalDateTime.now())
+                .build();
+    }
+
+    // 재가입: 정지 기록은 그대로 두고 계정만 되살림
+    public User rejoin(String name, String nickname) {
+        return this.toBuilder()
+                .name(name)
+                .nickname(nickname)
+                .withdrawn(false)
+                .withdrawnAt(null)
+                .build();
     }
 }

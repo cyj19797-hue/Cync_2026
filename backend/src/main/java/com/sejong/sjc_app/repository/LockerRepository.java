@@ -10,4 +10,5 @@ public interface LockerRepository extends JpaRepository<Locker, Long> {
     List<Locker> findByStatus(Locker.Status status);
     Optional<Locker> findByLockerNumber(Integer lockerNumber);
     boolean existsByLockerNumber(Integer lockerNumber);
+    boolean existsByCurrentUserId(String currentUserId);
 }
