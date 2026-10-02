@@ -53,9 +53,10 @@ extension Color {
     /// NOT written into `AccentColor`.
     static let accentRed = Color(hex: 0xFF383C)
 
-    /// Figma fill: `rgba(255,181,181,0.5)` — background of the small category
-    /// badge shown inside each notice row.
-    static let categoryBadgeBackground = Color(hex: 0xFFB5B5).opacity(0.5)
+    /// Background of the filled category badge (`FilterChip.Style.badge`) on
+    /// the notice detail card — the app accent (`eventAccent`) instead of
+    /// Figma's light pink `rgba(255,181,181,0.5)`.
+    static let categoryBadgeBackground = eventAccent
 
     /// Raw one-off fill (#EAEAEA, not a named Figma style) — background of
     /// the pill-shaped 이전 글/목록으로/다음 글 control on the detail screen.
@@ -70,7 +71,8 @@ extension Color {
 
     // MARK: - "3 캘린더" (calendar)
 
-    /// Figma style: `gray300` (#D0D5DD) — the selected day's circle fill.
+    /// Figma style: `gray300` (#D0D5DD) — neutral gray for disabled/broken
+    /// states (locker cells, comment dividers).
     static let gray300 = Color(hex: 0xD0D5DD)
 
     /// Figma style: `white_sub` (#F7F8FA) — the month-grid card background.
@@ -81,6 +83,23 @@ extension Color {
     /// category chips.
     static let cardBorder = Color(hex: 0xDBDBDB)
 
+    /// Sunday / public-holiday day numbers and weekday label — the red most
+    /// Korean calendars use. Same hue as `accentRed`.
+    static let calendarSunday = accentRed
+
+    /// Saturday day numbers and weekday label. A deeper blue than
+    /// `eventAccent` so it doesn't read as the "today"/selected accent.
+    static let calendarSaturday = Color(hex: 0x3478F6)
+
+    // MARK: - Category colors (calendar event dots / row accent bars)
+
+    /// Not in Figma — picked so the four categories stay distinguishable as
+    /// 4pt dots. 학사 keeps the app accent since it's the most common.
+    static let categoryAcademic = eventAccent
+    static let categoryStudentCouncil = Color(hex: 0x34C759)
+    static let categoryScholarship = Color(hex: 0xFF9F0A)
+    static let categoryExchange = Color(hex: 0xAF52DE)
+
     // MARK: - "4 사물함" (locker)
 
     /// Figma style: `primary` (#FF4F6D) — highlights the current user's own
@@ -88,6 +107,33 @@ extension Color {
     /// only this one element uses it in the file so far; promote it to
     /// `AccentColor` later if it turns out to be the app-wide tint too.
     static let brandPrimary = Color(hex: 0xFF4F6D)
+
+    /// Figma fill `rgba(255,141,40,0.3)` (#FF8D28) — "내 사물함" component's
+    /// `속성 1=승인대기` variant status dot/pill (신청 후 관리자 승인 대기 중).
+    /// Not an exact match for any `UIColor` system color, unlike the
+    /// `systemGreen`/`systemOrange` used elsewhere on this card.
+    static let lockerPendingBadge = Color(hex: 0xFF8D28)
+
+    /// Figma fill `rgba(0,192,232,0.3)` (#00C0E8) — "내 사물함" component's
+    /// `속성 1=베리언트4` variant status dot/pill (승인 완료, 비밀번호 등록 필요).
+    static let lockerApprovedBadge = Color(hex: 0x00C0E8)
+
+    // MARK: - Locker cell states (main-screen grid, apply-screen map, legend)
+
+    /// "신청 가능" — the only state that invites a tap, so the only one with
+    /// an accent fill (`eventAccentLight`, AccentLight).
+    static let lockerAvailable = eventAccentLight
+    /// "승인 대기중" — the original yellow, unchanged.
+    static let lockerPending = Color(hex: 0xFFC542)
+    /// 사용중 · 고장 · 사용 제한 · 정보 없음 — one quiet light-gray tile with
+    /// faded text, so the grid doesn't read as a wall of buttons.
+    static let lockerUnavailable = surface
+    static let lockerUnavailableText = gray400
+    /// Numberless "-" slots (B206's 학생회 사물함 columns) — a dark gray
+    /// block so they don't read as rentable lockers with a missing number.
+    static let lockerRestricted = gray400
+    /// "내 사물함" — AccentDark fill with white text so it stands out.
+    static let lockerMine = eventAccentDark
 
     // MARK: - "5 커뮤니티" (community)
 

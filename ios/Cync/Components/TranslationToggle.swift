@@ -5,7 +5,8 @@
 //  Figma node `271:1914` ("번역 탭") — "원문" / "AI 번역" pill toggle on the
 //  "2-1 공지글" detail card. Visually close to `FilterChip`, but it's
 //  a 2-state binary switch (not an open set of filter categories), so it
-//  gets its own small component rather than reusing the chip's API.
+//  gets its own small component rather than reusing the chip's API. No track
+//  behind the tabs — only the selected one gets a gray `surface` fill.
 //
 
 import SwiftUI
@@ -15,16 +16,16 @@ struct TranslationToggle: View {
 
     var body: some View {
         HStack(spacing: Spacing.xs) {
-            tab(titleKey: "원문", isSelected: !isShowingTranslation) {
+            tab(titleKey: .noticeOriginal, isSelected: !isShowingTranslation) {
                 isShowingTranslation = false
             }
-            tab(titleKey: "AI 번역", isSelected: isShowingTranslation) {
+            tab(titleKey: .noticeAiTranslation, isSelected: isShowingTranslation) {
                 isShowingTranslation = true
             }
         }
     }
 
-    private func tab(titleKey: LocalizedStringKey, isSelected: Bool, action: @escaping () -> Void) -> some View {
+    private func tab(titleKey: LocalizedStringResource, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(titleKey)
                 .font(.toggleTabLabel).tracking(Tracking.toggleTabLabel)

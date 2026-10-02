@@ -42,7 +42,7 @@ struct Comment: Identifiable, Codable, Hashable {
     /// `anonymous` hides identity entirely — even a set `authorNickname` —
     /// so an anonymous comment always shows "익명", never the nickname.
     var displayAuthorName: String {
-        anonymous ? "익명" : (authorNickname ?? authorName)
+        anonymous ? String(localized: .commonAnonymous) : (authorNickname ?? authorName)
     }
 }
 

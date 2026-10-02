@@ -20,22 +20,22 @@ struct LockerApplicationConfirmDialog: View {
     var body: some View {
         DialogCard {
             HStack(alignment: .lastTextBaseline, spacing: Spacing.xxs) {
-                Text("\(String(format: "%03d", locker.lockerNumber))번")
+                Text(.lockerNumber(String(format: "%03d", locker.lockerNumber)))
                     .font(.noticeDetailTitle).tracking(Tracking.noticeDetailTitle)
                 Text(location)
                     .font(.categoryBadge).tracking(Tracking.categoryBadge)
             }
             .foregroundStyle(Color.textPrimary)
 
-            Text("사물함을 신청하시겠습니까?")
+            Text(.lockerConfirmApply)
                 .font(.dialogBody).tracking(Tracking.dialogBody)
                 .foregroundStyle(Color.textPrimary)
                 .padding(.vertical, Spacing.xxs)
 
             HStack(spacing: Spacing.xs) {
                 Spacer(minLength: 0)
-                DialogActionButton(titleKey: "취소", action: onCancel)
-                DialogActionButton(titleKey: "신청", style: .primary, action: onConfirm)
+                DialogActionButton(titleKey: .commonCancel, action: onCancel)
+                DialogActionButton(titleKey: .lockerApplyAction, style: .primary, action: onConfirm)
             }
         }
     }

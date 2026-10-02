@@ -57,9 +57,9 @@ struct NoticeListView: View {
     private var content: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // TODO: Assets에 커스텀 "CheckSquare" 아이콘 추가 필요 — 우선 SF Symbol로 대체
-                AppTopBar(title: "공지사항") {
-                    Image(systemName: "checkmark.square")
+                // Figma의 체크박스 아이콘 대신 공지 의미에 맞는 확성기(SF Symbol) 사용
+                AppTopBar(title: .tabNotices) {
+                    Image(systemName: "megaphone")
                 } trailing: {
                     Button {
                         isSearchPresented = true
@@ -67,7 +67,7 @@ struct NoticeListView: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(Color.textPrimary)
                     }
-                    .accessibilityLabel("검색")
+                    .accessibilityLabel(Text(.commonSearch))
                 }
 
                 if isSearchPresented {
@@ -85,6 +85,7 @@ struct NoticeListView: View {
                     ForEach(viewModel.filteredNotices) { notice in
                         NoticeRow(
                             notice: notice,
+                            showsCategory: viewModel.selectedCategory == .all,
                             onToggleBookmark: { viewModel.toggleBookmark(for: notice) },
                             onSelect: { selectedNotice = notice }
                         )
@@ -101,13 +102,13 @@ struct NoticeListView: View {
                 await viewModel.load()
             }
             .alert(
-                "오류",
+                Text(.commonError),
                 isPresented: Binding(
                     get: { viewModel.errorMessage != nil },
                     set: { isPresented in if !isPresented { viewModel.errorMessage = nil } }
                 )
             ) {
-                Button("확인", role: .cancel) {}
+                Button(.commonOk, role: .cancel) {}
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }

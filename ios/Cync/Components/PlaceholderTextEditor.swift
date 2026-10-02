@@ -24,7 +24,7 @@ import SwiftUI
 
 struct PlaceholderTextEditor: View {
     @Binding var text: String
-    let placeholder: LocalizedStringKey
+    let placeholder: LocalizedStringResource
     var font: Font = .body
     var placeholderColor: Color = .gray400
     var textColor: Color = .textPrimary
@@ -33,7 +33,7 @@ struct PlaceholderTextEditor: View {
         ZStack(alignment: .topLeading) {
             if text.isEmpty {
                 Text(placeholder)
-                    .font(font)
+                    .font(font).tracking(Tracking.standard)
                     .foregroundStyle(placeholderColor)
                     .padding(.top, 8)
                     .padding(.leading, 5)
@@ -41,7 +41,7 @@ struct PlaceholderTextEditor: View {
             }
 
             TextEditor(text: $text)
-                .font(font)
+                .font(font).tracking(Tracking.standard)
                 .foregroundStyle(textColor)
                 .scrollContentBackground(.hidden)
         }

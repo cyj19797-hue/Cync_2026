@@ -6,7 +6,8 @@
 //
 //  No nav bar / back chevron in the design — this is an onboarding screen
 //  (after language selection). `CyncApp` shows this whenever
-//  `SessionStore.isLoggedIn` is false (always true on a fresh launch); a
+//  `SessionStore.isLoggedIn` is false (skipped on launch when "자동 로그인"
+//  restored a saved session); a
 //  successful `viewModel.submit()` calls `sessionStore.logIn()` to switch
 //  to `RootTabView`.
 //
@@ -40,7 +41,7 @@ struct LoginView: View {
                         .ignoresSafeArea()
 
                     ErrorDialog(
-                        titleKey: "로그인 실패",
+                        titleKey: .loginFailedTitle,
                         message: errorMessage,
                         onConfirm: { viewModel.errorMessage = nil }
                     )
@@ -60,7 +61,7 @@ struct LoginView: View {
 
     private var loginCard: some View {
         return VStack(alignment: .leading, spacing: Spacing.xxs) {
-            Text("로그인")
+            Text(.loginTitle)
                 .font(.loginTitle).tracking(Tracking.loginTitle)
                 .foregroundStyle(Color.eventAccent)
 
@@ -70,21 +71,27 @@ struct LoginView: View {
             }
             .padding(.vertical, Spacing.md)
 
-            CheckboxToggle(
-                isChecked: $viewModel.rememberStudentId,
-                titleKey: "학번 기억하기",
-                checkedFill: .eventAccent,
-                checkedBorderColor: .eventAccentDark,
-                checkmarkColor: .white
-            )
+            HStack(spacing: Spacing.sm) {
+                CheckboxToggle(
+                    isChecked: $viewModel.rememberStudentId,
+                    titleKey: .loginRememberId,
+                    style: .accent,
+                    spacing: Spacing.xs
+                )
+
+                CheckboxToggle(
+                    isChecked: $viewModel.autoLogin,
+                    titleKey: .loginAutoLogin,
+                    style: .accent,
+                    spacing: Spacing.xs
+                )
+            }
             .padding(.vertical, Spacing.xxs)
 
             PrimaryActionButton(
-                titleKey: "로그인",
+                titleKey: .loginSubmit,
                 isEnabled: viewModel.canSubmit && !viewModel.isSubmitting,
-                tint: .eventAccent,
-                font: .loginButtonLabel,
-                tracking: Tracking.loginButtonLabel
+                tint: .eventAccent
             ) {
                 Task {
                     if await viewModel.submit() {
@@ -105,17 +112,17 @@ struct LoginView: View {
 
     private var studentIdField: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text("학번")
+            Text(.loginStudentId)
                 .font(.loginFieldLabel).tracking(Tracking.loginFieldLabel)
                 .foregroundStyle(Color.textPrimary)
-            LabeledInputField(placeholder: "학번을 입력해주세요", text: $viewModel.studentId, keyboardType: .numberPad)
+            LabeledInputField(placeholder: .loginStudentIdPlaceholder, text: $viewModel.studentId, keyboardType: .numberPad)
         }
     }
 
     private var passwordField: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             HStack(spacing: Spacing.xxs) {
-                Text("비밀번호")
+                Text(.loginPassword)
                     .font(.loginFieldLabel).tracking(Tracking.loginFieldLabel)
                     .foregroundStyle(Color.textPrimary)
 
@@ -123,13 +130,13 @@ struct LoginView: View {
                     Image(systemName: "exclamationmark.circle")
                         .font(.system(size: 12))
                         .foregroundStyle(Color.textSecondary)
-                    Text("비밀번호는 서버에 저장되지 않아요!")
+                    Text(.loginPasswordNotStored)
                         .font(.loginCaption).tracking(Tracking.loginCaption)
                         .foregroundStyle(Color.textSecondary)
                 }
                 
             }
-            LabeledInputField(placeholder: "비밀번호를 입력해주세요", text: $viewModel.password, isSecure: true)
+            LabeledInputField(placeholder: .loginPasswordPlaceholder, text: $viewModel.password, isSecure: true)
         }
     }
 }

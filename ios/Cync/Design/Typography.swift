@@ -17,6 +17,9 @@
 //  text-style role each token plays) even though the system font doesn't
 //  need it to scale.
 //
+//  Figma's 18pt tokens are intentionally rendered at 17pt (the iOS
+//  body/headline size) — their comments below still quote Figma's 18.
+//
 
 import SwiftUI
 
@@ -50,6 +53,10 @@ extension Font {
     /// this file used for the "전체"/"학사"/… filter chip label until it was
     /// split out below (`.categoryFilterChipLabel`) at a smaller size.
     static let categoryChip = Font.appDefault(.medium, size: 16, relativeTo: .body)
+
+    /// `PrimaryActionButton` label — iOS 기본 주요 버튼 크기(17pt SemiBold)를
+    /// 따른다. 앱의 모든 주요 버튼이 이 토큰을 공유한다.
+    static let primaryButtonLabel = Font.appDefault(.semibold, size: 17, relativeTo: .body)
 
     /// Category filter chip label ("전체", "학사", …) on "2 공지사항" /
     /// "3 캘린더" — Pretendard Regular 14. Deliberately smaller/lighter than
@@ -116,18 +123,37 @@ extension Font {
     /// component (a calendar grid cell, not a notice row).
     static let calendarDayNumber = Font.appDefault(.regular, size: 14, relativeTo: .subheadline)
 
-    /// Small 12px captions on the schedule card ("8월 10일 화요일", "전체 보기")
-    /// — Pretendard Regular 12.
+    /// Small 12px captions — the "오늘" pill, the "9월 전체 일정" link and the
+    /// month list's holiday names — Pretendard Regular 12.
     static let calendarCaption = Font.appDefault(.regular, size: 12, relativeTo: .caption2)
 
-    /// "등록된 일정이 없습니다." empty-state message — Pretendard Medium 16.
-    /// (Figma: `361:2591` in "3-2 일정 전체보기(일정 없음)".)
-    static let emptyStateMessage = Font.appDefault(.medium, size: 16, relativeTo: .body)
+    /// "등록된 일정" card title and the month list's per-day headers — Bold 17, one step above the 16 Bold event
+    /// titles (`.noticeTitle`) listed under it so the header reads as a
+    /// section title rather than another row.
+    static let calendarSectionTitle = Font.appDefault(.bold, size: 17, relativeTo: .headline)
+
+    /// Selected date ("9월 25일 (금)") and holiday name next to
+    /// `calendarSectionTitle` — Regular 14.
+    static let calendarSectionSubtitle = Font.appDefault(.regular, size: 14, relativeTo: .subheadline)
+
+    /// "이 날은 일정이 없어요." empty-state message — Regular 14 (Figma
+    /// `361:2591` had Medium 16; reduced so it reads as a secondary note
+    /// under the 17 Bold section header rather than competing with it).
+    static let emptyStateMessage = Font.appDefault(.regular, size: 14, relativeTo: .subheadline)
+
+    // MARK: - Shared components
+
+    /// Centered title of `ScreenNavigationBar`'s `.centered` style (e.g.
+    /// "월별 일정") — Semibold 17, matching the iOS navigation bar title.
+    static let screenNavTitleCentered = Font.appDefault(.semibold, size: 17, relativeTo: .headline)
+
+    /// `NavigationChevron` SF Symbol ("<" / ">") — Semibold 14.
+    static let navigationChevron = Font.appDefault(.semibold, size: 14, relativeTo: .subheadline)
 
     // MARK: - "4 사물함" (locker)
 
     /// "나의 사물함" card title — Pretendard Bold 18.
-    static let myLockerTitle = Font.appDefault(.bold, size: 18, relativeTo: .title3)
+    static let myLockerTitle = Font.appDefault(.bold, size: 17, relativeTo: .title3)
 
     /// The large "XXX번" locker number on the summary card — Pretendard Bold 32.
     static let lockerNumberLarge = Font.appDefault(.bold, size: 28, relativeTo: .largeTitle)
@@ -141,6 +167,13 @@ extension Font {
     /// "센B202 앞" location picker label — Pretendard Medium 12.
     static let lockerLocationText = Font.appDefault(.medium, size: 12, relativeTo: .caption2)
 
+    /// Room ("B201") after MyLockerCard's big locker number — Medium 14 in
+    /// a light gray, so the number itself stays the focus.
+    static let lockerRoomLabel = Font.appDefault(.medium, size: 14, relativeTo: .subheadline)
+
+    /// Room button inside the map card ("B201 ⌄") — Medium 13.
+    static let lockerZoneButton = Font.appDefault(.medium, size: 13, relativeTo: .footnote)
+
     /// Grid cell locker number ("7번") — Pretendard Bold 16.
     static let lockerCellNumber = Font.appDefault(.bold, size: 16, relativeTo: .subheadline)
 
@@ -150,7 +183,7 @@ extension Font {
     // MARK: - Popup dialogs ("4-1-1 사물함 신청 팝업", "4-1-2 사물함 신청 팝업2")
 
     /// Dialog title ("계좌 안내") — Pretendard Bold 20.
-    static let dialogTitle = Font.appDefault(.bold, size: 18, relativeTo: .title3)
+    static let dialogTitle = Font.appDefault(.bold, size: 17, relativeTo: .title3)
 
     /// Dialog body copy — Pretendard Medium 16.
     static let dialogBody = Font.appDefault(.medium, size: 16, relativeTo: .body)
@@ -158,7 +191,7 @@ extension Font {
     // MARK: - "5 커뮤니티" (community)
 
     /// Post title ("제목입니다") — Pretendard SemiBold 20.
-    static let communityPostTitle = Font.appDefault(.bold, size: 18, relativeTo: .title3)
+    static let communityPostTitle = Font.appDefault(.bold, size: 17, relativeTo: .title3)
 
     /// Post body preview (1-line clamp) — Pretendard Medium 16.
     static let communityPostBody = Font.appDefault(.medium, size: 16, relativeTo: .body)
@@ -175,7 +208,7 @@ extension Font {
     static let commentAuthor = Font.appDefault(.semibold, size: 14, relativeTo: .subheadline)
 
     /// "댓글" section title — Pretendard SemiBold 18.
-    static let commentsSectionTitle = Font.appDefault(.semibold, size: 18, relativeTo: .title3)
+    static let commentsSectionTitle = Font.appDefault(.semibold, size: 17, relativeTo: .title3)
 
     /// "답글 달기" reply button — Pretendard Medium 14.
     ///
@@ -214,13 +247,13 @@ extension Font {
 
     /// "[필수] 이용약관" / "[선택] 중요한 학과 소식 알림" item row label —
     /// Pretendard Medium 18.
-    static let termsItemLabel = Font.appDefault(.medium, size: 18, relativeTo: .title3)
+    static let termsItemLabel = Font.appDefault(.medium, size: 17, relativeTo: .title3)
 
     /// "전체 동의" label — Pretendard Medium 16.
     static let termsAgreeAllLabel = Font.appDefault(.medium, size: 16, relativeTo: .body)
 
     /// "👉 세종대학교 계정으로 시작하기" button label — Pretendard Bold 18.
-    static let termsButtonLabel = Font.appDefault(.bold, size: 18, relativeTo: .title3)
+    static let termsButtonLabel = Font.appDefault(.bold, size: 17, relativeTo: .title3)
 
     // MARK: - "1-5 로그인" (login)
 
@@ -228,7 +261,7 @@ extension Font {
     static let loginTitle = Font.appDefault(.bold, size: 32, relativeTo: .largeTitle)
 
     /// "학번" / "비밀번호" field label — Pretendard Bold 18.
-    static let loginFieldLabel = Font.appDefault(.bold, size: 18, relativeTo: .title3)
+    static let loginFieldLabel = Font.appDefault(.bold, size: 17, relativeTo: .title3)
 
     /// Typed value inside the 학번/비밀번호 input boxes — Pretendard Medium 16.
     /// Not specified in Figma (the mock shows both fields empty), chosen to

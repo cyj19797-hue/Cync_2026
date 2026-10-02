@@ -96,7 +96,7 @@ struct LockerApplicationView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScreenNavigationBar(titleKey: "사물함 신청", onBack: { dismiss() })
+            ScreenNavigationBar(titleKey: .lockerApply, onBack: { dismiss() })
 
             ScrollView {
                 LazyVGrid(columns: lockerApplicationGridColumns, spacing: Spacing.xxs) {
@@ -142,13 +142,13 @@ struct LockerApplicationView: View {
             await viewModel.load()
         }
         .alert(
-            "오류",
+            Text(.commonError),
             isPresented: Binding(
                 get: { applyErrorMessage != nil },
                 set: { isPresented in if !isPresented { applyErrorMessage = nil } }
             )
         ) {
-            Button("확인", role: .cancel) {}
+            Button(.commonOk, role: .cancel) {}
         } message: {
             Text(applyErrorMessage ?? "")
         }
@@ -158,7 +158,7 @@ struct LockerApplicationView: View {
         Button {
             dialogStage = .confirm(locker)
         } label: {
-            Text("\(String(format: "%03d", locker.lockerNumber))번 사물함 신청하기")
+            Text(.lockerApplyNumbered(String(format: "%03d", locker.lockerNumber)))
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)

@@ -13,8 +13,10 @@
 //
 //  No UIKit here — the top bar reuses Components/AppTopBar.swift (shared
 //  with NoticeListView/CommunityView/LockerView) and search reuses the
-//  existing Components/SearchBar.swift (pure SwiftUI); the language picker
-//  and logout/withdraw confirmations use native `.confirmationDialog`, and
+//  existing Components/SearchBar.swift (pure SwiftUI); "언어 설정" opens the
+//  app's own page in iOS Settings (per-app language — the app follows the
+//  device/app language rather than an in-app picker), the logout/withdraw
+//  confirmations use native `.confirmationDialog`, and
 //  the nickname editor uses a native `.alert` with a `TextField` (supported
 //  directly by SwiftUI since iOS 16) instead of a hand-built prompt.
 //
@@ -27,7 +29,6 @@ struct SettingsView: View {
     @EnvironmentObject private var sessionStore: SessionStore
     @State private var isSearchPresented = false
     @State private var isEditingProfile = false
-    @State private var isLanguagePickerPresented = false
     @State private var isLogoutConfirmPresented = false
     @State private var isWithdrawConfirmPresented = false
     @State private var isNotificationSettingsPresented = false
@@ -36,14 +37,14 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                AppTopBar(title: "마이페이지", trailing: {
+                AppTopBar(title: .settingsTitle, trailing: {
                     Button {
                         isSearchPresented = true
                     } label: {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(Color.textPrimary)
                     }
-                    .accessibilityLabel("검색")
+                    .accessibilityLabel(Text(.commonSearch))
                 })
 
                 if isSearchPresented {
@@ -68,36 +69,36 @@ struct SettingsView: View {
                     }
 
                     Section {
-                        SettingsRow(systemImage: "globe", titleKey: "언어 설정", value: viewModel.language.rawValue) {
-                            isLanguagePickerPresented = true
+                        SettingsRow(systemImage: "globe", titleKey: .settingsLanguage, value: currentLanguageName) {
+                            openAppLanguageSettings()
                         }
-                        SettingsRow(systemImage: "bell", titleKey: "알림 설정") {
+                        SettingsRow(systemImage: "bell", titleKey: .settingsNotifications) {
                             isNotificationSettingsPresented = true
                         }
-                        SettingsRow(systemImage: "number", titleKey: "Cync 공지") {
+                        SettingsRow(systemImage: "number", titleKey: .settingsCyncNotice) {
                             isCyncNoticePresented = true
                         }
-                        SettingsRow(systemImage: "questionmark.circle", titleKey: "오류 및 문의") {
+                        SettingsRow(systemImage: "questionmark.circle", titleKey: .settingsInquiry) {
                             openInquiryChat()
                         }
-                        SettingsRow(systemImage: "info.circle", titleKey: "프로그램 정보") {
+                        SettingsRow(systemImage: "info.circle", titleKey: .settingsAppInfo) {
                             // TODO: 프로그램 정보 화면 연동 필요
                         }
                     } header: {
-                        Text("설정")
+                        Text(.tabSettings)
                             .font(.noticeTitle).tracking(Tracking.noticeTitle)
                             .foregroundStyle(Color.textPrimary)
                     }
 
                     Section {
-                        SettingsRow(systemImage: "rectangle.portrait.and.arrow.right", titleKey: "로그아웃") {
+                        SettingsRow(systemImage: "rectangle.portrait.and.arrow.right", titleKey: .settingsLogout) {
                             isLogoutConfirmPresented = true
                         }
-                        SettingsRow(systemImage: "person.crop.circle.badge.xmark", titleKey: "회원 탈퇴") {
+                        SettingsRow(systemImage: "person.crop.circle.badge.xmark", titleKey: .settingsWithdraw) {
                             isWithdrawConfirmPresented = true
                         }
                     } header: {
-                        Text("계정")
+                        Text(.settingsAccount)
                             .font(.noticeTitle).tracking(Tracking.noticeTitle)
                             .foregroundStyle(Color.textPrimary)
                     }
@@ -125,31 +126,23 @@ struct SettingsView: View {
                 }
             }
             .alert(
-                "오류",
+                Text(.commonError),
                 isPresented: Binding(
                     get: { viewModel.errorMessage != nil },
                     set: { isPresented in if !isPresented { viewModel.errorMessage = nil } }
                 )
             ) {
-                Button("확인", role: .cancel) {}
+                Button(.commonOk, role: .cancel) {}
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
-            .confirmationDialog("언어 설정", isPresented: $isLanguagePickerPresented, titleVisibility: .visible) {
-                ForEach(AppLanguage.allCases) { language in
-                    Button(language.rawValue) {
-                        viewModel.language = language
-                        // TODO: 실제 앱 로케일 전환(String Catalog 반영) 연동 필요
-                    }
-                }
-            }
-            .confirmationDialog("로그아웃 하시겠습니까?", isPresented: $isLogoutConfirmPresented, titleVisibility: .visible) {
-                Button("로그아웃", role: .destructive) {
+            .confirmationDialog(Text(.settingsLogoutConfirm), isPresented: $isLogoutConfirmPresented, titleVisibility: .visible) {
+                Button(.settingsLogout, role: .destructive) {
                     sessionStore.logOut()
                 }
             }
-            .confirmationDialog("정말 탈퇴하시겠습니까?", isPresented: $isWithdrawConfirmPresented, titleVisibility: .visible) {
-                Button("회원 탈퇴", role: .destructive) {
+            .confirmationDialog(Text(.settingsWithdrawConfirm), isPresented: $isWithdrawConfirmPresented, titleVisibility: .visible) {
+                Button(.settingsWithdraw, role: .destructive) {
                     // TODO: 실제 회원 탈퇴 API 연동 필요
                 }
             }
@@ -163,6 +156,22 @@ struct SettingsView: View {
     /// domain as an associated/universal link), and falls back to opening it
     /// in Safari when the app isn't installed — no separate custom-scheme
     /// check needed.
+    /// The language the app is actually displaying right now (`ko`/`en`
+    /// from the String Catalog), named in that same language — e.g. "한국어"
+    /// or "English".
+    private var currentLanguageName: String {
+        let code = Bundle.main.preferredLocalizations.first ?? "ko"
+        return Locale(identifier: code).localizedString(forLanguageCode: code) ?? code
+    }
+
+    /// "언어 설정" — the app follows the device language, so this opens the
+    /// app's page in iOS Settings, where iOS shows a per-app "Language"
+    /// option once the app ships more than one localization.
+    private func openAppLanguageSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
+    }
+
     private func openInquiryChat() {
         guard let url = URL(string: "https://open.kakao.com/o/shz9nZMi") else { return }
         UIApplication.shared.open(url)

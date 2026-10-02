@@ -8,54 +8,113 @@
 //  are individual capsule buttons rather than one segmented-control
 //  container, so a custom chip is used instead of `Picker(.segmented)`.
 //
-//  `isSelected` only ever switches the fill/border/corner-radius below —
-//  Figma specs the same `p-[8px]` on every chip regardless of selection, so
-//  the padding here is pinned to `chipHorizontalPadding`/`chipVerticalPadding`
-//  independently of `isSelected`, guaranteeing a selected and an unselected
-//  chip always render at the same height. (Renamed from `NoticeCategoryChip`
-//  — nothing about this chip is notice-specific, it's shared with
-//  `CalendarView` too via `CategoryFilterRow`.)
+//  Also covers the small category tag in front of each notice title (Figma
+//  node `I44:269;184:1577`, formerly its own `NoticeCategoryBadge`
+//  component) via `Style.badge` — same capsule shape and category label as
+//  the filter chip, just a filled accent-blue background
+//  (`categoryBadgeBackground`, no border) and no tap action, so it
+//  was folded into this component instead of duplicating the capsule layout
+//  in a second file.
+//
+//  `.selected` is a brand-blue (`eventAccent`) fill with a white label
+//  instead of Figma's light-gray `surface` fill — the gray was too close to
+//  the unselected chips to tell which filter is active.
+//
+//  `Style.selected`/`.unselected` only ever switch the fill/border/corner-radius
+//  below — Figma specs the same `p-[8px]` on every chip regardless of
+//  selection, so the padding here is pinned to
+//  `chipHorizontalPadding`/`chipVerticalPadding` independently of `style`,
+//  guaranteeing every variant renders at the same height.
 //
 
 import SwiftUI
 
 struct FilterChip: View {
+    enum Style: Equatable {
+        case selected
+        case unselected
+        /// The non-interactive notice-category tag (filled accent blue).
+        case badge
+    }
+
     /// Sourced from `Spacing.xs` (not a raw literal) so this stays in sync
     /// with the rest of the design system if that token ever changes.
     private static let chipHorizontalPadding: CGFloat = Spacing.xs
     private static let chipVerticalPadding: CGFloat = Spacing.xs
 
     let category: NoticeCategory
-    let isSelected: Bool
-    let action: () -> Void
+    let style: Style
+    /// `nil` renders as a plain (non-`Button`) label — used by `.badge`,
+    /// which is a static tag rather than a tappable filter.
+    var action: (() -> Void)?
 
     var body: some View {
-        Button(action: action) {
-            Text(category.localizedKey)
-                .font(.categoryFilterChipLabel).tracking(Tracking.categoryFilterChipLabel)
-                .foregroundStyle(Color.textPrimary)
-                .padding(.horizontal, Self.chipHorizontalPadding)
-                .padding(.vertical, Self.chipVerticalPadding)
-                .background {
-                    RoundedRectangle(cornerRadius: isSelected ? Radius.chipSelected : Radius.chipDefault)
-                        .fill(isSelected ? Color.surface : Color.white)
-                        .overlay {
-                            if !isSelected {
-                                RoundedRectangle(cornerRadius: Radius.chipDefault)
-                                    .strokeBorder(Color.borderLight, lineWidth: 0.5)
-                            }
-                        }
-                }
+        if let action {
+            Button(action: action) { label }
+                .buttonStyle(.plain)
+        } else {
+            label
         }
-        .buttonStyle(.plain)
+    }
+
+    private var label: some View {
+        Text(category.label)
+            .font(font).tracking(tracking)
+            .foregroundStyle(style == .selected ? Color.white : Color.textPrimary)
+            .padding(.horizontal, Self.chipHorizontalPadding)
+            .padding(.vertical, Self.chipVerticalPadding)
+            .background {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(fillColor)
+                    .overlay {
+                        if let borderColor {
+                            RoundedRectangle(cornerRadius: cornerRadius)
+                                .strokeBorder(borderColor, lineWidth: 0.5)
+                        }
+                    }
+            }
+    }
+
+    private var font: Font {
+        style == .badge ? .categoryBadge : .categoryFilterChipLabel
+    }
+
+    private var tracking: CGFloat {
+        style == .badge ? Tracking.categoryBadge : Tracking.categoryFilterChipLabel
+    }
+
+    private var cornerRadius: CGFloat {
+        style == .selected ? Radius.chipSelected : Radius.chipDefault
+    }
+
+    private var fillColor: Color {
+        switch style {
+        case .selected: return .eventAccent
+        case .unselected: return .white
+        case .badge: return .categoryBadgeBackground
+        }
+    }
+
+    private var borderColor: Color? {
+        switch style {
+        case .selected: return nil
+        case .unselected: return .borderLight
+        case .badge: return nil
+        }
     }
 }
 
 #Preview {
-    HStack(spacing: Spacing.xs) {
-        FilterChip(category: .all, isSelected: true) {}
-        FilterChip(category: .academic, isSelected: false) {}
-        FilterChip(category: .scholarship, isSelected: false) {}
+    VStack(alignment: .leading, spacing: Spacing.sm) {
+        HStack(spacing: Spacing.xs) {
+            FilterChip(category: .all, style: .selected) {}
+            FilterChip(category: .academic, style: .unselected) {}
+            FilterChip(category: .scholarship, style: .unselected) {}
+        }
+        HStack(spacing: Spacing.xs) {
+            FilterChip(category: .academic, style: .badge)
+            FilterChip(category: .exchange, style: .badge)
+        }
     }
     .padding()
     .background(Color.appBackground)

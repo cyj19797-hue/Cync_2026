@@ -33,19 +33,19 @@ import SwiftUI
 private enum RootTab: CaseIterable, Hashable {
     case notices, calendar, lockers, community, settings
 
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
-        case .notices: return "공지사항"
-        case .calendar: return "캘린더"
-        case .lockers: return "사물함"
-        case .community: return "커뮤니티"
-        case .settings: return "설정"
+        case .notices: return .tabNotices
+        case .calendar: return .tabCalendar
+        case .lockers: return .tabLockers
+        case .community: return .tabCommunity
+        case .settings: return .tabSettings
         }
     }
 
     var systemImage: String {
         switch self {
-        case .notices: return "checkmark.square"
+        case .notices: return "megaphone"
         case .calendar: return "calendar"
         case .lockers: return "shippingbox"
         case .community: return "face.smiling"

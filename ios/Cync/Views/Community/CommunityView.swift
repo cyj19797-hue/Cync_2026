@@ -16,6 +16,11 @@
 //  the 공유/저장/신고 action menu that used to live behind it
 //  (`.communityPostActionMenu(target:)`) has been removed.
 //
+//  Figma node `257:6758` ("프로필 설정") gates first-time entry: while
+//  `viewModel.needsNicknameSetup` is true, `ProfileSetupView` replaces this
+//  screen's whole content (bottom tab bar included, same as
+//  `NoticeDetailView`'s full-screen takeover) instead of the normal feed.
+//
 
 import SwiftUI
 
@@ -23,11 +28,31 @@ struct CommunityView: View {
     @StateObject private var viewModel = CommunityViewModel()
     @State private var selectedPost: CommunityPost?
     @State private var isComposePresented = false
+    @EnvironmentObject private var tabBarVisibility: TabBarVisibility
 
     var body: some View {
+        Group {
+            if viewModel.needsNicknameSetup, let profile = viewModel.profile {
+                ProfileSetupView(profile: profile) {
+                    viewModel.completeNicknameSetup()
+                }
+            } else {
+                feed
+            }
+        }
+        .task { await viewModel.load() }
+        .onChange(of: viewModel.needsNicknameSetup) { _, needsSetup in
+            tabBarVisibility.isHidden = needsSetup
+        }
+        .onDisappear {
+            tabBarVisibility.isHidden = false
+        }
+    }
+
+    private var feed: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                AppTopBar(title: "커뮤니티") {
+                AppTopBar(title: .tabCommunity) {
                     Image(systemName: "face.smiling")
                 } trailing: {
                     Button {
@@ -37,7 +62,7 @@ struct CommunityView: View {
                             .foregroundStyle(viewModel.isBanned ? Color.gray400 : Color.textPrimary)
                     }
                     .disabled(viewModel.isBanned)
-                    .accessibilityLabel("글쓰기")
+                    .accessibilityLabel(Text(.communityWrite))
                 }
 
                 List {
@@ -62,17 +87,14 @@ struct CommunityView: View {
             }
             .background(Color.appBackground)
             .toolbar(.hidden, for: .navigationBar)
-            .task {
-                await viewModel.load()
-            }
             .alert(
-                "오류",
+                Text(.commonError),
                 isPresented: Binding(
                     get: { viewModel.errorMessage != nil },
                     set: { isPresented in if !isPresented { viewModel.errorMessage = nil } }
                 )
             ) {
-                Button("확인", role: .cancel) {}
+                Button(.commonOk, role: .cancel) {}
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
@@ -82,4 +104,5 @@ struct CommunityView: View {
 
 #Preview {
     CommunityView()
+        .environmentObject(TabBarVisibility())
 }

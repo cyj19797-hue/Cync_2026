@@ -19,7 +19,7 @@ struct CyncNotice: Identifiable, Hashable {
     var content: String
 
     var dateText: String {
-        date.formatted(.dateTime.year().month(.twoDigits).day(.twoDigits).locale(Locale(identifier: "ko_KR")))
+        date.formatted(.dateTime.year().month(.twoDigits).day(.twoDigits))
             .replacingOccurrences(of: " ", with: "")
     }
 }

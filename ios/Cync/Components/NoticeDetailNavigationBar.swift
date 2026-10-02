@@ -17,11 +17,11 @@ struct NoticeDetailNavigationBar: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            button(systemImage: "arrow.left.circle", titleKey: "이전 글", iconLeading: true, action: onPrevious)
+            button(systemImage: "arrow.left.circle", titleKey: .noticePrevious, iconLeading: true, action: onPrevious)
             Spacer(minLength: 0)
-            button(systemImage: "list.bullet", titleKey: "목록으로", iconLeading: true, action: onGoToList)
+            button(systemImage: "list.bullet", titleKey: .noticeBackToList, iconLeading: true, action: onGoToList)
             Spacer(minLength: 0)
-            button(systemImage: "arrow.right.circle", titleKey: "다음 글", iconLeading: false, action: onNext)
+            button(systemImage: "arrow.right.circle", titleKey: .noticeNext, iconLeading: false, action: onNext)
         }
         .padding(.horizontal, Spacing.md)
         .frame(height: 42)
@@ -30,7 +30,7 @@ struct NoticeDetailNavigationBar: View {
 
     private func button(
         systemImage: String,
-        titleKey: LocalizedStringKey,
+        titleKey: LocalizedStringResource,
         iconLeading: Bool,
         action: (() -> Void)?
     ) -> some View {

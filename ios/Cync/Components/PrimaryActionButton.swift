@@ -17,14 +17,14 @@
 import SwiftUI
 
 struct PrimaryActionButton: View {
-    let titleKey: LocalizedStringKey
+    let titleKey: LocalizedStringResource
     var isEnabled: Bool = true
     var tint: Color = .brandPrimary
-    var font: Font = .categoryChip
-    /// Matches `font`'s default (`.categoryChip`) — a call site overriding
+    var font: Font = .primaryButtonLabel
+    /// Matches `font`'s default (`.primaryButtonLabel`) — a call site overriding
     /// `font:` to a different token must also override this to
     /// `Tracking.thatToken`, since the two can't be derived from each other.
-    var tracking: CGFloat = Tracking.categoryChip
+    var tracking: CGFloat = Tracking.primaryButtonLabel
     /// Optional 1pt border, e.g. "1-3 앱 소개"'s "연결하기" button
     /// (`eventAccentLight` border around an `eventAccent` fill). `nil` (the
     /// default) keeps every existing call site borderless.
@@ -49,7 +49,7 @@ struct PrimaryActionButton: View {
                 .underline(isUnderlined)
                 .foregroundStyle(isEnabled ? Color.white : Color.gray400)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, Spacing.xs)
+                .padding(.vertical, Spacing.button)
                 .background {
                     RoundedRectangle(cornerRadius: cornerRadius)
                         .fill(isEnabled ? tint : Color.surface)

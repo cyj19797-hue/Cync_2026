@@ -53,8 +53,8 @@ struct LockerApplicationMapView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScreenNavigationBar(titleKey: "사물함 신청", onBack: { dismiss() }) {
-                Menu("이동") {
+            ScreenNavigationBar(titleKey: .lockerApply, onBack: { dismiss() }) {
+                Menu(.lockerMove) {
                     ForEach(LockerMapViewController.zoneIdsInOrder, id: \.self) { zoneId in
                         Button(zoneId) { coordinator.controller?.warp(to: zoneId) }
                     }
@@ -85,13 +85,13 @@ struct LockerApplicationMapView: View {
             coordinator.onSelect = handleCellTap
         }
         .alert(
-            "오류",
+            Text(.commonError),
             isPresented: Binding(
                 get: { applyErrorMessage != nil },
                 set: { isPresented in if !isPresented { applyErrorMessage = nil } }
             )
         ) {
-            Button("확인", role: .cancel) {}
+            Button(.commonOk, role: .cancel) {}
         } message: {
             Text(applyErrorMessage ?? "")
         }
@@ -100,7 +100,7 @@ struct LockerApplicationMapView: View {
     private func handleCellTap(lockerNumber: Int, zoneId: String, status: LockerCellStatus) {
         guard status == .empty else { return }
         guard let locker = viewModel.lockers.first(where: { $0.lockerNumber == lockerNumber }) else {
-            applyErrorMessage = "\(zoneId) \(lockerNumber)번 사물함 정보를 서버에서 찾을 수 없습니다."
+            applyErrorMessage = String(localized: .lockerNotFound(zoneId, lockerNumber))
             return
         }
         dialogLocation = locker.location ?? zoneId

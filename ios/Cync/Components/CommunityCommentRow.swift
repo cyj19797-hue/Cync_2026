@@ -34,7 +34,7 @@ struct CommunityCommentRow: View {
 
                 if let onReply {
                     Button(action: onReply) {
-                        Text("답글 달기")
+                        Text(.commentReply)
                             .font(.commentReplyButton).tracking(Tracking.commentReplyButton)
                             .foregroundStyle(Color.gray400)
                     }

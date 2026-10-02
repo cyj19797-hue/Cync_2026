@@ -11,7 +11,7 @@
 import SwiftUI
 
 struct LabeledInputField: View {
-    let placeholder: LocalizedStringKey
+    let placeholder: LocalizedStringResource
     @Binding var text: String
     var isSecure: Bool = false
     var keyboardType: UIKeyboardType = .default
@@ -21,7 +21,7 @@ struct LabeledInputField: View {
             if isSecure {
                 SecureField(placeholder, text: $text)
             } else {
-                TextField(placeholder, text: $text)
+                TextField(String(localized: placeholder), text: $text)
                     .keyboardType(keyboardType)
             }
         }

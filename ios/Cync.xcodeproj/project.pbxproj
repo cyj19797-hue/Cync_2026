@@ -30,6 +30,7 @@
 		BD5F50A530457FCE00A65333 /* Design */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Design; sourceTree = "<group>"; };
 		BD5F50A630457FDC00A65333 /* Models */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Models; sourceTree = "<group>"; };
 		BD5F50A730457FE000A65333 /* Views */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Views; sourceTree = "<group>"; };
+		BD5F50A830457FE100A65333 /* Localization */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Localization; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,6 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				BD5F50A730457FE000A65333 /* Views */,
+				BD5F50A830457FE100A65333 /* Localization */,
 				BD5F50A630457FDC00A65333 /* Models */,
 				BD5F50A530457FCE00A65333 /* Design */,
 				BD5F50A430457FC300A65333 /* Components */,
@@ -96,6 +98,7 @@
 				BD5F50A530457FCE00A65333 /* Design */,
 				BD5F50A630457FDC00A65333 /* Models */,
 				BD5F50A730457FE000A65333 /* Views */,
+				BD5F50A830457FE100A65333 /* Localization */,
 			);
 			name = Cync;
 			productName = Cync;
@@ -119,9 +122,10 @@
 			};
 			buildConfigurationList = A70000000000000000000001 /* Build configuration list for PBXProject "Cync" */;
 			compatibilityVersion = "Xcode 14.0";
-			developmentRegion = en;
+			developmentRegion = ko;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				ko,
 				en,
 				Base,
 			);

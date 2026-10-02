@@ -42,7 +42,7 @@ struct CommunityPostDetailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScreenNavigationBar(titleKey: "", onBack: { dismiss() })
+            ScreenNavigationBar(titleKey: nil, onBack: { dismiss() })
 
             ZStack {
                 ScrollView {
@@ -55,25 +55,25 @@ struct CommunityPostDetailView: View {
                 // TODO: demo placeholder — swap these actions/labels for
                 // whatever this menu should actually do.
                 .confirmationDialog(
-                    "더보기",
+                    Text(.communityMore),
                     isPresented: $isActionMenuPresented,
                     titleVisibility: .hidden
                 ) {
-                    Button("데모 메뉴 1") {}
-                    Button("데모 메뉴 2") {}
-                    Button("데모 메뉴 3", role: .destructive) {}
+                    Button(.communityDemoMenu(1)) {}
+                    Button(.communityDemoMenu(2)) {}
+                    Button(.communityDemoMenu(3), role: .destructive) {}
                 }
                 .task {
                     await viewModel.loadComments()
                 }
                 .alert(
-                    "오류",
+                    Text(.commonError),
                     isPresented: Binding(
                         get: { viewModel.errorMessage != nil },
                         set: { isPresented in if !isPresented { viewModel.errorMessage = nil } }
                     )
                 ) {
-                    Button("확인", role: .cancel) {}
+                    Button(.commonOk, role: .cancel) {}
                 } message: {
                     Text(viewModel.errorMessage ?? "")
                 }
@@ -181,7 +181,7 @@ struct CommunityPostDetailView: View {
     private func reactionLabel(systemImage: String, count: Int) -> some View {
         HStack(spacing: 2) {
             Image(systemName: systemImage)
-            Text("\(count)")
+            Text(count, format: .number)
         }
         .font(.communityReactionCount).tracking(Tracking.communityReactionCount)
     }
@@ -210,7 +210,7 @@ struct CommunityPostDetailView: View {
 
     private var commentsSectionHeader: some View {
         HStack {
-            Text("댓글")
+            Text(.commentTitle)
                 .font(.commentsSectionTitle).tracking(Tracking.commentsSectionTitle)
                 .foregroundStyle(Color.textPrimary)
 
@@ -221,7 +221,7 @@ struct CommunityPostDetailView: View {
             } label: {
                 HStack(spacing: Spacing.xxs) {
                     Image(systemName: "square.and.pencil")
-                    Text("댓글 달기")
+                    Text(.commentWrite)
                 }
                 .font(.commentReplyButton).tracking(Tracking.commentReplyButton)
                 .foregroundStyle(Color.brandPrimary)

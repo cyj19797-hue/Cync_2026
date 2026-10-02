@@ -6,8 +6,8 @@
 //  endpoint yet (see `Notice`/`CalendarEvent`'s header comments), so
 //  bookmarking a notice on "공지사항" persists it here (`UserDefaults`,
 //  keyed by `Notice.id`) instead. "캘린더" reads this list too and shows
-//  each bookmarked notice as a same-day event on its `date` — see
-//  `CalendarEvent.init(bookmarkedNotice:)`.
+//  each bookmarked notice on the dates extracted from its text — see
+//  `CalendarEvent.events(fromBookmarkedNotice:)`.
 //
 
 import Foundation

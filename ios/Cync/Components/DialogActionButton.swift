@@ -18,7 +18,7 @@ enum DialogActionStyle {
 }
 
 struct DialogActionButton: View {
-    let titleKey: LocalizedStringKey
+    let titleKey: LocalizedStringResource
     var style: DialogActionStyle = .secondary
     let action: () -> Void
 

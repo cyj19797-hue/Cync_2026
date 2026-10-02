@@ -20,7 +20,7 @@ struct CategoryFilterRow: View {
                 ForEach(NoticeCategory.allCases) { category in
                     FilterChip(
                         category: category,
-                        isSelected: selectedCategory == category
+                        style: selectedCategory == category ? .selected : .unselected
                     ) {
                         selectedCategory = category
                     }

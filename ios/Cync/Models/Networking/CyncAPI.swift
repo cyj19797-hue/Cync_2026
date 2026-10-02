@@ -25,20 +25,19 @@ enum CyncAPIError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unauthorized:
-            return "로그인이 필요합니다."
+            return String(localized: .apiUnauthorized)
         case .badStatus(let code):
-            return "서버 오류가 발생했습니다. (HTTP \(code))"
+            return String(localized: .apiServerError(code))
         case .decoding:
-            return "서버 응답을 처리하지 못했습니다."
+            return String(localized: .apiDecoding)
         }
     }
 }
 
 /// Minimal Keychain-backed store for the login access token — matches the
 /// `KeychainHelper.load("accessToken")` assumption `docs/API.md` makes.
-/// Nothing calls `save` yet since there's no login flow; it exists so that
-/// flow has somewhere to put the token that every `CyncAPI` request below
-/// already reads from.
+/// `login(studentId:password:persistToken:)` saves here only when
+/// "자동 로그인" is checked.
 enum KeychainTokenStore {
     private static let account = "accessToken"
     private static let service = "com.cync.app"
@@ -136,14 +135,36 @@ enum CyncAPI {
 
     // MARK: - 0. 로그인
 
-    static func login(studentId: String, password: String) async throws -> LoginResponse {
+    /// `persistToken` is `LoginView`'s "자동 로그인" checkbox: `true` keeps
+    /// the JWT in the Keychain so `SessionStore` can restore the session on
+    /// next launch; `false` keeps it in memory only for this run.
+    static func login(studentId: String, password: String, persistToken: Bool) async throws -> LoginResponse {
         var request = authorizedRequest(path: "/api/auth/login", method: "POST")
         request.httpBody = formBody(["id": studentId, "password": password])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         let response: LoginResponse = try await send(request)
-        KeychainTokenStore.save(response.accessToken)
+        if persistToken {
+            KeychainTokenStore.save(response.accessToken)
+        } else {
+            KeychainTokenStore.clear()
+        }
         accessToken = response.accessToken
         return response
+    }
+
+    /// Checks the account password by attempting a login with it — there's
+    /// no dedicated verify endpoint. Leaves the stored session token alone
+    /// (the new token in the response is discarded). Returns `false` for any
+    /// HTTP error: the server answers a wrong password with 500, not 401, so
+    /// it can't be told apart from other server errors. Network failures
+    /// (no connection, timeout) still throw.
+    static func verifyPassword(studentId: String, password: String) async throws -> Bool {
+        var request = authorizedRequest(path: "/api/auth/login", method: "POST")
+        request.httpBody = formBody(["id": studentId, "password": password])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { return false }
+        return (200..<300).contains(http.statusCode)
     }
 
     // MARK: - 1. 닉네임 / 프로필 색상

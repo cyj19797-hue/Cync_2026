@@ -8,11 +8,10 @@
 //  Figma's square + checkmark look — a plain SwiftUI shape, not a case
 //  needing UIKit.
 //
-//  `checkedFill`/`checkedBorderColor`/`checkmarkColor` all default to the
-//  original gray-outline look (unaffected when unchecked either way), so
-//  the "익명" checkbox above is unaffected. "1-5 로그인"'s "학번 기억하기"
-//  checkbox overrides them to Figma's filled-blue-with-white-check style
-//  instead of duplicating the whole component for one color variant.
+//  `style` picks one of two `CheckboxStyle` color variants: `.standard`
+//  (the default — gray fill + dark check, e.g. "익명") or `.accent`
+//  (blue fill + white check, e.g. "1-5 로그인"'s "학번 기억하기" and
+//  "1-4 이용약관 동의"'s "전체 동의"). Unchecked looks the same either way.
 //
 //  The square itself is `CheckboxSquare` — pulled out so "1-4 이용약관 동의"'s
 //  `AgreementItemRow` (checkbox + label + a separate trailing chevron tap
@@ -32,24 +31,19 @@ import SwiftUI
 
 struct CheckboxToggle: View {
     @Binding var isChecked: Bool
-    let titleKey: LocalizedStringKey
-    var checkedFill: Color = .surface
-    var checkedBorderColor: Color = .borderLight
-    var checkmarkColor: Color = .textPrimary
+    let titleKey: LocalizedStringResource
+    var style: CheckboxStyle = .standard
     var font: Font = .categoryBadge
     var tracking: CGFloat = Tracking.categoryBadge
+    /// Gap between the square and its label — "1-5 로그인" passes a tighter one.
+    var spacing: CGFloat = Spacing.md
 
     var body: some View {
         Button {
             isChecked.toggle()
         } label: {
-            HStack(spacing: Spacing.xxs) {
-                CheckboxSquare(
-                    isChecked: isChecked,
-                    checkedFill: checkedFill,
-                    checkedBorderColor: checkedBorderColor,
-                    checkmarkColor: checkmarkColor
-                )
+            HStack(spacing: spacing) {
+                CheckboxSquare(isChecked: isChecked, style: style)
 
                 Text(titleKey)
                     .font(font)

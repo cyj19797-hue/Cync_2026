@@ -15,7 +15,6 @@ import Foundation
 @MainActor
 final class SettingsViewModel: ObservableObject {
     @Published var profile: UserProfile?
-    @Published var language: AppLanguage = .korean
     @Published var searchText: String = ""
     @Published var errorMessage: String?
 
@@ -36,8 +35,9 @@ final class SettingsViewModel: ObservableObject {
             let profile = try await CyncAPI.updateMyProfile(nickname: trimmed, color: color)
             self.profile = profile
             CurrentUserSession.shared.update(profile)
+            NicknameSetupStore.markCompleted(for: profile.studentId)
         } catch {
-            errorMessage = "닉네임이 중복되었거나 저장에 실패했습니다."
+            errorMessage = String(localized: .profileSaveFailedMessage)
         }
     }
 }

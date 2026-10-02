@@ -71,7 +71,8 @@ struct LaunchScreenView: View {
                                     .scaleEffect(isLogoRevealed ? Self.fullRevealScale : 0.0001, anchor: Self.dotAnchor)
                             }
 
-                        Text("Campus, in Cync")
+                        // Brand slogan — identical in every language, so not localized.
+                        Text(verbatim: "Campus, in Cync")
                             .font(.launchTagline).tracking(Tracking.launchTagline)
                             .foregroundStyle(Color.textPrimary)
                             .opacity(isTaglineVisible ? 1 : 0)
@@ -79,7 +80,7 @@ struct LaunchScreenView: View {
 
                     Spacer(minLength: 0)
                 }
-                .padding(.leading, Spacing.md)
+                .padding(.leading, Spacing.cardInset)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .onAppear {
