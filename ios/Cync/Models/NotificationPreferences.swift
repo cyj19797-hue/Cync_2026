@@ -51,7 +51,10 @@ struct NotificationPreferences: Codable, Equatable {
         let d = NotificationPreferences()
         allEnabled = try c.decodeIfPresent(Bool.self, forKey: .allEnabled) ?? d.allEnabled
         deadlineDDay = try c.decodeIfPresent(Bool.self, forKey: .deadlineDDay) ?? d.deadlineDDay
-        noticeCategories = try c.decodeIfPresent(Set<NoticeCategory>.self, forKey: .noticeCategories) ?? d.noticeCategories
+        // Decoded as raw strings so categories that no longer exist (장학 / 국제교류)
+        // are dropped instead of failing the whole load.
+        noticeCategories = try c.decodeIfPresent([String].self, forKey: .noticeCategories)
+            .map { Set($0.compactMap(NoticeCategory.init(rawValue:))) } ?? d.noticeCategories
         lockerApproved = try c.decodeIfPresent(Bool.self, forKey: .lockerApproved) ?? d.lockerApproved
         lockerRejected = try c.decodeIfPresent(Bool.self, forKey: .lockerRejected) ?? d.lockerRejected
         cyncNotices = try c.decodeIfPresent(Bool.self, forKey: .cyncNotices) ?? d.cyncNotices

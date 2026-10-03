@@ -109,11 +109,11 @@ struct FilterChip: View {
         HStack(spacing: Spacing.xs) {
             FilterChip(category: .all, style: .selected) {}
             FilterChip(category: .academic, style: .unselected) {}
-            FilterChip(category: .scholarship, style: .unselected) {}
+            FilterChip(category: .studentCouncil, style: .unselected) {}
         }
         HStack(spacing: Spacing.xs) {
             FilterChip(category: .academic, style: .badge)
-            FilterChip(category: .exchange, style: .badge)
+            FilterChip(category: .academic, style: .badge)
         }
     }
     .padding()

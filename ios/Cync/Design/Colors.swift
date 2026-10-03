@@ -128,8 +128,6 @@ extension Color {
     /// 4pt dots. 학사 keeps the app accent since it's the most common.
     static let categoryAcademic = eventAccent
     static let categoryStudentCouncil = Color(hex: 0x34C759)
-    static let categoryScholarship = Color(hex: 0xFF9F0A)
-    static let categoryExchange = Color(hex: 0xAF52DE)
 
     // MARK: - "4 사물함" (locker)
 

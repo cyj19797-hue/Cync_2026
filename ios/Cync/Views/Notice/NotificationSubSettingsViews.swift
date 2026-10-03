@@ -3,8 +3,7 @@
 //  Cync
 //
 //  The two sub-screens of "알림 설정", sharing its view model:
-//  - "새 공지 알림": one switch per notice category (학사 / 장학 / 학생회 /
-//    국제교류).
+//  - "새 공지 알림": one switch per notice category (학사 / 학생회).
 //  - "사물함 신청 결과 알림": 신청 승인 / 신청 거절.
 //  Same rows, dividers, banner and save-or-revert behavior as the main
 //  screen; everything is disabled while iOS notifications aren't allowed

@@ -149,13 +149,13 @@ final class CalendarViewModel: ObservableObject {
     }
 
     /// Empty-state copy for the selected day — names the category when a
-    /// specific chip is on ("이 날은 장학 일정이 없어요.").
+    /// specific chip is on ("이 날은 학생회 일정이 없어요.").
     var emptyDayMessage: LocalizedStringResource {
         guard selectedCategory != .all else { return .calendarEmpty }
         return .calendarEmptyDayCategory(String(appLocalized: selectedCategory.label))
     }
 
-    /// Empty-state copy for the monthly list ("9월 장학 일정이 없어요.").
+    /// Empty-state copy for the monthly list ("9월 학생회 일정이 없어요.").
     var emptyMonthMessage: LocalizedStringResource {
         guard selectedCategory != .all else { return .calendarEmptyMonth }
         return .calendarEmptyMonthCategory(

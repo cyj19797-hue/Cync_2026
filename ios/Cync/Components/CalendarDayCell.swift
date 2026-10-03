@@ -92,7 +92,7 @@ struct CalendarDayCell: View {
 
 #Preview {
     HStack {
-        CalendarDayCell(day: CalendarDay(date: Date(), isWithinDisplayedMonth: true), isSelected: true, isToday: false, eventCategories: [.academic, .scholarship]) {}
+        CalendarDayCell(day: CalendarDay(date: Date(), isWithinDisplayedMonth: true), isSelected: true, isToday: false, eventCategories: [.academic, .studentCouncil]) {}
         CalendarDayCell(day: CalendarDay(date: Date(), isWithinDisplayedMonth: true), isSelected: false, isToday: true, eventCategories: [.studentCouncil]) {}
         CalendarDayCell(day: CalendarDay(date: Date(), isWithinDisplayedMonth: false), isSelected: false, isToday: false) {}
     }

@@ -3015,40 +3015,6 @@
         }
       }
     },
-    "notice.category.exchange" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "International"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "국제교류"
-          }
-        }
-      }
-    },
-    "notice.category.scholarship" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scholarship"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "장학"
-          }
-        }
-      }
-    },
     "notice.category.studentCouncil" : {
       "extractionState" : "manual",
       "localizations" : {
