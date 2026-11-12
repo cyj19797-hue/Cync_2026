@@ -23,6 +23,11 @@ final class SessionStore: ObservableObject {
 
     private static let autoLoginEnabledKey = "autoLoginEnabled"
 
+    /// TEMP: the backend is stopped — while on, the app launches straight
+    /// into `RootTabView` and `MockServer` answers every API call. Flip
+    /// `DevBypass.isEnabled` (MockServer.swift) to go back to the server.
+    static let bypassLogin = DevBypass.isEnabled
+
     /// Last "자동 로그인" checkbox value — also prefills that checkbox.
     static var isAutoLoginEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: autoLoginEnabledKey) }
@@ -30,7 +35,9 @@ final class SessionStore: ObservableObject {
     }
 
     init() {
-        if Self.isAutoLoginEnabled,
+        if Self.bypassLogin {
+            isLoggedIn = true
+        } else if Self.isAutoLoginEnabled,
            let token = CyncAPI.accessToken,
            !JWT.isExpired(token) {
             isLoggedIn = true

@@ -13,6 +13,11 @@
 //  `ScrollView` reproduces the dim-backdrop-plus-card look and the
 //  scrollable body natively.
 //
+//  Admin actions: when `onEdit`/`onDelete` are given (NoticeListView passes
+//  them only to admins, only for 학생회 notices), a ⋮ in the top bar opens a
+//  `PopupMenu` with 수정/삭제. 삭제 asks first (`CommentDeleteDialog`, the
+//  same confirm as a post's) and shows a failure in `ErrorDialog`.
+//
 
 import SwiftUI
 
@@ -22,8 +27,17 @@ struct NoticeDetailView: View {
     let onDismiss: () -> Void
     var onPrevious: (() -> Void)?
     var onNext: (() -> Void)?
+    /// Admin 수정 — `nil` hides it.
+    var onEdit: (() -> Void)? = nil
+    /// Admin 삭제, run after the confirm — `nil` hides it.
+    var onDelete: (() async throws -> Void)? = nil
 
     @State private var isShowingTranslation = false
+    @State private var isAdminMenuOpen = false
+    @State private var isDeleteConfirmPresented = false
+    @State private var deleteErrorMessage: String?
+
+    private var hasAdminActions: Bool { onEdit != nil || onDelete != nil }
 
     var body: some View {
         GeometryReader { proxy in
@@ -40,6 +54,13 @@ struct NoticeDetailView: View {
                     )
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
+            // Outside the card's clip so the menu can overhang it.
+            .popupMenu(isPresented: $isAdminMenuOpen, items: adminMenuItems)
+            .overlay {
+                adminDialog
+            }
+            .animation(.easeOut(duration: 0.2), value: isDeleteConfirmPresented)
+            .animation(.easeOut(duration: 0.2), value: deleteErrorMessage)
         }
     }
 
@@ -85,9 +106,19 @@ struct NoticeDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.card))
     }
 
+    /// Height held for a 학생회 notice's photo while it loads (or failed).
+    private static let imagePlaceholderHeight: CGFloat = 200
+
     private var mainContent: some View {
         VStack(alignment: .leading, spacing: Spacing.xl) {
             header
+
+            if let imageURL = notice.imageURL {
+                RemoteImage(url: imageURL, contentMode: .fit, placeholderHeight: Self.imagePlaceholderHeight)
+                    .frame(maxWidth: .infinity)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.inputField))
+                    .accessibilityLabel(Text(.noticeImage))
+            }
 
             bodyContent
                 .font(.noticeDetailBody).tracking(Tracking.noticeDetailBody)
@@ -134,6 +165,90 @@ struct NoticeDetailView: View {
             backButton
             Spacer(minLength: Spacing.xs)
             TranslationToggle(isShowingTranslation: $isShowingTranslation)
+            if hasAdminActions {
+                adminMenuButton
+            }
+        }
+    }
+
+    // MARK: - Admin
+
+    private static let adminMenuIconWidth: CGFloat = 24
+    /// Draws 24pt wide but taps at 44×44: the shape reaches past the icon
+    /// without changing the bar's layout.
+    private static let adminMenuTouchExtension = (44 - adminMenuIconWidth) / 2
+
+    private var adminMenuButton: some View {
+        Button {
+            isAdminMenuOpen.toggle()
+        } label: {
+            Image(systemName: "ellipsis")
+                .rotationEffect(.degrees(90))
+                .foregroundStyle(Color.textPrimary)
+                .frame(width: Self.adminMenuIconWidth)
+                .padding(Self.adminMenuTouchExtension)
+                .contentShape(Rectangle())
+                .padding(-Self.adminMenuTouchExtension)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(.communityMore))
+        .popupMenuAnchor()
+    }
+
+    private var adminMenuItems: [PopupMenuItem] {
+        var items: [PopupMenuItem] = []
+        if let onEdit {
+            items.append(PopupMenuItem(id: "edit", systemImage: "pencil", titleKey: .commentEdit, action: onEdit))
+        }
+        if onDelete != nil {
+            items.append(PopupMenuItem(id: "delete", systemImage: "trash", titleKey: .commentDelete, role: .destructive) {
+                isDeleteConfirmPresented = true
+            })
+        }
+        return items
+    }
+
+    @ViewBuilder
+    private var adminDialog: some View {
+        if isDeleteConfirmPresented || deleteErrorMessage != nil {
+            ZStack {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        isDeleteConfirmPresented = false
+                        deleteErrorMessage = nil
+                    }
+
+                Group {
+                    if let deleteErrorMessage {
+                        ErrorDialog(titleKey: .commonError, message: deleteErrorMessage) {
+                            self.deleteErrorMessage = nil
+                        }
+                    } else {
+                        CommentDeleteDialog(
+                            titleKey: .noticeDeleteConfirmTitle,
+                            messageKey: .noticeDeleteConfirmMessage,
+                            onCancel: { isDeleteConfirmPresented = false }
+                        ) {
+                            isDeleteConfirmPresented = false
+                            delete()
+                        }
+                    }
+                }
+                .padding(.horizontal, Spacing.md)
+            }
+            .transition(.opacity)
+        }
+    }
+
+    private func delete() {
+        guard let onDelete else { return }
+        Task {
+            do {
+                try await onDelete()
+            } catch {
+                deleteErrorMessage = String(appLocalized: .noticeDeleteFailed(error.localizedDescription))
+            }
         }
     }
 

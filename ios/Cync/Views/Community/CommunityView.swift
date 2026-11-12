@@ -21,7 +21,7 @@
 //  shared `SearchBar` under the top bar (client-side title/body filter,
 //  `CommunityViewModel.filteredPosts`) — the top bar holds only search,
 //  like the other tabs. Composing is the floating button
-//  (`composeButton`), disabled (gray) while the user is banned; the list
+//  (`FloatingComposeButton`), disabled (gray) while the user is banned; the list
 //  keeps extra room at the bottom so the last row can scroll out from
 //  under it. Pull-to-refresh reloads the feed; an empty feed (or an empty
 //  search result) shows a centered message instead of a blank list.
@@ -69,8 +69,8 @@ struct CommunityView: View {
 
                 if isSearchPresented {
                     SearchBar(text: $viewModel.searchText, isActive: $isSearchPresented)
-                        .padding(.horizontal, Spacing.xs)
-                        .padding(.top, Spacing.xs)
+                        .padding(.horizontal, Spacing.screenHorizontal)
+                        .padding(.top, Spacing.screenContentTop)
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
 
@@ -91,15 +91,17 @@ struct CommunityView: View {
                 .refreshable { await viewModel.load() }
                 // Room under the last row so it isn't stuck behind the
                 // floating compose button.
-                .contentMargins(.bottom, Self.composeButtonSize + Spacing.md * 2, for: .scrollContent)
+                .contentMargins(.bottom, FloatingComposeButton.reservedHeight, for: .scrollContent)
                 .overlay {
                     if viewModel.hasLoaded && viewModel.filteredPosts.isEmpty {
                         emptyState
                     }
                 }
                 .overlay(alignment: .bottomTrailing) {
-                    composeButton
-                        .padding(Spacing.md)
+                    FloatingComposeButton(labelKey: .communityWrite, isDisabled: viewModel.isBanned) {
+                        isComposePresented = true
+                    }
+                    .padding(Spacing.md)
                 }
             }
             .animation(.default, value: isSearchPresented)
@@ -138,30 +140,6 @@ struct CommunityView: View {
                 Text(viewModel.errorMessage ?? "")
             }
         }
-    }
-
-    private static let composeButtonSize: CGFloat = 56
-
-    /// Floating "글쓰기" — a round accent button at the bottom right of the
-    /// feed (it used to be a pencil in the top bar). Gray and disabled
-    /// while the user is banned from the community.
-    private var composeButton: some View {
-        Button {
-            isComposePresented = true
-        } label: {
-            Image(systemName: "pencil")
-                .font(.noticeNavTitle)
-                .foregroundStyle(Color.white)
-                .frame(width: Self.composeButtonSize, height: Self.composeButtonSize)
-                .background {
-                    Circle().fill(viewModel.isBanned ? Color.gray300 : Color.buttonAccent)
-                }
-                .shadow(color: Color.textPrimary.opacity(0.18), radius: 8, y: 4)
-                .contentShape(Circle())
-        }
-        .buttonStyle(.plain)
-        .disabled(viewModel.isBanned)
-        .accessibilityLabel(Text(.communityWrite))
     }
 
     private var emptyState: some View {

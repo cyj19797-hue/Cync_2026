@@ -29,8 +29,9 @@ struct SearchBar: View {
 
     var body: some View {
         HStack(spacing: Spacing.md) {
-            HStack(spacing: Spacing.md) {
+            HStack(spacing: Spacing.xs) {
                 Image(systemName: "magnifyingglass")
+                    .font(.categoryChip)
                     .foregroundStyle(Color.gray400)
 
                 TextField(String(appLocalized: .commonSearch), text: $text)
@@ -47,13 +48,15 @@ struct SearchBar: View {
                         text = ""
                     } label: {
                         Image(systemName: "xmark.circle.fill")
+                            .font(.categoryChip)
                             .foregroundStyle(Color.gray400)
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, Spacing.md)
-            .padding(.vertical, Spacing.md)
+            // Same height as the FilterChip row it replaces.
+            .padding(.horizontal, Spacing.cardInset)
+            .padding(.vertical, Spacing.xs)
             .background {
                 RoundedRectangle(cornerRadius: Radius.chipSelected)
                     .fill(Color.surface)

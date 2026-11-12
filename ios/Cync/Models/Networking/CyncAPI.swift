@@ -108,6 +108,40 @@ enum CyncAPI {
             .data(using: .utf8)!
     }
 
+    /// TEMP: answers from `MockServer` while `DevBypass.isEnabled` is on
+    /// (backend is stopped). Every request in this file goes through here.
+    private static func perform(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        if DevBypass.isEnabled {
+            return await MockServer.shared.handle(request)
+        }
+        return try await URLSession.shared.data(for: request)
+    }
+
+    /// `multipart/form-data` body — only the 학생회공지 endpoints take it
+    /// (`docs/API.md` §3); everything else is form-urlencoded.
+    /// The image part is always a JPEG named `notice.jpg` — the server keeps
+    /// the uploaded file name's extension when storing it.
+    private static func setMultipartBody(_ request: inout URLRequest, fields: [String: String], image: Data?) {
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        var body = Data()
+        for (name, value) in fields.sorted(by: { $0.key < $1.key }) {
+            body.append(Data("--\(boundary)\r\n".utf8))
+            body.append(Data("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n".utf8))
+            body.append(Data("\(value)\r\n".utf8))
+        }
+        if let image {
+            body.append(Data("--\(boundary)\r\n".utf8))
+            body.append(Data("Content-Disposition: form-data; name=\"image\"; filename=\"notice.jpg\"\r\n".utf8))
+            body.append(Data("Content-Type: image/jpeg\r\n\r\n".utf8))
+            body.append(image)
+            body.append(Data("\r\n".utf8))
+        }
+        body.append(Data("--\(boundary)--\r\n".utf8))
+        request.httpBody = body
+    }
+
     private static func checkStatus(_ response: URLResponse) throws {
         guard let http = response as? HTTPURLResponse else { return }
         guard (200..<300).contains(http.statusCode) else {
@@ -119,7 +153,7 @@ enum CyncAPI {
     }
 
     private static func send<T: Decodable>(_ request: URLRequest) async throws -> T {
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await perform(request)
         try checkStatus(response)
         do {
             return try JSONDecoder().decode(T.self, from: data)
@@ -129,13 +163,13 @@ enum CyncAPI {
     }
 
     private static func send(_ request: URLRequest) async throws {
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await perform(request)
         try checkStatus(response)
     }
 
     /// For endpoints that answer with plain text instead of JSON.
     private static func sendText(_ request: URLRequest) async throws -> String {
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await perform(request)
         try checkStatus(response)
         return String(data: data, encoding: .utf8) ?? ""
     }
@@ -169,7 +203,7 @@ enum CyncAPI {
         var request = authorizedRequest(path: "/api/auth/login", method: "POST")
         request.httpBody = formBody(["id": studentId, "password": password])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await perform(request)
         guard let http = response as? HTTPURLResponse else { return false }
         return (200..<300).contains(http.statusCode)
     }
@@ -289,6 +323,35 @@ enum CyncAPI {
 
     static func fetchCouncilNotices() async throws -> [CouncilNotice] {
         try await send(authorizedRequest(path: "/api/notices/council", method: "GET"))
+    }
+
+    /// ADMIN only. The author isn't typed on screen — it's the signed-in
+    /// admin's `studentId`/`name` from `CurrentUserSession`. `image` is an
+    /// already-shrunk JPEG (see `UploadImagePreparer` — the server rejects
+    /// files over 1MB); nil leaves the part out and the server stores
+    /// `imageUrl: null`.
+    static func createCouncilNotice(title: String, content: String, image: Data?) async throws -> CouncilNotice {
+        guard let profile = await CurrentUserSession.shared.profile else { throw CyncAPIError.unauthorized }
+        var request = authorizedRequest(path: "/api/notices/council", method: "POST")
+        setMultipartBody(
+            &request,
+            fields: ["title": title, "content": content, "authorId": profile.studentId, "authorName": profile.name],
+            image: image
+        )
+        return try await send(request)
+    }
+
+    /// ADMIN only. `image` replaces the current one; nil keeps it — the
+    /// server has no way to remove a notice's image.
+    static func updateCouncilNotice(id: Int, title: String, content: String, image: Data?) async throws -> CouncilNotice {
+        var request = authorizedRequest(path: "/api/notices/council/\(id)", method: "PUT")
+        setMultipartBody(&request, fields: ["title": title, "content": content], image: image)
+        return try await send(request)
+    }
+
+    /// ADMIN only.
+    static func deleteCouncilNotice(id: Int) async throws {
+        try await send(authorizedRequest(path: "/api/notices/council/\(id)", method: "DELETE"))
     }
 
     // MARK: - 3b. 학과공지 (크롤링)

@@ -20,8 +20,18 @@ final class NoticeListViewModel: ObservableObject {
     @Published var selectedCategory: NoticeCategory = .all
     @Published var searchText: String = ""
     @Published var errorMessage: String?
+    /// Shows the 공지 작성 button and the detail's 수정/삭제 menu. Only the
+    /// server enforces it — these are just hidden for everyone else.
+    @Published private(set) var isAdmin = CurrentUserSession.shared.profile?.isAdmin ?? false
 
     func load() async {
+        // Who's signed in decides the admin controls; a failure here just
+        // leaves them hidden and doesn't block the list.
+        Task {
+            if let profile = try? await CurrentUserSession.shared.refresh() {
+                isAdmin = profile.isAdmin
+            }
+        }
         do {
             async let council = CyncAPI.fetchCouncilNotices()
             async let school = CyncAPI.fetchSchoolNotices()
@@ -51,6 +61,32 @@ final class NoticeListViewModel: ObservableObject {
     func toggleBookmark(for notice: Notice) {
         guard let index = notices.firstIndex(where: { $0.id == notice.id }) else { return }
         notices[index].isBookmarked = BookmarkStore.shared.toggle(notices[index])
+    }
+
+    // MARK: - 학생회 공지 (admin)
+
+    /// A notice just written — goes to the top (it's the newest).
+    func insertCouncilNotice(_ councilNotice: CouncilNotice) -> Notice {
+        let notice = Notice(councilNotice: councilNotice)
+        notices.insert(notice, at: 0)
+        return notice
+    }
+
+    /// An edited notice, in place. Keeps the row's bookmark state.
+    func replaceCouncilNotice(_ councilNotice: CouncilNotice) -> Notice {
+        var notice = Notice(councilNotice: councilNotice)
+        if let index = notices.firstIndex(where: { $0.id == notice.id }) {
+            notice.isBookmarked = notices[index].isBookmarked
+            notices[index] = notice
+        }
+        return notice
+    }
+
+    func deleteCouncilNotice(_ notice: Notice) async throws {
+        guard let councilId = notice.councilId else { return }
+        try await CyncAPI.deleteCouncilNotice(id: councilId)
+        notices.removeAll { $0.id == notice.id }
+        BookmarkStore.shared.remove(noticeId: notice.id)
     }
 
     /// The notice shown before/after `notice` in the currently filtered,

@@ -23,7 +23,8 @@ private struct RootView: View {
     /// 설정 > 언어 설정 — its locale is injected below so every `Text(.key)`
     /// in the app switches language immediately (see AppLanguage.swift).
     @ObservedObject private var languageSettings = LanguageSettings.shared
-    @State private var isShowingLaunchScreen = true
+    // TEMP: skip the splash too while `SessionStore.bypassLogin` is on.
+    @State private var isShowingLaunchScreen = !SessionStore.bypassLogin
     @State private var hasSeenIntro = false
     @State private var hasAgreedToTerms = false
 

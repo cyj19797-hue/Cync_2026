@@ -12,6 +12,11 @@
 //  bottom tab bar while it's open (see TabBarVisibility.swift), so the
 //  card gets the extra room instead of sharing the screen with it.
 //
+//  Admins only (`NoticeListViewModel.isAdmin`): a floating 공지 작성 button
+//  at the bottom right, and 수정/삭제 on a 학생회 notice's detail card —
+//  both open the shared `PostComposeView` (see NoticeComposeConfiguration).
+//  Everyone else sees neither.
+//
 
 import SwiftUI
 
@@ -19,6 +24,7 @@ struct NoticeListView: View {
     @StateObject private var viewModel = NoticeListViewModel()
     @State private var isSearchPresented = false
     @State private var selectedNotice: Notice?
+    @State private var composeTarget: NoticeComposeTarget?
 
     var body: some View {
         ZStack {
@@ -37,7 +43,9 @@ struct NoticeListView: View {
                     },
                     onNext: viewModel.notice(after: notice).map { next in
                         { selectedNotice = next }
-                    }
+                    },
+                    onEdit: adminEditAction(for: notice),
+                    onDelete: adminDeleteAction(for: notice)
                 )
                 .transition(.opacity)
                 .zIndex(1)
@@ -83,6 +91,20 @@ struct NoticeListView: View {
                     }
                 }
                 .listStyle(.plain)
+                // Room under the last row so it isn't stuck behind the
+                // admin's floating button.
+                .contentMargins(.bottom, viewModel.isAdmin ? FloatingComposeButton.reservedHeight : 0, for: .scrollContent)
+                .overlay(alignment: .bottomTrailing) {
+                    if viewModel.isAdmin {
+                        FloatingComposeButton(labelKey: .noticeComposeTitle) {
+                            composeTarget = .create
+                        }
+                        .padding(Spacing.md)
+                    }
+                }
+            }
+            .navigationDestination(item: $composeTarget) { target in
+                composeView(for: target)
             }
             .background(Color.appBackground)
             .animation(.default, value: isSearchPresented)
@@ -105,6 +127,47 @@ struct NoticeListView: View {
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
+        }
+    }
+}
+
+extension NoticeListView {
+    @ViewBuilder
+    private func composeView(for target: NoticeComposeTarget) -> some View {
+        switch target {
+        case .create:
+            PostComposeView(configuration: .councilNoticeCreate { councilNotice in
+                _ = viewModel.insertCouncilNotice(councilNotice)
+            })
+        case let .edit(_, councilId, title, content, imageURL):
+            PostComposeView(configuration: .councilNoticeEdit(
+                councilId: councilId,
+                title: title,
+                content: content,
+                imageURL: imageURL
+            ) { councilNotice in
+                // Back on the edited notice's card once the screen closes.
+                selectedNotice = viewModel.replaceCouncilNotice(councilNotice)
+            })
+        }
+    }
+
+    /// 수정 on the detail card — admins, 학생회 notices only.
+    private func adminEditAction(for notice: Notice) -> (() -> Void)? {
+        guard viewModel.isAdmin, let target = NoticeComposeTarget(editing: notice) else { return nil }
+        return {
+            selectedNotice = nil
+            composeTarget = target
+        }
+    }
+
+    /// 삭제 on the detail card — admins, 학생회 notices only. The card asks
+    /// first and shows any error itself.
+    private func adminDeleteAction(for notice: Notice) -> (() async throws -> Void)? {
+        guard viewModel.isAdmin, notice.isCouncilNotice else { return nil }
+        return {
+            try await viewModel.deleteCouncilNotice(notice)
+            selectedNotice = nil
         }
     }
 }

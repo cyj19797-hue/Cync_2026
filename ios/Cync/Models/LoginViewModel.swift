@@ -47,6 +47,9 @@ final class LoginViewModel: ObservableObject {
         errorMessage = nil
         defer { isSubmitting = false }
 
+        // TEMP: server is down — see `SessionStore.bypassLogin`.
+        if SessionStore.bypassLogin { return true }
+
         do {
             _ = try await CyncAPI.login(studentId: studentId, password: password, persistToken: autoLogin)
         } catch is URLError {

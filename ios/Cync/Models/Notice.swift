@@ -68,6 +68,17 @@ struct Notice: Identifiable, Codable {
     /// `nil` for boards written in-app (student council), which have no
     /// external original.
     var sourceURL: URL? = nil
+    /// The row's own id on `/api/notices/council` — set only for 학생회
+    /// 공지, which admins can edit/delete through it. Not the same as `id`:
+    /// both boards number from 1, so `id` offsets school notices instead.
+    var councilId: Int? = nil
+
+    /// Photo attached to a 학생회 notice (`CouncilNotice.imageUrl`) — a
+    /// public URL, no auth needed. `nil` for everything else.
+    var imageURL: URL? = nil
+
+    /// Written in-app on the 학생회 board (so admins can edit/delete it).
+    var isCouncilNotice: Bool { councilId != nil }
 
     /// Absolute date in the current locale: "2026.09.01." in Korean,
     /// "Sep 1, 2026" in English.
@@ -125,7 +136,9 @@ extension Notice {
             deadlineDays: nil,
             isBookmarked: false,
             originalText: councilNotice.content,
-            translatedText: nil
+            translatedText: nil,
+            councilId: councilNotice.id,
+            imageURL: councilNotice.imageUrl.flatMap(URL.init(string:))
         )
     }
 }
