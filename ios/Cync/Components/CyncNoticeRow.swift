@@ -48,7 +48,14 @@ struct CyncNoticeRow: View {
                             .font(isRead ? .cyncNoticeRowTitleRead : .cyncNoticeRowTitle)
                             .tracking(isRead ? Tracking.cyncNoticeRowTitleRead : Tracking.cyncNoticeRowTitle)
                             .foregroundStyle(Color.textPrimary)
-                            .multilineTextAlignment(.leading)
+                            // One line (Figma `734:4224`); a long title
+                            // truncates before it reaches the tag.
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        if notice.isPopup {
+                            PopupTag()
+                        }
                     }
 
                     Text(notice.dateText)
@@ -61,7 +68,7 @@ struct CyncNoticeRow: View {
         }
         .buttonStyle(.plain)
         .padding(.vertical, Spacing.xs)
-        // Reads as "읽지 않음, 고정 공지, 제목, 날짜" — the dot and pin are
+        // Reads as "읽지 않음, 고정 공지, 제목, 팝업, 날짜" — the dot and pin are
         // shapes/icons, so each carries its own label above.
         .accessibilityElement(children: .combine)
     }

@@ -35,6 +35,14 @@ enum Spacing {
     /// the same on every screen, so content never starts at a different
     /// height from one screen to the next.
     static let screenContentTop: CGFloat = cardInset
+    /// Inner padding of compact in-row buttons ("거부"/"승인") — Figma `p-[10px]`.
+    static let compactButton: CGFloat = 10
+    /// Vertical padding of a bordered list card (관리자 사물함 행) — Figma `py-[14px]`.
+    static let listCardVertical: CGFloat = 14
+    /// Gap between tags / small items on the admin report card — Figma `gap-[6px]`.
+    static let tag: CGFloat = 6
+    /// Vertical padding of the "처리 완료" line on a report card — Figma `py-[10px]`.
+    static let innerBox: CGFloat = 10
 }
 
 /// Corner radius tokens.
@@ -57,4 +65,10 @@ enum Radius {
     static let inputField: CGFloat = 8
     /// "1-4 이용약관 동의" agreement item card corner radius (12px).
     static let agreementCard: CGFloat = 12
+    /// Bordered list cards and summary card on "관리자 - 사물함 관리" (12px).
+    static let listCard: CGFloat = 12
+    /// Admin locker map's bottom action card (16px).
+    static let actionCard: CGFloat = 16
+    /// Small tags on the admin report card ("게시글", 신고 사유) (6px).
+    static let tag: CGFloat = 6
 }

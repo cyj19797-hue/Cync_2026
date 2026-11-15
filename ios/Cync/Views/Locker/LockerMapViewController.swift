@@ -119,6 +119,32 @@ final class LockerMapViewController: UIViewController {
     }
     private var initialViewport: ViewportState?
 
+    /// Set *before* the view loads. `.student` (default) = unchanged colors.
+    var palette: LockerMapPalette = .student
+
+    /// When non-nil, the map never fetches: these statuses are painted
+    /// instead, and again every time they change (the admin screen feeds
+    /// its own view model's data). `nil` (default) = fetch as before.
+    var statusesOverride: [Int: LockerCellStatus]? {
+        didSet {
+            guard isViewLoaded, let statusesOverride, statusesOverride != oldValue else { return }
+            applyStatuses(statusesOverride)
+        }
+    }
+
+    /// Pull-to-refresh handler for `statusesOverride` mode — the host
+    /// reloads its data (which flows back through `statusesOverride`).
+    /// `nil` (default) = the map refetches by itself as before.
+    var onPullToRefresh: (() async -> Void)?
+
+    /// Admin selection outline — the cell keeps its color. `nil` clears it.
+    var selectedLockerNumber: Int? {
+        didSet {
+            guard isViewLoaded, selectedLockerNumber != oldValue else { return }
+            for zoneView in zoneViews.values { zoneView.setSelectedLockerNumber(selectedLockerNumber) }
+        }
+    }
+
     /// Set *before* the view loads. When set, the initial zoom warps past
     /// the plain fit-to-screen view straight to this locker's zone and
     /// highlights its cell (`.selected`) once statuses load — used by
@@ -153,7 +179,12 @@ final class LockerMapViewController: UIViewController {
         setUpStatusErrorView()
 
         if loadAndLayoutZones() {
-            fetchAndApplyLockerStatuses()
+            if let statusesOverride {
+                applyStatuses(statusesOverride)
+                for zoneView in zoneViews.values { zoneView.setSelectedLockerNumber(selectedLockerNumber) }
+            } else {
+                fetchAndApplyLockerStatuses()
+            }
         }
     }
 
@@ -304,7 +335,7 @@ final class LockerMapViewController: UIViewController {
             for zoneId in zoneRow {
                 guard let cells = cellsByZone[zoneId] else { continue }
                 let zone = LockerZone(zoneId: zoneId, cells: cells)
-                let zoneView = LockerZoneView(zone: zone)
+                let zoneView = LockerZoneView(zone: zone, palette: palette)
                 let size = LockerZoneView.contentSize(for: zone)
 
                 let frame = CGRect(origin: CGPoint(x: cursorX, y: cursorY), size: size)
@@ -473,7 +504,21 @@ final class LockerMapViewController: UIViewController {
     }
 
     @objc private func handlePullToRefresh() {
+        if let onPullToRefresh {
+            Task {
+                await onPullToRefresh()
+                scrollView.refreshControl?.endRefreshing()
+            }
+            return
+        }
         fetchAndApplyLockerStatuses(isPullToRefresh: true)
+    }
+
+    /// Paints `statusesOverride` data (no fetch, no spinner).
+    private func applyStatuses(_ statusByLockerNumber: [Int: LockerCellStatus]) {
+        for zoneView in zoneViews.values {
+            zoneView.applyStatuses(statusByLockerNumber)
+        }
     }
 
     @objc private func handleRefreshButtonTap() {
@@ -700,9 +745,22 @@ struct LockerMapScreenView: UIViewControllerRepresentable {
     /// since `navigationItem` set on a bare UIKit controller pushed via
     /// `NavigationLink` isn't reliably bridged into the actual nav bar.
     var onControllerReady: ((LockerMapViewController) -> Void)?
+    /// See `LockerMapViewController.palette`.
+    var palette: LockerMapPalette = .student
+    /// See `LockerMapViewController.statusesOverride` — re-applied on
+    /// every update, so the cells follow the host's data.
+    var statusesOverride: [Int: LockerCellStatus]? = nil
+    /// See `LockerMapViewController.onPullToRefresh`.
+    var onPullToRefresh: (() async -> Void)? = nil
+    /// See `LockerMapViewController.selectedLockerNumber`.
+    var selectedLockerNumber: Int? = nil
 
     func makeUIViewController(context: Context) -> LockerMapViewController {
         let controller = LockerMapViewController()
+        controller.palette = palette
+        controller.statusesOverride = statusesOverride
+        controller.onPullToRefresh = onPullToRefresh
+        controller.selectedLockerNumber = selectedLockerNumber
         controller.delegate = delegate
         controller.initialZoomFit = initialZoomFit
         controller.showsLegend = showsLegend
@@ -724,6 +782,11 @@ struct LockerMapScreenView: UIViewControllerRepresentable {
 
     func updateUIViewController(_ uiViewController: LockerMapViewController, context: Context) {
         uiViewController.delegate = delegate
+        if let statusesOverride {
+            uiViewController.statusesOverride = statusesOverride
+            uiViewController.onPullToRefresh = onPullToRefresh
+            uiViewController.selectedLockerNumber = selectedLockerNumber
+        }
     }
 }
 

@@ -350,4 +350,58 @@ extension Font {
     /// The detail title itself reuses `.postDetailTitle` (Pretendard Bold
     /// 20), which happens to match this frame's title spec exactly.
     static var cyncNoticeDetailDate: Font { .appDefault(.regular, size: 14, relativeTo: .subheadline) }
+
+    // MARK: - 관리자 사물함 관리 (Figma `690:3687`, row `689:3696`)
+
+    /// Row title "B201 · 012번" — SF Pro Semibold 16.
+    static var adminLockerRowTitle: Font { .appDefault(.semibold, size: 16, relativeTo: .body) }
+    /// Row subtitle "학번 22011234" — SF Pro Regular 14.
+    static var adminLockerRowSubtitle: Font { .appDefault(.regular, size: 14, relativeTo: .subheadline) }
+    /// Row "거부"/"승인" buttons — SF Pro Medium 16.
+    static var adminLockerRowAction: Font { .appDefault(.medium, size: 16, relativeTo: .body) }
+    /// Summary card numbers — SF Pro Bold 20.
+    static var adminSummaryValue: Font { .appDefault(.bold, size: 20, relativeTo: .title3) }
+    /// Summary card labels — SF Pro Regular 13.
+    static var adminSummaryLabel: Font { .appDefault(.regular, size: 13, relativeTo: .footnote) }
+    /// Selected tab chip ("승인 대기 3") — SF Pro Semibold 14.
+    static var adminTabChipSelected: Font { .appDefault(.semibold, size: 14, relativeTo: .subheadline) }
+    /// Unselected tab chip — SF Pro Medium 14.
+    static var adminTabChip: Font { .appDefault(.medium, size: 14, relativeTo: .subheadline) }
+    /// List header "승인 대기 3건" — SF Pro Semibold 16.
+    static var adminListHeader: Font { .appDefault(.semibold, size: 16, relativeTo: .body) }
+    /// Text-only action "여러 개 선택" — SF Pro Medium 14.
+    static var adminTextAction: Font { .appDefault(.medium, size: 14, relativeTo: .subheadline) }
+    /// Guide line under the list — SF Pro Regular 13 (line height 1.45).
+    static var adminFootnote: Font { .appDefault(.regular, size: 13, relativeTo: .footnote) }
+    /// Room filter button "전체 구역 ⌄" — SF Pro Medium 15.
+    static var adminFilterButton: Font { .appDefault(.medium, size: 15, relativeTo: .subheadline) }
+    /// Action card title "006번 사물함" — SF Pro Semibold 18.
+    static var adminCardTitle: Font { .appDefault(.semibold, size: 18, relativeTo: .headline) }
+    /// Action card info value ("22011234") — SF Pro Medium 14.
+    static var adminCardInfoValue: Font { .appDefault(.medium, size: 14, relativeTo: .subheadline) }
+    /// Action card info label / hint — SF Pro Regular 14.
+    static var adminCardBody: Font { .appDefault(.regular, size: 14, relativeTo: .subheadline) }
+    /// Small gray status pill ("빈 칸", "고장") — SF Pro Medium 13.
+    static var adminStatusPill: Font { .appDefault(.medium, size: 13, relativeTo: .footnote) }
+
+    // MARK: - 관리자 신고 관리 (Figma `731:3889`, card `729:3939`, ban `731:4120`)
+
+    /// Card tags ("게시글", "욕설 또는 혐오 표현") — SF Pro Medium 12.
+    static var adminReportTag: Font { .appDefault(.medium, size: 12, relativeTo: .caption) }
+    /// "신고 3건" in the card header — SF Pro Semibold 13.
+    static var adminReportCount: Font { .appDefault(.semibold, size: 13, relativeTo: .footnote) }
+    /// Reported author's name in the preview box — SF Pro Semibold 14.
+    static var adminReportAuthor: Font { .appDefault(.semibold, size: 14, relativeTo: .subheadline) }
+    /// Reported post's title in the preview box — SF Pro Semibold 15.
+    static var adminReportTitle: Font { .appDefault(.semibold, size: 15, relativeTo: .subheadline) }
+    /// "처리 완료" at the start of the result line — SF Pro Semibold 14.
+    static var adminReportResult: Font { .appDefault(.semibold, size: 14, relativeTo: .subheadline) }
+    /// Ban form section labels ("정지 기간", "사유") — SF Pro Semibold 14.
+    static var adminFormLabel: Font { .appDefault(.semibold, size: 14, relativeTo: .subheadline) }
+    /// Ban form checkbox label ("신고된 게시글도 함께 삭제") — SF Pro Medium 15.
+    static var adminFormCheckbox: Font { .appDefault(.medium, size: 15, relativeTo: .subheadline) }
+    /// "팝업" tag on Cync 공지 rows/detail — SF Pro Semibold 12 (Figma `734:4277`).
+    static var popupTag: Font { .appDefault(.semibold, size: 12, relativeTo: .caption) }
+    /// Filled main action in an admin card ("7일 정지하기") — SF Pro Semibold 16.
+    static var adminPrimaryAction: Font { .appDefault(.semibold, size: 16, relativeTo: .body) }
 }

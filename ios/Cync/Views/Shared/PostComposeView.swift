@@ -30,6 +30,9 @@
 //  - "익명" sits on its own row under the divider (it used to share the
 //    title row and squeeze long titles), with what it does written beside
 //    it when checked. Modes without it skip the row entirely.
+//  - Cync 공지 modes put an on/off row there instead
+//    (`PostComposeConfiguration.extraToggle` — "앱 실행 시 팝업으로 띄우기"
+//    + a gray hint line), drawn with `AppSwitchToggleStyle`.
 //  - 학생회 공지 modes put a "사진 첨부" row there instead
 //    (`ComposeImageAttachmentRow`, one photo, shrunk to ≤1MB before upload).
 //    The submit button waits while a photo is being prepared and shows a
@@ -56,9 +59,11 @@ struct PostComposeView: View {
 
     private var configuration: PostComposeConfiguration { viewModel.configuration }
 
-    /// A row between the divider and the content (익명 or 사진 첨부).
+    /// A row between the divider and the content (익명, 사진 첨부 or the
+    /// extra switch).
     private var hasOptionRow: Bool {
         configuration.showsAnonymousToggle || configuration.showsImageAttachment
+            || configuration.extraToggle != nil
     }
 
     private enum Field {
@@ -83,6 +88,10 @@ struct PostComposeView: View {
 
             if configuration.showsAnonymousToggle {
                 anonymousRow
+            }
+
+            if let extraToggle = configuration.extraToggle {
+                extraToggleRow(extraToggle)
             }
 
             if configuration.showsImageAttachment {
@@ -182,6 +191,33 @@ struct PostComposeView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
         .padding(.horizontal, Spacing.screenHorizontal)
+    }
+
+    /// Switch + label (one tap target, 44pt tall) and an optional gray
+    /// hint under it (Figma `734:4330`), then a divider before the content.
+    private func extraToggleRow(_ toggle: PostComposeExtraToggle) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.tag) {
+            Toggle(isOn: $viewModel.extraToggleValue) {
+                Text(toggle.labelKey)
+                    .font(.categoryChip).tracking(Tracking.categoryChip)
+                    .foregroundStyle(Color.textPrimary)
+            }
+            .toggleStyle(AppSwitchToggleStyle())
+            .frame(minHeight: 44)
+
+            if let hintKey = toggle.hintKey {
+                Text(hintKey)
+                    .font(.adminFootnote).tracking(Tracking.adminFootnote)
+                    .foregroundStyle(Color.textSecondary)
+                    .lineSpacing(5)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.horizontal, Spacing.screenHorizontal)
+        .padding(.bottom, Spacing.cardInset)
+        .overlay(alignment: .bottom) {
+            Divider().overlay(Color.borderLight)
+        }
     }
 
     private static let submitButtonHeight: CGFloat = 32
@@ -298,6 +334,18 @@ struct PostComposeView: View {
 #Preview("커뮤니티") {
     NavigationStack {
         PostComposeView(configuration: .communityPost(onSubmit: { _ in }))
+    }
+}
+
+#Preview("Cync 공지 작성 (토글 켬)") {
+    NavigationStack {
+        PostComposeView(configuration: .appNoticeCreate(initialPopup: true, onCreated: { _ in }))
+    }
+}
+
+#Preview("Cync 공지 수정") {
+    NavigationStack {
+        PostComposeView(configuration: .appNoticeEdit(notice: CyncNotice(AppNotice.previewList[1]), onUpdated: { _ in }))
     }
 }
 

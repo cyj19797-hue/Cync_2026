@@ -15,17 +15,27 @@
 import SwiftUI
 
 struct AuthorLine: View {
+    enum Style {
+        /// Post header and comments (Semibold 16 name).
+        case standard
+        /// The admin report card's preview box (Semibold 14 name, Figma
+        /// `729:3891`).
+        case compact
+    }
+
     let authorName: String
     let createdAt: Date
     /// A tag after the name — "글쓴이" on a comment by the post's author,
     /// so it reads "익명 글쓴이 · 9/15": the same name the post shows,
     /// marked as the author (see `badge(_:)`).
     var badgeKey: LocalizedStringResource? = nil
+    var style: Style = .standard
 
     var body: some View {
         HStack(spacing: Spacing.xxs) {
             Text(authorName)
-                .font(.commentAuthor).tracking(Tracking.commentAuthor)
+                .font(style == .compact ? .adminReportAuthor : .commentAuthor)
+                .tracking(style == .compact ? Tracking.adminReportAuthor : Tracking.commentAuthor)
                 .foregroundStyle(Color.textPrimary)
                 .lineLimit(1)
 

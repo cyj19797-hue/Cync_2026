@@ -23,7 +23,9 @@ enum LockerAPIService {
     }
 }
 
-private extension LockerCellStatus {
+extension LockerCellStatus {
+    /// Server status → map cell status (also used by the admin screen,
+    /// which feeds the map its own data).
     init(serverStatus: LockerStatus) {
         switch serverStatus {
         case .available: self = .empty

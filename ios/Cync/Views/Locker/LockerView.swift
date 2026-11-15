@@ -10,6 +10,7 @@
 //    "사물함 신청 방법" guide (`LockerApplyGuideDialog`), which — for
 //    students without a locker — also links to the existing apply screen
 //    (`LockerApplicationMapView`, unchanged).
+//    Admins also get a "관리" button there → `AdminLockerManageView`.
 //  - "나의 사물함" card (`MyLockerCard`). "사물함 비밀번호 찾기" first asks
 //    for the account password (`LockerPasswordVerifyDialog`) and only then
 //    reveals the locker password.
@@ -41,6 +42,7 @@ struct LockerView: View {
     @State private var isZonePickerPresented = false
     @State private var isApplying = false
     @State private var isGuidePresented = false
+    @State private var isAdminManagePresented = false
     @State private var map = MapControllerHolder()
     /// Room last picked in the dropdown.
     @State private var selectedZoneId: String?
@@ -65,6 +67,12 @@ struct LockerView: View {
                     // reads as a warning or error.
                     TopBarIconButton(systemImage: "info.circle", labelKey: .lockerGuideAccessibility) {
                         isGuidePresented = true
+                    }
+                    // Admins only — approve/reject locker requests.
+                    if viewModel.isAdmin {
+                        TopBarIconButton(systemImage: "person.badge.key", labelKey: .adminLockerTitle) {
+                            isAdminManagePresented = true
+                        }
                     }
                 }
 
@@ -93,6 +101,9 @@ struct LockerView: View {
             .dimsTabBar(isGuidePresented || isPasswordVerifyPresented)
             .navigationDestination(isPresented: $isApplying) {
                 applicationScreen
+            }
+            .navigationDestination(isPresented: $isAdminManagePresented) {
+                AdminLockerManageView()
             }
             .task {
                 await viewModel.load()

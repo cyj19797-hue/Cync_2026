@@ -13,6 +13,8 @@ struct ProfileAvatar: View {
     let nickname: String
     let color: ProfileColor?
     var size: CGFloat = 56
+    /// The letter's font — smaller avatars pass a smaller one.
+    var initialFont: Font = .postDetailTitle
 
     var body: some View {
         Circle()
@@ -20,7 +22,7 @@ struct ProfileAvatar: View {
             .frame(width: size, height: size)
             .overlay {
                 Text(verbatim: initial)
-                    .font(.postDetailTitle)
+                    .font(initialFont)
                     .foregroundStyle(Color.textPrimary)
             }
             .accessibilityHidden(true)

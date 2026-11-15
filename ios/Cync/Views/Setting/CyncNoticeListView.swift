@@ -15,6 +15,11 @@
 //  Beyond Figma: a skeleton while loading, an empty state, an inline
 //  error with 다시 시도 (not a system `.alert`), and pull-to-refresh.
 //
+//  Admins (Figma `734:4224`): the same `FloatingComposeButton` as 학생회
+//  공지 pushes "Cync 공지 작성" (the shared `PostComposeView`); a new
+//  notice goes on top with a toast. Rows that pop up at launch carry a
+//  "팝업" tag. Edit / popup switch / delete live on the detail's ⋮ menu.
+//
 //  No bottom tab bar here: only the five main tab screens show it — see
 //  TabBarVisibility.swift.
 //
@@ -22,10 +27,21 @@
 import SwiftUI
 
 struct CyncNoticeListView: View {
-    @StateObject private var viewModel = CyncNoticeListViewModel()
+    @StateObject private var viewModel: CyncNoticeListViewModel
     @ObservedObject private var readStore = CyncNoticeReadStore.shared
+    @ObservedObject private var session = CurrentUserSession.shared
     @State private var selectedNotice: CyncNotice?
+    @State private var isComposePresented = false
     @Environment(\.dismiss) private var dismiss
+
+    init() {
+        _viewModel = StateObject(wrappedValue: CyncNoticeListViewModel())
+    }
+
+    /// Previews inject sample data.
+    init(viewModel: CyncNoticeListViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -42,9 +58,15 @@ struct CyncNoticeListView: View {
         }
         .background(Color.appBackground)
         .navigationDestination(item: $selectedNotice) { notice in
-            CyncNoticeDetailView(notice: notice)
+            CyncNoticeDetailView(notice: notice, viewModel: viewModel)
+        }
+        .navigationDestination(isPresented: $isComposePresented) {
+            PostComposeView(configuration: .appNoticeCreate { created in
+                viewModel.insert(created)
+            })
         }
         .toolbar(.hidden, for: .navigationBar)
+        .toast(message: $viewModel.toastMessage)
         .task {
             await viewModel.load()
         }
@@ -62,9 +84,20 @@ struct CyncNoticeListView: View {
         }
         .listStyle(.plain)
         .refreshable { await viewModel.load() }
+        // Room under the last row so it isn't stuck behind the admin's
+        // floating button.
+        .contentMargins(.bottom, viewModel.isAdmin ? FloatingComposeButton.reservedHeight : 0, for: .scrollContent)
         .overlay {
             if viewModel.notices.isEmpty {
                 emptyState
+            }
+        }
+        .overlay(alignment: .bottomTrailing) {
+            if viewModel.isAdmin {
+                FloatingComposeButton(labelKey: .appNoticeComposeTitle) {
+                    isComposePresented = true
+                }
+                .padding(Spacing.md)
             }
         }
     }
@@ -136,8 +169,11 @@ struct CyncNoticeListView: View {
     )
 }
 
-#Preview {
+#Preview("관리자 목록") {
     NavigationStack {
-        CyncNoticeListView()
+        CyncNoticeListView(viewModel: CyncNoticeListViewModel(
+            previewNotices: AppNotice.previewList.map(CyncNotice.init),
+            isAdmin: true
+        ))
     }
 }

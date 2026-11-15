@@ -108,13 +108,9 @@ enum CyncAPI {
             .data(using: .utf8)!
     }
 
-    /// TEMP: answers from `MockServer` while `DevBypass.isEnabled` is on
-    /// (backend is stopped). Every request in this file goes through here.
+    /// Every request in this file goes through here.
     private static func perform(_ request: URLRequest) async throws -> (Data, URLResponse) {
-        if DevBypass.isEnabled {
-            return await MockServer.shared.handle(request)
-        }
-        return try await URLSession.shared.data(for: request)
+        try await URLSession.shared.data(for: request)
     }
 
     /// `multipart/form-data` body — only the 학생회공지 endpoints take it
@@ -285,6 +281,15 @@ enum CyncAPI {
         try await send(authorizedRequest(path: "/api/comments/\(id)", method: "DELETE"))
     }
 
+    /// One comment, for the admin report screen's preview. NOT on the
+    /// server yet — `CommentController` has no single-comment GET (only
+    /// `GET /api/posts/{postId}/comments`, and a report carries just the
+    /// comment id). Fails (404/405) until the backend adds it; the report
+    /// screen then shows "댓글 내용을 불러올 수 없어요".
+    static func fetchComment(id: Int) async throws -> Comment {
+        try await send(authorizedRequest(path: "/api/comments/\(id)", method: "GET"))
+    }
+
     /// Moderator edit. NOT on the server yet — `CommentController` has no
     /// update endpoint; this follows the same shape as `PUT /api/posts/{id}`
     /// and fails (404/405) until the backend adds it.
@@ -317,6 +322,39 @@ enum CyncAPI {
 
     static func reportPost(id: Int, reason: ReportReason) async throws {
         try await report(targetType: "POST", targetId: id, reason: reason)
+    }
+
+    /// ADMIN only — reports not yet resolved, newest first. One row per
+    /// report; the app groups them by target (`ReportGroup`).
+    static func fetchPendingReports() async throws -> [Report] {
+        try await send(authorizedRequest(path: "/api/reports/pending", method: "GET"))
+    }
+
+    /// ADMIN only — every report, pending and resolved, newest first.
+    static func fetchAllReports() async throws -> [Report] {
+        try await send(authorizedRequest(path: "/api/reports", method: "GET"))
+    }
+
+    /// ADMIN only — marks one report `RESOLVED`. Does nothing else: deleting
+    /// or banning are separate calls the admin screen makes first.
+    @discardableResult
+    static func resolveReport(id: Int) async throws -> Report {
+        try await send(authorizedRequest(path: "/api/reports/\(id)/resolve", method: "POST"))
+    }
+
+    // MARK: - 5. 활동 정지
+
+    /// ADMIN only. `days == nil` bans permanently. A 학번 that never signed
+    /// in to the app fails with 500 ("사용자를 찾을 수 없습니다").
+    static func banUser(studentId: String, days: Int?, reason: String) async throws {
+        var query = ["reason": reason]
+        if let days { query["days"] = String(days) }
+        try await send(authorizedRequest(path: "/api/admin/users/\(studentId)/ban", method: "POST", query: query))
+    }
+
+    /// ADMIN only. Same 500 as `banUser` for an unknown 학번.
+    static func unbanUser(studentId: String) async throws {
+        try await send(authorizedRequest(path: "/api/admin/users/\(studentId)/unban", method: "POST"))
     }
 
     // MARK: - 3. 학생회공지
@@ -372,6 +410,75 @@ enum CyncAPI {
 
     static func applyLocker(id: Int) async throws -> Locker {
         try await send(authorizedRequest(path: "/api/lockers/\(id)/apply", method: "POST"))
+    }
+
+    /// ADMIN only — every locker waiting for approval (`PENDING`).
+    static func fetchPendingLockers() async throws -> [Locker] {
+        try await send(authorizedRequest(path: "/api/lockers/pending", method: "GET"))
+    }
+
+    /// ADMIN only — `PENDING` → `IN_USE`; the student can now see the
+    /// password. `assignedAt` becomes the approval time.
+    static func approveLocker(id: Int) async throws -> Locker {
+        try await send(authorizedRequest(path: "/api/lockers/\(id)/approve", method: "POST"))
+    }
+
+    /// ADMIN only — turns the request down; the locker goes back to
+    /// `AVAILABLE` and the student has to apply again.
+    static func rejectLocker(id: Int) async throws -> Locker {
+        try await send(authorizedRequest(path: "/api/lockers/\(id)/reject", method: "POST"))
+    }
+
+    /// The student themself or an ADMIN — `IN_USE` → `AVAILABLE`. Nothing
+    /// returns a locker automatically; it stays `IN_USE` until this.
+    static func returnLocker(id: Int) async throws -> Locker {
+        try await send(authorizedRequest(path: "/api/lockers/\(id)/return", method: "POST"))
+    }
+
+    /// The only statuses an admin may set directly — `IN_USE`/`PENDING`
+    /// come from approve/apply, and the server rejects them here (500).
+    enum AdminSettableLockerStatus: String {
+        case broken = "BROKEN"
+        case available = "AVAILABLE"
+    }
+
+    /// ADMIN only — mark a locker 고장 or back to 빈 칸.
+    static func setLockerStatus(id: Int, status: AdminSettableLockerStatus) async throws -> Locker {
+        try await send(authorizedRequest(
+            path: "/api/lockers/\(id)/status",
+            method: "PATCH",
+            query: ["status": status.rawValue]
+        ))
+    }
+
+    // MARK: - 8. 앱 공지사항
+
+    /// Every Cync 공지, newest first. No login needed.
+    static func fetchAppNotices() async throws -> [AppNotice] {
+        try await send(authorizedRequest(path: "/api/app-notices", method: "GET"))
+    }
+
+    /// ADMIN only.
+    static func createAppNotice(title: String, content: String, isPopup: Bool) async throws -> AppNotice {
+        var request = authorizedRequest(path: "/api/app-notices", method: "POST")
+        request.httpBody = formBody(["title": title, "content": content, "isPopup": String(isPopup)])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        return try await send(request)
+    }
+
+    /// ADMIN only. Title, content and `isPopup` are all replaced — there's
+    /// no popup-only endpoint, so turning the popup on/off re-sends the
+    /// current title and content.
+    static func updateAppNotice(id: Int, title: String, content: String, isPopup: Bool) async throws -> AppNotice {
+        var request = authorizedRequest(path: "/api/app-notices/\(id)", method: "PUT")
+        request.httpBody = formBody(["title": title, "content": content, "isPopup": String(isPopup)])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        return try await send(request)
+    }
+
+    /// ADMIN only. Answers in plain text ("삭제 완료").
+    static func deleteAppNotice(id: Int) async throws {
+        try await send(authorizedRequest(path: "/api/app-notices/\(id)", method: "DELETE"))
     }
 
     // MARK: - 6. 학사일정

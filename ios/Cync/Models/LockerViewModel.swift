@@ -19,6 +19,9 @@ final class LockerViewModel: ObservableObject {
     /// `false` until the first successful load — the header's "신청" button
     /// waits for it so it doesn't flash for students who already have one.
     @Published private(set) var hasLoaded = false
+    /// Shows the header's "관리" button (→ AdminLockerManageView). Hidden
+    /// for everyone else; the server enforces the rest.
+    @Published private(set) var isAdmin = CurrentUserSession.shared.profile?.isAdmin ?? false
 
     private var studentId: String?
     /// Locker number → room ("B201"), from `lockers.json`, for the
@@ -46,6 +49,7 @@ final class LockerViewModel: ObservableObject {
 
             lockers = allLockers
             studentId = profile.studentId
+            isAdmin = profile.isAdmin
             myLocker = allLockers.first { $0.isMine(studentId: profile.studentId) }
             hasLoaded = true
         } catch {

@@ -14,37 +14,96 @@
 //    `Menu`); tapping outside closes it. Apply it on a view that contains
 //    the zone button, high enough that the list isn't clipped.
 //
+//  Optional extras for a room *filter* (관리자 사물함 관리 "사용 중"), off by
+//  default so the map screens are unchanged: an "전체 구역" label/row for
+//  "no room picked" (`allZonesKey`), and a `.field` button look matching
+//  the search field beside it.
+//
 
 import SwiftUI
 
 struct LockerZoneButton: View {
-    /// Room shown on the button — `nil` falls back to the first room.
+    enum Style {
+        /// Outlined capsule — the map screens.
+        case capsule
+        /// `surface`-filled box, as tall as `SearchBar` — a filter row.
+        case field
+    }
+
+    /// Room shown on the button — `nil` falls back to `allZonesKey` if
+    /// given, otherwise to the first room.
     let zoneId: String?
     @Binding var isPresented: Bool
+    var allZonesKey: LocalizedStringResource? = nil
+    var style: Style = .capsule
+    /// `.field` only: vertical padding for when there's no `SearchBar`
+    /// beside it to take the height from. 0 (default) = unchanged.
+    var fieldVerticalPadding: CGFloat = 0
 
     var body: some View {
         Button {
             isPresented.toggle()
         } label: {
-            HStack(spacing: Spacing.xxs) {
-                Text(verbatim: zoneId ?? LockerMapViewController.zoneIdsInOrder.first ?? "")
-                    .font(.lockerZoneButton).tracking(Tracking.lockerZoneButton)
-                    .foregroundStyle(Color.textPrimary)
-                Image(systemName: "chevron.down")
-                    .font(.lockerZoneButton)
-                    .foregroundStyle(Color.gray400)
+            switch style {
+            case .capsule: capsuleLabel
+            case .field: fieldLabel
             }
-            .padding(.horizontal, Spacing.cardInset)
-            .padding(.vertical, Spacing.xxs + 2)
-            // Gray outline, same gray as the chevron.
-            .overlay {
-                Capsule().strokeBorder(Color.gray400)
-            }
-            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityHint(Text(.lockerChooseZone))
         .anchorPreference(key: LockerZoneMenuAnchorKey.self, value: .bounds) { $0 }
+    }
+
+    @ViewBuilder
+    private var title: some View {
+        if let zoneId {
+            Text(verbatim: zoneId)
+        } else if let allZonesKey {
+            Text(allZonesKey)
+        } else {
+            Text(verbatim: LockerMapViewController.zoneIdsInOrder.first ?? "")
+        }
+    }
+
+    private var capsuleLabel: some View {
+        HStack(spacing: Spacing.xxs) {
+            title
+                .font(.lockerZoneButton).tracking(Tracking.lockerZoneButton)
+                .foregroundStyle(Color.textPrimary)
+            Image(systemName: "chevron.down")
+                .font(.lockerZoneButton)
+                .foregroundStyle(Color.gray400)
+        }
+        .padding(.horizontal, Spacing.cardInset)
+        .padding(.vertical, Spacing.xxs + 2)
+        // Gray outline, same gray as the chevron.
+        .overlay {
+            Capsule().strokeBorder(Color.gray400)
+        }
+        .contentShape(Capsule())
+    }
+
+    /// Figma `690:3811`: 12/10pt padding, 4pt gap, 10pt corners. Vertical
+    /// padding matches `SearchBar` so the two line up in one row.
+    private var fieldLabel: some View {
+        HStack(spacing: Spacing.xxs) {
+            title
+                .font(.adminFilterButton).tracking(Tracking.adminFilterButton)
+                .foregroundStyle(Color.textPrimary)
+                .lineLimit(1)
+            Image(systemName: "chevron.down")
+                .font(.adminFilterButton)
+                .foregroundStyle(Color.textPrimary)
+        }
+        .padding(.leading, Spacing.cardInset)
+        .padding(.trailing, Spacing.compactButton)
+        .padding(.vertical, fieldVerticalPadding)
+        .frame(maxHeight: .infinity)
+        .background {
+            RoundedRectangle(cornerRadius: Radius.chipSelected)
+                .fill(Color.surface)
+        }
+        .contentShape(RoundedRectangle(cornerRadius: Radius.chipSelected))
     }
 }
 
@@ -75,12 +134,29 @@ extension View {
         currentZoneId: String?,
         onSelect: @escaping (String) -> Void
     ) -> some View {
+        lockerZoneDropdown(
+            isPresented: isPresented,
+            currentZoneId: currentZoneId,
+            allZonesKey: nil,
+            onSelectZone: { zoneId in if let zoneId { onSelect(zoneId) } }
+        )
+    }
+
+    /// Same dropdown with an "전체 구역" row on top (`allZonesKey`), which
+    /// selects `nil` — for a room filter.
+    func lockerZoneDropdown(
+        isPresented: Binding<Bool>,
+        currentZoneId: String?,
+        allZonesKey: LocalizedStringResource?,
+        onSelectZone: @escaping (String?) -> Void
+    ) -> some View {
         overlayPreferenceValue(LockerZoneMenuAnchorKey.self) { anchor in
             LockerZoneDropdown(
                 isPresented: isPresented,
                 anchor: anchor,
                 currentZoneId: currentZoneId,
-                onSelect: onSelect
+                allZonesKey: allZonesKey,
+                onSelect: onSelectZone
             )
         }
         .animation(.easeOut(duration: 0.15), value: isPresented.wrappedValue)
@@ -91,7 +167,8 @@ private struct LockerZoneDropdown: View {
     @Binding var isPresented: Bool
     let anchor: Anchor<CGRect>?
     let currentZoneId: String?
-    let onSelect: (String) -> Void
+    let allZonesKey: LocalizedStringResource?
+    let onSelect: (String?) -> Void
 
     private static let sortedZoneIds = LockerMapViewController.zoneIdsInOrder.sorted {
         $0.localizedStandardCompare($1) == .orderedAscending
@@ -122,6 +199,23 @@ private struct LockerZoneDropdown: View {
     private var list: some View {
         ScrollView {
             VStack(spacing: 0) {
+                if let allZonesKey {
+                    Button {
+                        isPresented = false
+                        onSelect(nil)
+                    } label: {
+                        Text(allZonesKey)
+                            .font(.categoryFilterChipLabel).tracking(Tracking.categoryFilterChipLabel)
+                            .foregroundStyle(currentZoneId == nil ? Color.eventAccent : Color.textPrimary)
+                            .frame(maxWidth: .infinity, minHeight: Self.rowHeight, alignment: .leading)
+                            .padding(.horizontal, Spacing.md)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+
+                    Divider().overlay(Color.borderLight)
+                }
+
                 ForEach(Self.sortedZoneIds, id: \.self) { zoneId in
                     Button {
                         isPresented = false

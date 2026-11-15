@@ -113,4 +113,29 @@ enum Tracking {
     static let cyncNoticeRowTitle: CGFloat = standard
     static let cyncNoticeRowTitleRead: CGFloat = standard
     static let cyncNoticeDetailDate: CGFloat = standard
+
+    static let adminLockerRowTitle: CGFloat = standard
+    static let adminLockerRowSubtitle: CGFloat = standard
+    static let adminLockerRowAction: CGFloat = standard
+    static let adminSummaryValue: CGFloat = standard
+    static let adminSummaryLabel: CGFloat = standard
+    static let adminTabChipSelected: CGFloat = standard
+    static let adminTabChip: CGFloat = standard
+    static let adminListHeader: CGFloat = standard
+    static let adminTextAction: CGFloat = standard
+    static let adminFootnote: CGFloat = standard
+    static let adminFilterButton: CGFloat = standard
+    static let adminCardTitle: CGFloat = standard
+    static let adminCardInfoValue: CGFloat = standard
+    static let adminCardBody: CGFloat = standard
+    static let adminStatusPill: CGFloat = standard
+    static let adminReportTag: CGFloat = standard
+    static let adminReportCount: CGFloat = standard
+    static let adminReportAuthor: CGFloat = standard
+    static let adminReportTitle: CGFloat = standard
+    static let adminReportResult: CGFloat = standard
+    static let adminFormLabel: CGFloat = standard
+    static let adminFormCheckbox: CGFloat = standard
+    static let adminPrimaryAction: CGFloat = standard
+    static let popupTag: CGFloat = standard
 }

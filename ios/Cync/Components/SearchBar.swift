@@ -25,6 +25,10 @@ import SwiftUI
 struct SearchBar: View {
     @Binding var text: String
     @Binding var isActive: Bool
+    var placeholder: LocalizedStringResource = .commonSearch
+    /// "취소" next to the field — for a search the user opened and can
+    /// close (공지/커뮤니티). Off for an always-there field (관리자 사물함).
+    var showsCancelButton = true
     @FocusState private var isFocused: Bool
 
     var body: some View {
@@ -34,7 +38,7 @@ struct SearchBar: View {
                     .font(.categoryChip)
                     .foregroundStyle(Color.gray400)
 
-                TextField(String(appLocalized: .commonSearch), text: $text)
+                TextField(String(appLocalized: placeholder), text: $text)
                     .font(.categoryChip).tracking(Tracking.categoryChip)
                     .foregroundStyle(Color.textPrimary)
                     .focused($isFocused)
@@ -62,14 +66,16 @@ struct SearchBar: View {
                     .fill(Color.surface)
             }
 
-            Button(.commonCancel) {
-                text = ""
-                isFocused = false
-                isActive = false
+            if showsCancelButton {
+                Button(.commonCancel) {
+                    text = ""
+                    isFocused = false
+                    isActive = false
+                }
+                .font(.categoryChip).tracking(Tracking.categoryChip)
+                .foregroundStyle(Color.textPrimary)
+                .buttonStyle(.plain)
             }
-            .font(.categoryChip).tracking(Tracking.categoryChip)
-            .foregroundStyle(Color.textPrimary)
-            .buttonStyle(.plain)
         }
         .onAppear {
             isFocused = isActive

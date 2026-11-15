@@ -25,6 +25,8 @@ final class PostComposeViewModel: ObservableObject {
             }
         }
     }
+    /// The `extraToggle` switch (when the mode has one).
+    @Published var extraToggleValue: Bool
     @Published var errorMessage: String?
     @Published var isSubmitting = false
 
@@ -47,6 +49,7 @@ final class PostComposeViewModel: ObservableObject {
         self.configuration = configuration
         title = configuration.initialTitle
         content = configuration.initialContent
+        extraToggleValue = configuration.extraToggle?.initialValue ?? false
         isAnonymous = configuration.remembersAnonymousChoice
             ? UserDefaults.standard.bool(forKey: Self.anonymousKey)
             : false
@@ -69,6 +72,7 @@ final class PostComposeViewModel: ObservableObject {
     /// typed at all".
     var hasInput: Bool {
         title != configuration.initialTitle || content != configuration.initialContent || attachedImage != nil
+            || extraToggleValue != (configuration.extraToggle?.initialValue ?? false)
     }
 
     /// Busy with the photo or the upload — the submit button is disabled.
@@ -110,7 +114,8 @@ final class PostComposeViewModel: ObservableObject {
             title: title,
             content: content,
             isAnonymous: configuration.showsAnonymousToggle && isAnonymous,
-            image: configuration.showsImageAttachment ? attachedImage : nil
+            image: configuration.showsImageAttachment ? attachedImage : nil,
+            extraToggle: configuration.extraToggle != nil && extraToggleValue
         )
         do {
             try await configuration.submit(draft)

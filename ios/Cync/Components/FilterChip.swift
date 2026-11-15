@@ -26,6 +26,10 @@
 //  `chipHorizontalPadding`/`chipVerticalPadding` independently of `style`,
 //  guaranteeing every variant renders at the same height.
 //
+//  The tappable `.selected`/`.unselected` chips render through the shared
+//  `SelectableChip` (`.filter` look); `label` below now only draws the
+//  static `.badge`.
+//
 
 import SwiftUI
 
@@ -49,7 +53,10 @@ struct FilterChip: View {
     var action: (() -> Void)?
 
     var body: some View {
-        if let action {
+        if style != .badge, let action {
+            // The tappable filter chip is the shared `SelectableChip`.
+            SelectableChip(titleKey: category.label, isSelected: style == .selected, action: action)
+        } else if let action {
             Button(action: action) { label }
                 .buttonStyle(.plain)
         } else {

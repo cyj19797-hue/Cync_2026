@@ -147,6 +147,15 @@ extension Color {
     /// `속성 1=베리언트4` variant status dot/pill (승인 완료, 비밀번호 등록 필요).
     static let lockerApprovedBadge = Color(hex: 0x00C0E8)
 
+    /// Figma fill `rgba(52,199,89,0.3)` (#34C759) — "사용중" status dot/pill
+    /// (내 사물함 카드, 관리자 사물함 행). Same as the light-mode system green
+    /// it replaces.
+    static let lockerInUseBadge = Color(hex: 0x34C759)
+
+    /// Figma `#FFEFE0` — 승인 대기 tile on the admin locker map (light orange,
+    /// a tint of `lockerPendingBadge`).
+    static let lockerAdminPending = Color(hex: 0xFFEFE0)
+
     // MARK: - Locker cell states (main-screen grid, apply-screen map, legend)
 
     /// "신청 가능" — the only state that invites a tap, so the only one with
@@ -172,6 +181,35 @@ extension Color {
     /// Figma style: `primary_dark` (#E63F5D) — border of the checked "기타"
     /// checkbox on the report-reason sheet.
     static let brandPrimaryDark = Color(hex: 0xE63F5D)
+
+    // MARK: - 관리자 신고 관리 (Figma `729:3939`, `731:4120`)
+
+    /// Destructive red — 신고 사유 태그 / "신고 n건" / "삭제" text, the
+    /// pending-count number on the 미처리 tab, and the "n일 정지하기" fill.
+    /// Figma has #F04438, which is only ~3.6:1 against white (and lower on
+    /// its pink tag); this is the same hue deepened to clear 4.5:1 for
+    /// small text — the same reason `accentStrong` replaces #36AFFF.
+    static let adminDanger = Color(hex: 0xD92D20)
+
+    /// Figma `#FFECEA` — background of the red 신고 사유 tag.
+    static let adminDangerTint = Color(hex: 0xFFECEA)
+
+    /// "처리 완료 · …" text on a resolved report card. Figma's #12965A is
+    /// ~3.4:1 on its green tint; deepened to clear 4.5:1.
+    static let adminSuccess = Color(hex: 0x067647)
+
+    /// Figma `#E0F6EA` — background of the "처리 완료" line.
+    static let adminSuccessTint = Color(hex: 0xE0F6EA)
+
+    // MARK: - Cync 공지 "팝업" 태그 (Figma `734:4276`)
+
+    /// "팝업" tag text. Figma's #FF8D28 is only ~2.2:1 on its tint; this
+    /// is the same orange deepened past 4.5:1.
+    static let popupTagText = Color(hex: 0xB54708)
+
+    /// Figma `#FFEFE0` — "팝업" tag background (same tint as the admin
+    /// map's 승인 대기 tile).
+    static let popupTagBackground = Color(hex: 0xFFEFE0)
 
     // MARK: - Profile colors (`ProfileColor` from `PUT /api/me/profile`)
 

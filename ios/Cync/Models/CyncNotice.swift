@@ -5,9 +5,8 @@
 //  A single "Cync 공지" entry — in-app announcements posted by the Cync
 //  team itself (e.g. version-update notes), shown on "6-2 Cync 공지" /
 //  "6-2-1 공지사항 내용". Distinct from the school/student-council board
-//  backing `Notice`/`NoticeListView`. No backend endpoint exists for this
-//  board yet, so the list is empty until one is wired into
-//  `CyncNoticeListViewModel.load()`.
+//  backing `Notice`/`NoticeListView`. Comes from `GET /api/app-notices`
+//  (`AppNotice`, converted in AppNotice.swift).
 //
 //  Body format (proposed for the future API): `content` is Markdown, so
 //  links (`[text](url)`) render tappable — the detail screen styles them
@@ -27,6 +26,9 @@ struct CyncNotice: Identifiable, Hashable {
     /// regardless of date.
     var isPinned: Bool = false
     var imageURLs: [URL] = []
+    /// Shown as a popup when the app launches (`AppNotice.isPopup`) —
+    /// marked with a "팝업" tag on the list and detail.
+    var isPopup: Bool = false
 
     var dateText: String {
         RelativeTime.absoluteDateText(for: date)

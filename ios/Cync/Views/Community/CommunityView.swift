@@ -42,6 +42,9 @@ struct CommunityView: View {
     @State private var selectedPost: CommunityPost?
     @State private var isComposePresented = false
     @State private var isSearchPresented = false
+    @State private var isReportManagePresented = false
+    /// Admin check reads the shared `GET /api/me` cache.
+    @ObservedObject private var session = CurrentUserSession.shared
 
     var body: some View {
         Group {
@@ -64,6 +67,11 @@ struct CommunityView: View {
                 } trailing: {
                     TopBarIconButton(systemImage: "magnifyingglass", labelKey: .commonSearch) {
                         isSearchPresented = true
+                    }
+                    // Admins only — 신고 관리, with a red dot while any
+                    // report is unresolved.
+                    if session.profile?.isAdmin == true {
+                        reportManageButton
                     }
                 }
 
@@ -118,6 +126,12 @@ struct CommunityView: View {
                     }
                 )
             }
+            .navigationDestination(isPresented: $isReportManagePresented) {
+                AdminReportManageView()
+                    .onDisappear {
+                        Task { await viewModel.refreshPendingReports() }
+                    }
+            }
             .navigationDestination(isPresented: $isComposePresented) {
                 CommunityPostComposeView { newPost in
                     viewModel.posts.insert(newPost, at: 0)
@@ -140,6 +154,23 @@ struct CommunityView: View {
                 Text(viewModel.errorMessage ?? "")
             }
         }
+    }
+
+    private var reportManageButton: some View {
+        TopBarIconButton(systemImage: "exclamationmark.bubble", labelKey: .adminReportTitle) {
+            isReportManagePresented = true
+        }
+        .overlay(alignment: .topTrailing) {
+            if viewModel.pendingReportCount > 0 {
+                Circle()
+                    .fill(Color.adminDanger)
+                    .frame(width: 8, height: 8)
+                    // On the icon's top-right corner, not the 44pt box's.
+                    .offset(x: -10, y: 10)
+                    .accessibilityHidden(true)
+            }
+        }
+        .accessibilityValue(viewModel.pendingReportCount > 0 ? Text(.adminReportHasPending) : Text(verbatim: ""))
     }
 
     private var emptyState: some View {
