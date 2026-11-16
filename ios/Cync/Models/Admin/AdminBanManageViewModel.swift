@@ -44,7 +44,10 @@ final class AdminBanManageViewModel: ObservableObject {
     private let isPreview: Bool
     private let previewAdminId: String?
 
-    init(history: AdminActionHistoryStore = .shared) {
+    /// `nil` → `.shared`. (A `= .shared` default argument would be evaluated
+    /// outside the main actor, which Swift 6 rejects.)
+    init(history: AdminActionHistoryStore? = nil) {
+        let history = history ?? .shared
         self.history = history
         isPreview = false
         previewAdminId = nil

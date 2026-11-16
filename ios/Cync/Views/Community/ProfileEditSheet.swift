@@ -83,7 +83,7 @@ struct ProfileEditSheet: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            Color.black.opacity(0.4)
+            Color.dimOverlayMedium
                 .ignoresSafeArea()
                 .onTapGesture { attemptClose() }
 
@@ -322,7 +322,7 @@ struct ProfileEditSheet: View {
 
     private var discardConfirm: some View {
         ZStack {
-            Color.black.opacity(0.3)
+            Color.dimOverlay
                 .ignoresSafeArea()
                 .onTapGesture { isDiscardConfirmPresented = false }
 

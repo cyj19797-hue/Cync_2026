@@ -193,7 +193,7 @@ struct SettingsView: View {
     /// Dimmed backdrop (tap = cancel) with a popup centered on it.
     private func dimmed<Content: View>(onTap: @escaping () -> Void, @ViewBuilder content: () -> Content) -> some View {
         ZStack {
-            Color.black.opacity(0.6)
+            Color.dimOverlayStrong
                 .ignoresSafeArea()
                 .onTapGesture(perform: onTap)
 
@@ -224,7 +224,7 @@ struct SettingsView: View {
     private var languagePickerOverlay: some View {
         if isLanguagePickerPresented {
             ZStack {
-                Color.black.opacity(0.6)
+                Color.dimOverlayStrong
                     .ignoresSafeArea()
                     .onTapGesture { isLanguagePickerPresented = false }
 

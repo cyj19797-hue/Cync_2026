@@ -489,7 +489,7 @@ struct CommunityPostDetailView: View {
     private var dialogOverlay: some View {
         if let dialog {
             ZStack {
-                Color.black.opacity(0.6)
+                Color.dimOverlayStrong
                     .ignoresSafeArea()
                     .onTapGesture { dismissDialog() }
 

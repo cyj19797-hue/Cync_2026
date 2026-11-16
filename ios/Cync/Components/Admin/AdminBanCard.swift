@@ -156,7 +156,7 @@ struct AdminBanCard: View {
         @State private var alsoDelete = true
         var body: some View {
             ZStack(alignment: .bottom) {
-                Color.black.opacity(0.3).ignoresSafeArea()
+                Color.dimOverlay.ignoresSafeArea()
                 AdminBanCard(
                     authorName: "익명", authorColor: nil, studentId: "22011234", targetKind: .post,
                     period: $period, reason: $reason, alsoDelete: $alsoDelete,

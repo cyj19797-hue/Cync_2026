@@ -138,4 +138,12 @@ enum Tracking {
     static let adminFormCheckbox: CGFloat = standard
     static let adminPrimaryAction: CGFloat = standard
     static let popupTag: CGFloat = standard
+
+    // MARK: - App-launch popup notice
+    static let appNoticePopupLabel: CGFloat = standard
+    static let appNoticePopupTitle: CGFloat = standard
+    static let appNoticePopupBody: CGFloat = standard
+    static let appNoticePopupConfirm: CGFloat = standard
+    static let appNoticePopupDismiss: CGFloat = standard
+    static let appNoticePopupOrder: CGFloat = standard
 }

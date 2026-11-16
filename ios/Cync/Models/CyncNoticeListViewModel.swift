@@ -35,6 +35,12 @@ final class CyncNoticeListViewModel: ObservableObject {
         previewIsAdmin = false
     }
 
+    /// Just `notice`, read-only (no admin menu), no server call — backs the
+    /// detail screen opened from the app-launch popup's 자세히 보기.
+    convenience init(viewing notice: CyncNotice) {
+        self.init(previewNotices: [notice], isAdmin: false)
+    }
+
     /// Preview data — never calls the server.
     init(previewNotices: [CyncNotice], isAdmin: Bool) {
         isPreview = true

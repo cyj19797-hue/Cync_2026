@@ -22,10 +22,17 @@ struct FloatingComposeButton: View {
     var isDisabled = false
     let action: () -> Void
 
+    /// Side of the pencil glyph (`ComposeEdit` asset, 48×48 SVG drawn as a
+    /// template so it takes `foregroundStyle`). Scales with Dynamic Type.
+    @ScaledMetric(relativeTo: .headline) private var iconSize: CGFloat = 22
+
     var body: some View {
         Button(action: action) {
-            Image(systemName: "pencil")
-                .font(.noticeNavTitle)
+            Image("ComposeEdit")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: iconSize, height: iconSize)
                 .foregroundStyle(Color.white)
                 .frame(width: Self.size, height: Self.size)
                 .background {

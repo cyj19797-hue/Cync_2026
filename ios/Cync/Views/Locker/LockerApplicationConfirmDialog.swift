@@ -43,7 +43,7 @@ struct LockerApplicationConfirmDialog: View {
 
 #Preview {
     ZStack {
-        Color.black.opacity(0.6).ignoresSafeArea()
+        Color.dimOverlayStrong.ignoresSafeArea()
         LockerApplicationConfirmDialog(
             locker: Locker(id: 128, lockerNumber: 128, location: "센 B03 뒷문 방향", status: .available, currentUserId: nil, assignedAt: nil, dueDate: nil, password: nil),
             location: "센 B03 뒷문 방향",

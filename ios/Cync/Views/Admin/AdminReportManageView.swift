@@ -202,7 +202,7 @@ struct AdminReportManageView: View {
         if let group = banTarget {
             let preview = viewModel.preview(for: group)
             ZStack(alignment: .bottom) {
-                Color.black.opacity(0.3)
+                Color.dimOverlay
                     .ignoresSafeArea()
                     .onTapGesture { closeBanCard() }
 
@@ -243,7 +243,7 @@ struct AdminReportManageView: View {
     private var dialogs: some View {
         if deleteTarget != nil || viewModel.errorMessage != nil {
             ZStack {
-                Color.black.opacity(0.3)
+                Color.dimOverlay
                     .ignoresSafeArea()
                     .onTapGesture {
                         deleteTarget = nil

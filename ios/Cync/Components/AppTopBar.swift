@@ -83,20 +83,23 @@ struct AppTopBar<TitleContent: View, Leading: View, Trailing: View>: View {
 
 /// An icon action in `AppTopBar`'s trailing slot — 44×44pt to tap, with
 /// the icon at the bar's title size (Regular), so every tab's actions look
-/// and sit the same.
+/// and sit the same. Admin-only actions pass `isAdminOnly: true`.
 struct TopBarIconButton: View {
     static let size: CGFloat = 44
 
     let systemImage: String
     let labelKey: LocalizedStringResource
+    /// Admin-only entry (사물함 관리, 신고 관리): drawn Bold in
+    /// `secondaryAccent` so it stands apart from the everyday actions.
+    var isAdminOnly = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Image(systemName: systemImage)
                 .font(.noticeNavTitle)
-                .fontWeight(.regular)
-                .foregroundStyle(Color.textPrimary)
+                .fontWeight(isAdminOnly ? .bold : .regular)
+                .foregroundStyle(isAdminOnly ? Color.secondaryAccent : Color.textPrimary)
                 .frame(width: Self.size, height: Self.size)
                 .contentShape(Rectangle())
         }
@@ -136,9 +139,9 @@ extension AppTopBar where TitleContent == Text {
             TopBarIconButton(systemImage: "magnifyingglass", labelKey: "검색") {}
         }
 
-        AppTopBar(title: "설정") {
+        AppTopBar(title: "설정", leading: {
             Image(systemName: "gearshape")
-        }
+        })
     }
 }
 

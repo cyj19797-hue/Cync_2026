@@ -157,7 +157,7 @@ struct CommunityView: View {
     }
 
     private var reportManageButton: some View {
-        TopBarIconButton(systemImage: "exclamationmark.bubble", labelKey: .adminReportTitle) {
+        TopBarIconButton(systemImage: "exclamationmark.bubble", labelKey: .adminReportTitle, isAdminOnly: true) {
             isReportManagePresented = true
         }
         .overlay(alignment: .topTrailing) {

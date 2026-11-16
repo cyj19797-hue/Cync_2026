@@ -25,6 +25,14 @@ extension Color {
     /// file) so it stays in sync with the display-P3 value set in Xcode.
     static let eventAccentLight = Color(hex: 0x8DD1FF)
 
+    /// Figma #E8F6FF — palest `eventAccent` tint: the icon circle on the
+    /// app-launch popup notice card.
+    static let eventAccentTint = Color(hex: 0xE8F6FF)
+
+    /// Figma #F7F8FA — a hair off white: the "1 / 2" order pill on the
+    /// app-launch popup notice card.
+    static let surfaceSubtle = Color(hex: 0xF7F8FA)
+
     /// Figma style: `white` (#FFFFFF) — screen background.
     static let appBackground = Color.white
 
@@ -61,6 +69,29 @@ extension Color {
     /// Raw one-off fill (#EAEAEA, not a named Figma style) — background of
     /// the pill-shaped 이전 글/목록으로/다음 글 control on the detail screen.
     static let controlPillBackground = Color(hex: 0xEAEAEA)
+
+    // MARK: - Shared hues
+    //
+    // One definition per value that several tokens below share, so changing
+    // the hue changes every use at once.
+
+    /// #34C759 — 사용중 badge, 학생회 일정 dot, profile 초록.
+    static let statusGreen = Color(hex: 0x34C759)
+
+    /// #FFEFE0 — light orange tint: admin map 승인 대기 tile, "팝업" tag.
+    static let orangeTint = Color(hex: 0xFFEFE0)
+
+    // MARK: - Dims (behind popups)
+
+    /// Black 30% — behind dialogs, bottom action cards and the ban card.
+    static let dimOverlay = Color.black.opacity(0.3)
+
+    /// Black 40% — behind the profile editor.
+    static let dimOverlayMedium = Color.black.opacity(0.4)
+
+    /// Black 60% — behind the notice detail card (Figma `rgba(53,53,53,0.6)`)
+    /// and the locker application dialogs.
+    static let dimOverlayStrong = Color.black.opacity(0.6)
 
     // MARK: - "1-5 로그인" (login)
 
@@ -109,11 +140,6 @@ extension Color {
     /// Figma style: `white_sub` (#F7F8FA) — the month-grid card background.
     static let calendarSurface = Color(hex: 0xF7F8FA)
 
-    /// Raw one-off stroke (#DBDBDB, not a named Figma style) — border of the
-    /// "등록된 일정" card, distinct from the lighter `borderLight` used on
-    /// category chips.
-    static let cardBorder = Color(hex: 0xDBDBDB)
-
     /// Sunday / public-holiday day numbers and weekday label — the red most
     /// Korean calendars use. Same hue as `accentRed`.
     static let calendarSunday = accentRed
@@ -127,7 +153,8 @@ extension Color {
     /// Not in Figma — picked so the four categories stay distinguishable as
     /// 4pt dots. 학사 keeps the app accent since it's the most common.
     static let categoryAcademic = eventAccent
-    static let categoryStudentCouncil = Color(hex: 0x34C759)
+    /// 학생회 = the brand's secondary color (pink).
+    static let categoryStudentCouncil = secondaryAccent
 
     // MARK: - "4 사물함" (locker)
 
@@ -150,11 +177,11 @@ extension Color {
     /// Figma fill `rgba(52,199,89,0.3)` (#34C759) — "사용중" status dot/pill
     /// (내 사물함 카드, 관리자 사물함 행). Same as the light-mode system green
     /// it replaces.
-    static let lockerInUseBadge = Color(hex: 0x34C759)
+    static let lockerInUseBadge = statusGreen
 
     /// Figma `#FFEFE0` — 승인 대기 tile on the admin locker map (light orange,
     /// a tint of `lockerPendingBadge`).
-    static let lockerAdminPending = Color(hex: 0xFFEFE0)
+    static let lockerAdminPending = orangeTint
 
     // MARK: - Locker cell states (main-screen grid, apply-screen map, legend)
 
@@ -177,10 +204,6 @@ extension Color {
 
     /// Figma style: `gray700` (#344054) — like/comment count labels.
     static let gray700 = Color(hex: 0x344054)
-
-    /// Figma style: `primary_dark` (#E63F5D) — border of the checked "기타"
-    /// checkbox on the report-reason sheet.
-    static let brandPrimaryDark = Color(hex: 0xE63F5D)
 
     // MARK: - 관리자 신고 관리 (Figma `729:3939`, `731:4120`)
 
@@ -209,7 +232,7 @@ extension Color {
 
     /// Figma `#FFEFE0` — "팝업" tag background (same tint as the admin
     /// map's 승인 대기 tile).
-    static let popupTagBackground = Color(hex: 0xFFEFE0)
+    static let popupTagBackground = orangeTint
 
     // MARK: - Profile colors (`ProfileColor` from `PUT /api/me/profile`)
 
@@ -219,7 +242,7 @@ extension Color {
     static let profileRed = Color(hex: 0xFF3B30)
     static let profileOrange = Color(hex: 0xFF9500)
     static let profileYellow = Color(hex: 0xFFCC00)
-    static let profileGreen = Color(hex: 0x34C759)
+    static let profileGreen = statusGreen
     static let profileMint = Color(hex: 0x00C7BE)
     static let profileBlue = Color(hex: 0x007AFF)
     static let profilePurple = Color(hex: 0xAF52DE)

@@ -150,7 +150,7 @@ struct CyncNoticeDetailView: View {
     private var dialogs: some View {
         if isDeleteConfirmPresented || deleteErrorMessage != nil || viewModel.errorMessage != nil {
             ZStack {
-                Color.black.opacity(0.3)
+                Color.dimOverlay
                     .ignoresSafeArea()
                     .onTapGesture {
                         isDeleteConfirmPresented = false

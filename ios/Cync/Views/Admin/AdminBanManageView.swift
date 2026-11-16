@@ -145,7 +145,7 @@ struct AdminBanManageView: View {
     private var dialogs: some View {
         if isConfirmPresented || viewModel.errorMessage != nil {
             ZStack {
-                Color.black.opacity(0.3)
+                Color.dimOverlay
                     .ignoresSafeArea()
                     .onTapGesture {
                         isConfirmPresented = false

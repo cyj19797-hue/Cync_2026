@@ -97,7 +97,10 @@ final class AdminReportManageViewModel: ObservableObject {
     /// Previews: the signed-in admin's 학번 (otherwise `CurrentUserSession`).
     private let previewAdminId: String?
 
-    init(history: AdminActionHistoryStore = .shared) {
+    /// `nil` → `.shared`. (A `= .shared` default argument would be evaluated
+    /// outside the main actor, which Swift 6 rejects.)
+    init(history: AdminActionHistoryStore? = nil) {
+        let history = history ?? .shared
         self.history = history
         isPreview = false
         previewAdminId = nil

@@ -133,7 +133,7 @@ struct LockerPasswordVerifyDialog: View {
 
 #Preview {
     ZStack {
-        Color.black.opacity(0.6).ignoresSafeArea()
+        Color.dimOverlayStrong.ignoresSafeArea()
         LockerPasswordVerifyDialog(lockerPassword: "3847", verify: { $0 == "1234" }, onClose: {})
             .padding(.horizontal, Spacing.md)
     }

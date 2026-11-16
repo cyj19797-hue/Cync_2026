@@ -141,7 +141,7 @@ struct PostComposeView: View {
                 discardConfirm
             } else if let message = viewModel.errorMessage {
                 ZStack {
-                    Color.black.opacity(0.3).ignoresSafeArea()
+                    Color.dimOverlay.ignoresSafeArea()
                     ErrorDialog(titleKey: .commonError, message: message) {
                         viewModel.errorMessage = nil
                     }
@@ -300,7 +300,7 @@ struct PostComposeView: View {
 
     private var discardConfirm: some View {
         ZStack {
-            Color.black.opacity(0.3)
+            Color.dimOverlay
                 .ignoresSafeArea()
                 .onTapGesture { isDiscardConfirmPresented = false }
 

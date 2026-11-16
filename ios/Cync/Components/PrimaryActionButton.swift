@@ -40,6 +40,10 @@ struct PrimaryActionButton: View {
     /// "1-4 이용약관 동의"'s button underlines its label; every other call
     /// site leaves this `false`.
     var isUnderlined: Bool = false
+    /// Fixed visible height, e.g. the app-launch popup's 52pt 확인 button.
+    /// `nil` (the default) keeps the padding-driven height of every
+    /// existing call site.
+    var minHeight: CGFloat? = nil
     let action: () -> Void
 
     var body: some View {
@@ -53,6 +57,7 @@ struct PrimaryActionButton: View {
                 .foregroundStyle(isEnabled ? labelColor : Color.gray400)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.button)
+                .frame(minHeight: minHeight)
                 .background {
                     RoundedRectangle(cornerRadius: cornerRadius)
                         .fill(isEnabled ? tint : Color.surface)

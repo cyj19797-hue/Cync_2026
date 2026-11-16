@@ -40,14 +40,14 @@ struct AppNotice: Decodable, Identifiable, Hashable {
         updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt)
     }
 
-    init(id: Int, title: String, content: String, isPopup: Bool, createdAt: String) {
+    init(id: Int, title: String, content: String, isPopup: Bool, createdAt: String, updatedAt: String? = nil) {
         self.id = id
         self.title = title
         self.content = content
         self.isPopup = isPopup
         self.authorId = nil
         self.createdAt = createdAt
-        self.updatedAt = createdAt
+        self.updatedAt = updatedAt ?? createdAt
     }
 }
 

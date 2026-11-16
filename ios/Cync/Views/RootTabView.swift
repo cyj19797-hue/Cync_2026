@@ -79,7 +79,7 @@ struct RootTabView: View {
                     .overlay {
                         // Same dim as the popup backdrop above it.
                         if tabBarVisibility.isDimmed {
-                            Color.black.opacity(0.6)
+                            Color.dimOverlayStrong
                                 .ignoresSafeArea(edges: .bottom)
                                 .contentShape(Rectangle())
                                 .transition(.opacity)

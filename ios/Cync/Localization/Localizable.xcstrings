@@ -7929,13 +7929,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "When on, every user sees this as a popup when they open the app. Only use it for must-know news like maintenance or required updates."
+            "value" : "When on, every user sees this as a popup when they open the app. Only use it for must-know news like maintenance or required updates. The popup shows just the first 4 lines of the body, so put the key point first."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "켜면 앱을 실행할 때 모든 사용자에게 팝업으로 떠요. 점검·필수 업데이트처럼 꼭 알려야 할 때만 켜 주세요."
+            "value" : "켜면 앱을 실행할 때 모든 사용자에게 팝업으로 떠요. 점검·필수 업데이트처럼 꼭 알려야 할 때만 켜 주세요. 팝업에는 본문 앞부분(4줄)만 보이니 첫 줄에 핵심을 적어 주세요."
           }
         }
       }
@@ -8106,6 +8106,125 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "공지 관리"
+          }
+        }
+      }
+    },
+    "appNoticePopup.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cync Notice  ·  %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cync 공지  ·  %@"
+          }
+        }
+      }
+    },
+    "appNoticePopup.confirm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인"
+          }
+        }
+      }
+    },
+    "appNoticePopup.dontShowAgain" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't show again"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다시 보지 않기"
+          }
+        }
+      }
+    },
+    "appNoticePopup.order" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld / %2$lld"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld / %2$lld"
+          }
+        }
+      }
+    },
+    "appNoticePopup.orderAccessibility" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notice %2$lld of %1$lld"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공지 %1$lld개 중 %2$lld번째"
+          }
+        }
+      }
+    },
+    "appNoticePopup.viewDetail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View details"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자세히 보기"
+          }
+        }
+      }
+    },
+    "appNoticePopup.close" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "닫기"
           }
         }
       }

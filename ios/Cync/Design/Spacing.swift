@@ -71,4 +71,8 @@ enum Radius {
     static let actionCard: CGFloat = 16
     /// Small tags on the admin report card ("게시글", 신고 사유) (6px).
     static let tag: CGFloat = 6
+    /// App-launch popup notice card (Figma `743:4865`, 24px).
+    static let popupCard: CGFloat = 24
+    /// That card's full-width 확인 button (Figma `743:4885`, 14px).
+    static let popupButton: CGFloat = 14
 }

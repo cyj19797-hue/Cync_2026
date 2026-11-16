@@ -11,6 +11,8 @@
 //    students without a locker — also links to the existing apply screen
 //    (`LockerApplicationMapView`, unchanged).
 //    Admins also get a "관리" button there → `AdminLockerManageView`.
+//    Admins can't apply: no "나의 사물함" card and no "신청하러 가기" in
+//    the guide.
 //  - "나의 사물함" card (`MyLockerCard`). "사물함 비밀번호 찾기" first asks
 //    for the account password (`LockerPasswordVerifyDialog`) and only then
 //    reveals the locker password.
@@ -70,7 +72,7 @@ struct LockerView: View {
                     }
                     // Admins only — approve/reject locker requests.
                     if viewModel.isAdmin {
-                        TopBarIconButton(systemImage: "person.badge.key", labelKey: .adminLockerTitle) {
+                        TopBarIconButton(systemImage: "person.badge.key", labelKey: .adminLockerTitle, isAdminOnly: true) {
                             isAdminManagePresented = true
                         }
                     }
@@ -83,7 +85,11 @@ struct LockerView: View {
                 // apart; items within a block `Spacing.cardInset`.
                 ScrollView {
                     VStack(spacing: Spacing.sm) {
-                        myLockerCard
+                        // Admins don't apply for lockers — no "나의 사물함"
+                        // card (it doubles as the apply entry point).
+                        if !viewModel.isAdmin {
+                            myLockerCard
+                        }
 
                         allLockersSection
                     }
@@ -249,11 +255,11 @@ struct LockerView: View {
     private var popups: some View {
         if isGuidePresented {
             ZStack {
-                Color.black.opacity(0.6)
+                Color.dimOverlayStrong
                     .ignoresSafeArea()
                     .onTapGesture { isGuidePresented = false }
                 LockerApplyGuideDialog(
-                    onApply: viewModel.hasLoaded && viewModel.myLocker == nil
+                    onApply: viewModel.hasLoaded && viewModel.myLocker == nil && !viewModel.isAdmin
                         ? { isGuidePresented = false; isApplying = true }
                         : nil,
                     onClose: { isGuidePresented = false }
@@ -262,7 +268,7 @@ struct LockerView: View {
             }
         } else if isPasswordVerifyPresented {
             ZStack {
-                Color.black.opacity(0.6)
+                Color.dimOverlayStrong
                     .ignoresSafeArea()
                 LockerPasswordVerifyDialog(
                     lockerPassword: viewModel.myLocker?.password,

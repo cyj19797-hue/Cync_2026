@@ -302,7 +302,7 @@ struct AdminLockerManageView: View {
     private var mapCardOverlay: some View {
         if viewModel.selectedTab == .map, let number = viewModel.selectedMapLockerNumber {
             ZStack(alignment: .bottom) {
-                Color.black.opacity(0.3)
+                Color.dimOverlay
                     .ignoresSafeArea()
                     .onTapGesture { viewModel.selectedMapLockerNumber = nil }
 
@@ -487,7 +487,7 @@ struct AdminLockerManageView: View {
     private var dialogs: some View {
         if rejectTarget != nil || returnTarget != nil || viewModel.errorMessage != nil {
             ZStack {
-                Color.black.opacity(0.3)
+                Color.dimOverlay
                     .ignoresSafeArea()
                     .onTapGesture {
                         rejectTarget = nil

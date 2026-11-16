@@ -373,6 +373,21 @@ extension Font {
     static var adminTextAction: Font { .appDefault(.medium, size: 14, relativeTo: .subheadline) }
     /// Guide line under the list — SF Pro Regular 13 (line height 1.45).
     static var adminFootnote: Font { .appDefault(.regular, size: 13, relativeTo: .footnote) }
+
+    // MARK: - App-launch popup notice (Figma `743:4848`, 시안 A)
+
+    /// "Cync 공지 · 2026.11.17." label above the title (13 Medium, accent).
+    static var appNoticePopupLabel: Font { .appDefault(.medium, size: 13, relativeTo: .footnote) }
+    /// Popup title (21 Bold, centered, multi-line).
+    static var appNoticePopupTitle: Font { .appDefault(.bold, size: 21, relativeTo: .title3) }
+    /// Popup body (15 Regular, `textSecondary`, 160% line height).
+    static var appNoticePopupBody: Font { .appDefault(.regular, size: 15, relativeTo: .subheadline) }
+    /// 확인 button label (16 Semibold).
+    static var appNoticePopupConfirm: Font { .appDefault(.semibold, size: 16, relativeTo: .body) }
+    /// "다시 보지 않기" text button (14 Medium, gray400).
+    static var appNoticePopupDismiss: Font { .appDefault(.medium, size: 14, relativeTo: .subheadline) }
+    /// "1 / 2" order pill (12 Medium).
+    static var appNoticePopupOrder: Font { .appDefault(.medium, size: 12, relativeTo: .caption2) }
     /// Room filter button "전체 구역 ⌄" — SF Pro Medium 15.
     static var adminFilterButton: Font { .appDefault(.medium, size: 15, relativeTo: .subheadline) }
     /// Action card title "006번 사물함" — SF Pro Semibold 18.

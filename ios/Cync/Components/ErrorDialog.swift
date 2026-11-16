@@ -39,7 +39,7 @@ struct ErrorDialog: View {
 
 #Preview {
     ZStack {
-        Color.black.opacity(0.6).ignoresSafeArea()
+        Color.dimOverlayStrong.ignoresSafeArea()
         ErrorDialog(
             titleKey: "로그인 실패",
             message: "학번 또는 비밀번호를 제대로 입력해주세요.",

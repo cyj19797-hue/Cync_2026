@@ -44,7 +44,7 @@ extension View {
         overlay {
             if let currentStage = stage.wrappedValue {
                 ZStack {
-                    Color.black.opacity(0.6)
+                    Color.dimOverlayStrong
                         .ignoresSafeArea()
 
                     switch currentStage {

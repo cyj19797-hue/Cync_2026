@@ -38,6 +38,8 @@ final class NoticeListViewModel: ObservableObject {
             let councilNotices = try await council
             let schoolNotices = try await school
             let merged = councilNotices.map(Notice.init(councilNotice:)) + schoolNotices.map(Notice.init(schoolNotice:))
+            // Drop bookmarks of notices no longer on the server (→ 캘린더).
+            BookmarkStore.shared.sync(with: merged)
             notices = merged
                 .map { notice in
                     var notice = notice

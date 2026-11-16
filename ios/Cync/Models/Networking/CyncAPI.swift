@@ -458,6 +458,17 @@ enum CyncAPI {
         try await send(authorizedRequest(path: "/api/app-notices", method: "GET"))
     }
 
+    /// Cync 공지 flagged to pop up at app launch. No login needed. The
+    /// server's order isn't newest-first — callers sort (see
+    /// `AppNoticePopupController`). DEBUG builds launched with
+    /// `-mockPopupNotices` get `MockServer`'s fixtures instead.
+    static func fetchPopupNotices() async throws -> [AppNotice] {
+        #if DEBUG
+        if let mock = MockServer.popupNotices { return mock }
+        #endif
+        return try await send(authorizedRequest(path: "/api/app-notices/popup", method: "GET"))
+    }
+
     /// ADMIN only.
     static func createAppNotice(title: String, content: String, isPopup: Bool) async throws -> AppNotice {
         var request = authorizedRequest(path: "/api/app-notices", method: "POST")

@@ -62,7 +62,7 @@ struct LoginView: View {
         .overlay {
             if let errorMessage = viewModel.errorMessage {
                 ZStack {
-                    Color.black.opacity(0.6)
+                    Color.dimOverlayStrong
                         .ignoresSafeArea()
 
                     ErrorDialog(

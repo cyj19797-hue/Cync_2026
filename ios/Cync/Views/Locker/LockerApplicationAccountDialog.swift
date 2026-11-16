@@ -39,7 +39,7 @@ struct LockerApplicationAccountDialog: View {
 
 #Preview {
     ZStack {
-        Color.black.opacity(0.6).ignoresSafeArea()
+        Color.dimOverlayStrong.ignoresSafeArea()
         LockerApplicationAccountDialog {}
             .padding(.horizontal, Spacing.md)
     }

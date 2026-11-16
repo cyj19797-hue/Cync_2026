@@ -2,9 +2,9 @@
 //  CalendarViewModel.swift
 //  Cync
 //
-//  Backs CalendarView with the real `GET /api/academic-schedule` call
-//  (`docs/API.md` §6), plus whatever notices are bookmarked in
-//  `BookmarkStore` — see `CalendarEvent.init(bookmarkedNotice:)`.
+//  Backs CalendarView. Students see only the notices they bookmarked in
+//  `BookmarkStore` (see `CalendarEvent.events(fromBookmarkedNotice:)`);
+//  admins also see every `GET /api/academic-schedule` row (`docs/API.md` §6).
 //
 
 import Combine
@@ -44,24 +44,69 @@ final class CalendarViewModel: ObservableObject {
 
     private let calendar = Calendar.current
 
-    init(
-        events: [CalendarEvent] = [],
-        referenceDate: Date = Date()
-    ) {
+    /// What's on the calendar depends on who's signed in:
+    ///   - students: only the notices they bookmarked on "공지사항"
+    ///     (`BookmarkStore`), on the dates extracted from each notice.
+    ///   - admins: additionally every row of `GET /api/academic-schedule`.
+    /// `scheduleEvents` is fetched only for admins.
+    private var scheduleEvents: [CalendarEvent] = []
+    private var bookmarkEvents: [CalendarEvent] = []
+    private var isAdmin = CurrentUserSession.shared.profile?.isAdmin ?? false
+    private let isPreview: Bool
+    private var bookmarkSubscription: AnyCancellable?
+
+    init(referenceDate: Date = Date()) {
+        events = []
+        displayedMonth = referenceDate
+        selectedDate = referenceDate
+        isPreview = false
+
+        // Follows bookmark changes live — the calendar tab stays alive
+        // while the user bookmarks on "공지사항", so a one-time read in
+        // `load()` would miss them. `$bookmarkedNotices` emits on the main
+        // actor (BookmarkStore is @MainActor) and once right away.
+        bookmarkSubscription = BookmarkStore.shared.$bookmarkedNotices
+            .sink { [weak self] notices in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.bookmarkEvents = notices.flatMap(CalendarEvent.events(fromBookmarkedNotice:))
+                    self.rebuildEvents()
+                }
+            }
+    }
+
+    /// Preview data — shown as-is, never calls the server.
+    init(events: [CalendarEvent], referenceDate: Date) {
         self.events = events
-        self.displayedMonth = referenceDate
-        self.selectedDate = referenceDate
+        displayedMonth = referenceDate
+        selectedDate = referenceDate
+        isPreview = true
     }
 
     func load() async {
+        guard !isPreview else { return }
+        // Bookmarks are saved snapshots — prune ones whose notice is no
+        // longer on the server before they land on the calendar.
+        await BookmarkStore.shared.refreshFromServer()
+        if let profile = try? await CurrentUserSession.shared.refresh() {
+            isAdmin = profile.isAdmin
+        }
+        guard isAdmin else {
+            scheduleEvents = []
+            rebuildEvents()
+            return
+        }
         do {
             let schedules = try await CyncAPI.fetchAcademicSchedules()
-            let scheduleEvents = schedules.compactMap(CalendarEvent.init(schedule:))
-            let bookmarkEvents = BookmarkStore.shared.bookmarkedNotices.flatMap(CalendarEvent.events(fromBookmarkedNotice:))
-            events = scheduleEvents + bookmarkEvents
+            scheduleEvents = schedules.compactMap(CalendarEvent.init(schedule:))
+            rebuildEvents()
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func rebuildEvents() {
+        events = (isAdmin ? scheduleEvents : []) + bookmarkEvents
     }
 
     /// Full weeks (7-day rows) covering `displayedMonth`, trimmed so a
@@ -101,9 +146,33 @@ final class CalendarViewModel: ObservableObject {
     }
 
     var eventsForSelectedDate: [CalendarEvent] {
-        filteredEvents
-            .filter { $0.contains(selectedDate, calendar: calendar) }
-            .sorted(by: Self.displayOrder)
+        Self.oncePerNotice(
+            filteredEvents
+                .filter { $0.contains(selectedDate, calendar: calendar) }
+                .sorted(by: Self.displayOrder)
+        )
+    }
+
+    /// One bookmarked notice can yield several dates — a 신청 기간 plus the
+    /// 마감/행사 days inside it, or overlapping periods — and they're kept as
+    /// separate entries. A day still lists each notice once: a specific
+    /// day (마감 / 행사 / timed) beats a period covering it, so 11/29 shows
+    /// "마감 23:59", not "11/22~11/29". Keeps `events`' order otherwise.
+    private static func oncePerNotice(_ events: [CalendarEvent]) -> [CalendarEvent] {
+        func rank(_ event: CalendarEvent) -> Int {
+            if event.isMultiDay { return event.kind == nil ? 3 : 2 }
+            return event.kind == nil && !event.hasTime ? 1 : 0
+        }
+        var best: [Int: CalendarEvent] = [:]
+        for event in events {
+            guard let noticeId = event.sourceNoticeId else { continue }
+            if let current = best[noticeId], rank(current) <= rank(event) { continue }
+            best[noticeId] = event
+        }
+        return events.filter { event in
+            guard let noticeId = event.sourceNoticeId else { return true }
+            return best[noticeId]?.id == event.id
+        }
     }
 
     /// Every day in `displayedMonth` that has at least one event, for the
@@ -120,7 +189,7 @@ final class CalendarViewModel: ObservableObject {
         }
 
         return grouped
-            .map { CalendarDaySection(date: $0.key, events: $0.value.sorted(by: Self.displayOrder)) }
+            .map { CalendarDaySection(date: $0.key, events: Self.oncePerNotice($0.value.sorted(by: Self.displayOrder))) }
             .sorted { $0.date < $1.date }
     }
 
@@ -145,7 +214,7 @@ final class CalendarViewModel: ObservableObject {
     }
 
     func eventCount(on date: Date) -> Int {
-        filteredEvents.filter { $0.contains(date, calendar: calendar) }.count
+        Self.oncePerNotice(filteredEvents.filter { $0.contains(date, calendar: calendar) }).count
     }
 
     /// Empty-state copy for the selected day — names the category when a

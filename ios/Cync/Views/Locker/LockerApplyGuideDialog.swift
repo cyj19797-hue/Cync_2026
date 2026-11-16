@@ -54,7 +54,7 @@ struct LockerApplyGuideDialog: View {
 
 #Preview {
     ZStack {
-        Color.black.opacity(0.6).ignoresSafeArea()
+        Color.dimOverlayStrong.ignoresSafeArea()
         LockerApplyGuideDialog(onApply: {}, onClose: {})
             .padding(.horizontal, Spacing.md)
     }

@@ -43,7 +43,7 @@ struct NoticeDetailView: View {
         GeometryReader { proxy in
             ZStack {
                 // Figma fill `rgba(53,53,53,0.6)` on the top-level frame.
-                Color.black.opacity(0.6)
+                Color.dimOverlayStrong
                     .ignoresSafeArea()
                     .onTapGesture(perform: onDismiss)
 
@@ -212,7 +212,7 @@ struct NoticeDetailView: View {
     private var adminDialog: some View {
         if isDeleteConfirmPresented || deleteErrorMessage != nil {
             ZStack {
-                Color.black.opacity(0.3)
+                Color.dimOverlay
                     .ignoresSafeArea()
                     .onTapGesture {
                         isDeleteConfirmPresented = false
