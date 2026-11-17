@@ -3,3 +3,7 @@ build/
 .idea/
 *.class
 src/main/resources/application.yaml
+.DS_Store
+app.jar
+*.jar
+.env

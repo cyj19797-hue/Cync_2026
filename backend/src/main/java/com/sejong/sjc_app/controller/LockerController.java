@@ -20,6 +20,7 @@ public class LockerController {
     private final LockerRepository lockerRepository;
 
     // 전체 사물함 목록 조회 (로그인 필요)
+    // 학번(currentUserId)은 관리자 또는 본인 사물함일 때만 내려가고, 나머지는 null
     @GetMapping
     public List<LockerResponse> getLockers(Authentication authentication) {
         String studentId = authentication.getName();
@@ -29,7 +30,7 @@ public class LockerController {
         return lockerRepository.findAll().stream()
                 .map(locker -> {
                     boolean canSeePassword = isAdmin || studentId.equals(locker.getCurrentUserId());
-                    return LockerResponse.from(locker, canSeePassword);
+                    return LockerResponse.from(locker, canSeePassword, studentId, isAdmin);
                 })
                 .collect(Collectors.toList());
     }
@@ -38,7 +39,7 @@ public class LockerController {
     @GetMapping("/available")
     public List<LockerResponse> getAvailableLockers() {
         return lockerRepository.findByStatus(Locker.Status.AVAILABLE).stream()
-                .map(locker -> LockerResponse.from(locker, false))
+                .map(locker -> LockerResponse.from(locker, false, null, false))
                 .collect(Collectors.toList());
     }
 
@@ -47,7 +48,7 @@ public class LockerController {
     @PreAuthorize("hasRole('ADMIN')")
     public List<LockerResponse> getPendingLockers() {
         return lockerRepository.findByStatus(Locker.Status.PENDING).stream()
-                .map(locker -> LockerResponse.from(locker, true))
+                .map(locker -> LockerResponse.from(locker, true, null, true))
                 .collect(Collectors.toList());
     }
 
@@ -74,7 +75,7 @@ public class LockerController {
                 .build();
 
         Locker saved = lockerRepository.save(updated);
-        return LockerResponse.from(saved, false);
+        return LockerResponse.from(saved, false, studentId, false);
     }
 
     // 신청 취소 (본인만) - PENDING -> AVAILABLE
@@ -95,7 +96,7 @@ public class LockerController {
 
         Locker updated = resetLocker(locker, Locker.Status.AVAILABLE);
         Locker saved = lockerRepository.save(updated);
-        return LockerResponse.from(saved, false);
+        return LockerResponse.from(saved, false, studentId, false);
     }
 
     // 관리자 승인 (ADMIN만) - PENDING -> IN_USE
@@ -120,7 +121,7 @@ public class LockerController {
                 .build();
 
         Locker saved = lockerRepository.save(updated);
-        return LockerResponse.from(saved, true);
+        return LockerResponse.from(saved, true, null, true);
     }
 
     // 관리자 거부 (ADMIN만) - PENDING -> AVAILABLE
@@ -136,7 +137,7 @@ public class LockerController {
 
         Locker updated = resetLocker(locker, Locker.Status.AVAILABLE);
         Locker saved = lockerRepository.save(updated);
-        return LockerResponse.from(saved, false);
+        return LockerResponse.from(saved, false, null, true);
     }
 
     // 사물함 반납 (본인 또는 ADMIN) - IN_USE -> AVAILABLE
@@ -160,7 +161,7 @@ public class LockerController {
 
         Locker updated = resetLocker(locker, Locker.Status.AVAILABLE);
         Locker saved = lockerRepository.save(updated);
-        return LockerResponse.from(saved, false);
+        return LockerResponse.from(saved, false, studentId, isAdmin);
     }
 
     // 사물함 상태 강제 변경 (ADMIN만) - 고장 처리 / 복구
@@ -178,7 +179,7 @@ public class LockerController {
 
         Locker updated = resetLocker(locker, status);
         Locker saved = lockerRepository.save(updated);
-        return LockerResponse.from(saved, true);
+        return LockerResponse.from(saved, true, null, true);
     }
 
     // 공용 헬퍼 - 사용자 정보를 초기화하며 상태만 바꿔 새 객체 생성
