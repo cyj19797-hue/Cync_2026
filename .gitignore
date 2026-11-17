@@ -71,3 +71,12 @@ ios/*.xcworkspace
 *.tmp
 *.temp
 .cache/
+
+# Simulator screenshots (kept locally, not committed)
+ios/screenshots/
+
+# Generated reports (kept locally, not committed)
+Claude outputs/
+
+# Claude Code project instructions (kept locally, not committed)
+CLAUDE.md

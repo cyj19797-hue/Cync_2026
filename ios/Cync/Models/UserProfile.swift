@@ -39,6 +39,21 @@ enum ProfileColor: String, CaseIterable, Codable {
         case .gray: return .profileGray
         }
     }
+
+    /// Spoken name for VoiceOver ("빨강, 선택됨").
+    var nameKey: LocalizedStringResource {
+        switch self {
+        case .red: return .profileColorRed
+        case .orange: return .profileColorOrange
+        case .yellow: return .profileColorYellow
+        case .green: return .profileColorGreen
+        case .mint: return .profileColorMint
+        case .blue: return .profileColorBlue
+        case .purple: return .profileColorPurple
+        case .pink: return .profileColorPink
+        case .gray: return .profileColorGray
+        }
+    }
 }
 
 extension UserProfile {
@@ -47,7 +62,7 @@ extension UserProfile {
     static let mock = UserProfile(
         studentId: "20231234",
         name: "홍길동",
-        role: "STUDENT",
+        role: "USER",
         nickname: "코딩하는펭귄",
         profileColor: .blue,
         banned: false,
@@ -57,3 +72,20 @@ extension UserProfile {
     )
 }
 
+extension UserProfile {
+    /// Server roles are `USER` and `ADMIN` only.
+    var isAdmin: Bool { role == "ADMIN" }
+
+    /// Preview/placeholder admin (운영진) — to see admin-only controls.
+    static let adminMock = UserProfile(
+        studentId: "admin",
+        name: "운영진",
+        role: "ADMIN",
+        nickname: "운영진",
+        profileColor: .blue,
+        banned: false,
+        banExpiresAt: nil,
+        banReason: nil,
+        currentlyBanned: false
+    )
+}

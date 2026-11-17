@@ -43,34 +43,48 @@ final class SessionStore: ObservableObject {
     }
 
     func logIn() {
+        // Bookmarks are kept per account — load this one's.
+        BookmarkStore.shared.switchAccount(to: CyncAPI.accessToken.flatMap(JWT.subject))
         isLoggedIn = true
     }
 
     func logOut() {
         CyncAPI.logout()
+        BookmarkStore.shared.switchAccount(to: nil)
         isLoggedIn = false
     }
 }
 
-/// Reads a JWT's `exp` claim locally — no signature check, only used to
-/// skip auto login with a token the server would reject anyway.
-private enum JWT {
+/// Reads a JWT's claims locally — no signature check. Used to skip auto
+/// login with a token the server would reject anyway, and to know which
+/// account is signed in before `/api/me` answers.
+enum JWT {
     static func isExpired(_ token: String) -> Bool {
+        guard token.split(separator: ".").count == 3 else { return true }
+        guard let exp = payload(of: token)?["exp"] as? TimeInterval else {
+            // No readable `exp` — treat as non-expiring; the server still
+            // answers 401 if it's actually invalid.
+            return false
+        }
+        return Date(timeIntervalSince1970: exp) <= Date()
+    }
+
+    /// The `sub` claim — the backend puts the student id (학번) there
+    /// (`JwtTokenProvider`).
+    static func subject(_ token: String) -> String? {
+        payload(of: token)?["sub"] as? String
+    }
+
+    private static func payload(of token: String) -> [String: Any]? {
         let parts = token.split(separator: ".")
-        guard parts.count == 3 else { return true }
+        guard parts.count == 3 else { return nil }
 
         var base64 = String(parts[1])
             .replacingOccurrences(of: "-", with: "+")
             .replacingOccurrences(of: "_", with: "/")
         base64 += String(repeating: "=", count: (4 - base64.count % 4) % 4)
 
-        guard let data = Data(base64Encoded: base64),
-              let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let exp = payload["exp"] as? TimeInterval else {
-            // No readable `exp` — treat as non-expiring; the server still
-            // answers 401 if it's actually invalid.
-            return false
-        }
-        return Date(timeIntervalSince1970: exp) <= Date()
+        guard let data = Data(base64Encoded: base64) else { return nil }
+        return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
     }
 }

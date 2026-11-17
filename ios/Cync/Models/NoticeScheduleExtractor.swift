@@ -65,6 +65,9 @@ enum NoticeScheduleExtractor {
             merged[key] = existing
         }
 
+        // Periods and the deadlines/events inside them stay separate entries
+        // (a 신청 기간 and its per-round 마감 are different facts). When both
+        // fall on one day, `CalendarViewModel` shows only the specific one.
         return order
             .compactMap { merged[$0] }
             .sorted { $0.startDate < $1.startDate }
@@ -92,6 +95,9 @@ enum NoticeScheduleExtractor {
     }
 
     // MARK: - Keywords
+
+    /// Text between two dates that just continues a list ("11/20, 11/27").
+    private static let separatorOnly: Set<String> = ["", ",", "/", "·", "및", "및,", "or", "and"]
 
     private static let deadlineKeywords = ["마감", "까지", "기한", "deadline", "due", "until"]
     /// A date *range* on a line with one of these is an application window,
@@ -143,6 +149,10 @@ enum NoticeScheduleExtractor {
                 .compactMap { dateMatch(from: $0, in: line, postedDate: postedDate, calendar: calendar) }
 
             var index = 0
+            /// End of the previous date (or range) on this line, and the kind
+            /// it got — for `context(...)` below.
+            var previousEnd = 0
+            var previousKind: CalendarEvent.Kind?
             while index < matches.count {
                 let start = matches[index]
                 let afterStart = NSMaxRange(start.range)
@@ -167,17 +177,45 @@ enum NoticeScheduleExtractor {
                     }
                 }
 
+                // Kind comes from the words around *this* date — between the
+                // previous date and the next one — not the whole line: in
+                // "11/21(토) 컨퍼런스 참가자 모집 (~11/16 마감)" only 11/16 is
+                // the deadline.
+                // `index` moved on iff a range swallowed the next date match.
+                let rangeEnd = matches[index].range.location != start.range.location
+                    ? NSMaxRange(matches[index].range)
+                    : afterStart
+                let nextStart = index + 1 < matches.count ? matches[index + 1].range.location : ns.length
+                let before = ns.substring(with: NSRange(location: previousEnd, length: max(0, start.range.location - previousEnd)))
+                let after = ns.substring(with: NSRange(location: rangeEnd, length: max(0, nextStart - rangeEnd)))
+                let context = before + " " + after
+                let trimmedBefore = before.trimmingCharacters(in: .whitespaces)
+
                 let startDay = calendar.startOfDay(for: start.date)
+                var schedule: ExtractedSchedule
                 if let endDate, calendar.startOfDay(for: endDate) > startDay {
-                    schedules.append(rangeSchedule(start: startDay, end: calendar.startOfDay(for: endDate), line: line))
+                    schedule = rangeSchedule(start: startDay, end: calendar.startOfDay(for: endDate), line: context)
                 } else {
-                    schedules.append(ExtractedSchedule(
+                    schedule = ExtractedSchedule(
                         startDate: start.date,
                         endDate: startDay,
                         hasTime: start.hasTime,
-                        kind: kind(forLine: line)
-                    ))
+                        kind: kind(forLine: context)
+                    )
                 }
+                if schedule.kind == nil {
+                    if trimmedBefore.hasSuffix("~") || trimmedBefore.hasSuffix("∼") {
+                        // "(~11/16)" — "until", i.e. a deadline.
+                        schedule.kind = .deadline
+                    } else if previousEnd > 0, separatorOnly.contains(trimmedBefore) {
+                        // "마감: 11/20, 11/27" — a list continues the
+                        // previous date's kind.
+                        schedule.kind = previousKind
+                    }
+                }
+                schedules.append(schedule)
+                previousEnd = rangeEnd
+                previousKind = schedule.kind
                 index += 1
             }
         }

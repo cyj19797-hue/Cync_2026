@@ -23,15 +23,14 @@ struct LockerApplicationAccountDialog: View {
             Text(.lockerAccountTitle)
                 .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.bottom, Spacing.xxs)
+                .dialogTitleGap()
 
             Text(accountInfoText)
                 .font(.dialogBody).tracking(Tracking.dialogBody)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.bottom, Spacing.xxs)
+                .dialogBodyGap()
 
-            HStack {
-                Spacer(minLength: 0)
+            DialogActionRow {
                 DialogActionButton(titleKey: .commonOk, action: onConfirm)
             }
         }
@@ -40,7 +39,7 @@ struct LockerApplicationAccountDialog: View {
 
 #Preview {
     ZStack {
-        Color.black.opacity(0.6).ignoresSafeArea()
+        Color.dimOverlayStrong.ignoresSafeArea()
         LockerApplicationAccountDialog {}
             .padding(.horizontal, Spacing.md)
     }

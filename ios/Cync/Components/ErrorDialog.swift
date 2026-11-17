@@ -23,15 +23,14 @@ struct ErrorDialog: View {
             Text(titleKey)
                 .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.bottom, Spacing.xxs)
+                .dialogTitleGap()
 
             Text(message)
                 .font(.dialogBody).tracking(Tracking.dialogBody)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.bottom, Spacing.xxs)
+                .dialogBodyGap()
 
-            HStack {
-                Spacer(minLength: 0)
+            DialogActionRow {
                 DialogActionButton(titleKey: .commonOk, action: onConfirm)
             }
         }
@@ -40,7 +39,7 @@ struct ErrorDialog: View {
 
 #Preview {
     ZStack {
-        Color.black.opacity(0.6).ignoresSafeArea()
+        Color.dimOverlayStrong.ignoresSafeArea()
         ErrorDialog(
             titleKey: "로그인 실패",
             message: "학번 또는 비밀번호를 제대로 입력해주세요.",

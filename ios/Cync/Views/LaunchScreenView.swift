@@ -8,19 +8,16 @@
 //  `LoginView`/`RootTabView` for a beat before fading out, so it's always
 //  the first thing a user sees.
 //
-//  The logo ("C" mark stacked over the "cync" wordmark, `CyncLogoLockup`)
-//  isn't the same asset as `Image`/`CyncWordmark` used elsewhere (those are
-//  a mark-only icon and a horizontal one-line lockup, respectively) —
-//  Figma's "start" frame uses a third, vertically-stacked variant exported
-//  as its own flattened asset, so that's what was pulled in here instead of
-//  approximating it from the other two.
+//  The logo is the mark-only `Image` asset (the "C" + blue dot, same art
+//  as the app icon). It used to be a separate vertically-stacked mark +
+//  wordmark lockup (`CyncLogoLockup`), which has since been dropped.
 //
 //  Figma centers the whole (logo + tagline) block vertically on screen while
 //  keeping it left-aligned horizontally (not centered) — `Spacer`s above/
 //  below reproduce the vertical centering, `.leading` alignment reproduces
 //  the horizontal placement.
 //
-//  Reveal animation: a radial "pop" — the logo grows out from its own red
+//  Reveal animation: a radial "pop" — the logo grows out from its own blue
 //  dot (not the block's center) via a `Circle` mask animated from near-zero
 //  to full `scaleEffect`, `anchor`ed at the dot's actual position in the
 //  artwork (measured directly off the source asset's pixels, not eyeballed).
@@ -36,20 +33,18 @@
 import SwiftUI
 
 struct LaunchScreenView: View {
-    /// Where the logo's red dot actually sits, as a fraction of the
-    /// `CyncLogoLockup` image's own frame — measured off the source PNG's
-    /// pixels (centroid of its red pixels), not guessed. The reveal circle
-    /// is anchored here so the logo appears to "pop" out from the dot.
-    private static let dotAnchor = UnitPoint(x: 0.53, y: 0.31)
+    /// Where the logo's blue dot actually sits, as a fraction of the
+    /// `Image` asset's own frame — measured off the source PNG's pixels
+    /// (centroid of its blue pixels), not guessed. The reveal circle is
+    /// anchored here so the logo appears to "pop" out from the dot.
+    private static let dotAnchor = UnitPoint(x: 0.548, y: 0.5)
 
-    /// `Circle()` inscribed in a non-square frame only touches the *midpoint*
+    /// `Circle()` inscribed in the square frame only touches the *midpoint*
     /// of each edge, not the corners — so scaling it up to exactly `1` (its
-    /// own natural, un-scaled size) leaves the four corners of the
-    /// `CyncLogoLockup` frame still masked out, clipping the wordmark's
-    /// bottom corners. Solved analytically for this frame's aspect ratio and
-    /// the anchor above: scale `2` is the smallest value whose ellipse fully
-    /// covers every corner; this adds a safety margin over that.
-    private static let fullRevealScale: CGFloat = 2.2
+    /// own natural, un-scaled size) leaves the frame's corners masked out.
+    /// Solved for the anchor above: scale `1.45` is the smallest value whose
+    /// circle covers every corner; this adds a safety margin over that.
+    private static let fullRevealScale: CGFloat = 1.6
 
     @State private var isLogoRevealed = false
     @State private var isTaglineVisible = false
@@ -62,10 +57,10 @@ struct LaunchScreenView: View {
                     Spacer(minLength: 0)
 
                     VStack(alignment: .leading, spacing: Spacing.xs) {
-                        Image("CyncLogoLockup")
+                        Image("Image")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 100, height: 105)
+                            .frame(width: 100, height: 100)
                             .mask {
                                 Circle()
                                     .scaleEffect(isLogoRevealed ? Self.fullRevealScale : 0.0001, anchor: Self.dotAnchor)

@@ -42,9 +42,12 @@ struct LockerPasswordVerifyDialog: View {
 
     private var inputContent: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
+            // Stack spacing is `Spacing.xs`; these top it up to the shared
+            // `DialogMetrics` gaps.
             Text(.lockerVerifyTitle)
                 .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
+                .padding(.bottom, DialogMetrics.titleToBody - Spacing.xs)
 
             Text(.lockerVerifyMessage)
                 .font(.dialogBody).tracking(Tracking.dialogBody)
@@ -63,17 +66,17 @@ struct LockerPasswordVerifyDialog: View {
                     .foregroundStyle(Color.accentRed)
             }
 
-            HStack(spacing: Spacing.xs) {
-                Spacer(minLength: 0)
+            DialogActionRow {
                 DialogActionButton(titleKey: .commonCancel, action: onClose)
+                // "비밀번호 보기" says what happens, unlike "확인".
                 DialogActionButton(
-                    titleKey: phase == .verifying ? .lockerVerifying : .commonOk,
+                    titleKey: phase == .verifying ? .lockerVerifying : .lockerShowPassword,
                     style: .primary,
                     action: submit
                 )
                 .disabled(accountPassword.isEmpty || phase == .verifying)
             }
-            .padding(.top, Spacing.xxs)
+            .padding(.top, DialogMetrics.bodyToActions - Spacing.xs)
         }
         .onAppear { isFieldFocused = true }
     }
@@ -83,6 +86,7 @@ struct LockerPasswordVerifyDialog: View {
             Text(.lockerPasswordAlertTitle)
                 .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
+                .padding(.bottom, DialogMetrics.titleToBody - Spacing.xs)
 
             Group {
                 if let lockerPassword {
@@ -94,10 +98,9 @@ struct LockerPasswordVerifyDialog: View {
                 }
             }
             .foregroundStyle(Color.textPrimary)
-            .padding(.vertical, Spacing.xxs)
+            .padding(.bottom, DialogMetrics.bodyToActions - Spacing.xs)
 
-            HStack {
-                Spacer(minLength: 0)
+            DialogActionRow {
                 DialogActionButton(titleKey: .commonOk, action: onClose)
             }
         }
@@ -130,7 +133,7 @@ struct LockerPasswordVerifyDialog: View {
 
 #Preview {
     ZStack {
-        Color.black.opacity(0.6).ignoresSafeArea()
+        Color.dimOverlayStrong.ignoresSafeArea()
         LockerPasswordVerifyDialog(lockerPassword: "3847", verify: { $0 == "1234" }, onClose: {})
             .padding(.horizontal, Spacing.md)
     }

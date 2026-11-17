@@ -8,16 +8,15 @@
 //  `SchoolNotice` shape from `GET /api/notices/school` (`docs/API.md` §7,
 //  the one that's actually populated).
 //
-//  Neither board has a concept of "장학"/"국제교류" notices yet — same gap
-//  as `CalendarEvent`'s matching categories — so those filter chips will
-//  stay empty against real data until those boards exist server-side.
+//  The filter categories follow those two boards: 학사 (department) and
+//  학생회 (student council).
 //
 
 import Foundation
 import SwiftUI
 
 /// The category filters shown as chips at the top of the notice list
-/// (Figma node `42:108`, "전체" / "학사" / "장학" / "학생회" / "국제교류").
+/// ("전체" / "학사" / "학생회" — one per notice board in the API spec).
 ///
 /// NOTE: Figma also included a 6th chip literally labeled "버튼" ("Button").
 /// It reads as a leftover demo/placeholder component rather than a real
@@ -25,9 +24,7 @@ import SwiftUI
 enum NoticeCategory: String, CaseIterable, Identifiable, Codable {
     case all = "전체"
     case academic = "학사"
-    case scholarship = "장학"
     case studentCouncil = "학생회"
-    case exchange = "국제교류"
 
     var id: String { rawValue }
 
@@ -38,9 +35,7 @@ enum NoticeCategory: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .all: return .noticeCategoryAll
         case .academic: return .noticeCategoryAcademic
-        case .scholarship: return .noticeCategoryScholarship
         case .studentCouncil: return .noticeCategoryStudentCouncil
-        case .exchange: return .noticeCategoryExchange
         }
     }
 
@@ -48,9 +43,7 @@ enum NoticeCategory: String, CaseIterable, Identifiable, Codable {
     var accentColor: Color {
         switch self {
         case .all, .academic: return .categoryAcademic
-        case .scholarship: return .categoryScholarship
         case .studentCouncil: return .categoryStudentCouncil
-        case .exchange: return .categoryExchange
         }
     }
 }
@@ -75,15 +68,22 @@ struct Notice: Identifiable, Codable {
     /// `nil` for boards written in-app (student council), which have no
     /// external original.
     var sourceURL: URL? = nil
+    /// The row's own id on `/api/notices/council` — set only for 학생회
+    /// 공지, which admins can edit/delete through it. Not the same as `id`:
+    /// both boards number from 1, so `id` offsets school notices instead.
+    var councilId: Int? = nil
+
+    /// Photo attached to a 학생회 notice (`CouncilNotice.imageUrl`) — a
+    /// public URL, no auth needed. `nil` for everything else.
+    var imageURL: URL? = nil
+
+    /// Written in-app on the 학생회 board (so admins can edit/delete it).
+    var isCouncilNotice: Bool { councilId != nil }
 
     /// Absolute date in the current locale: "2026.09.01." in Korean,
     /// "Sep 1, 2026" in English.
     var dateText: String {
-        if Locale.current.language.languageCode == .korean {
-            return date.formatted(.dateTime.year().month(.twoDigits).day(.twoDigits))
-                .replacingOccurrences(of: " ", with: "")
-        }
-        return date.formatted(.dateTime.year().month(.abbreviated).day())
+        RelativeTime.absoluteDateText(for: date)
     }
 
     /// List-row date: "오늘" / "어제" / "3일 전" ("Today" / "Yesterday" /
@@ -103,6 +103,7 @@ struct Notice: Identifiable, Codable {
         let formatter = RelativeDateTimeFormatter()
         formatter.dateTimeStyle = .named
         formatter.formattingContext = .beginningOfSentence
+        formatter.locale = AppLanguage.currentLocale
         return formatter.localizedString(from: DateComponents(day: -days))
     }
 }
@@ -135,7 +136,9 @@ extension Notice {
             deadlineDays: nil,
             isBookmarked: false,
             originalText: councilNotice.content,
-            translatedText: nil
+            translatedText: nil,
+            councilId: councilNotice.id,
+            imageURL: councilNotice.imageUrl.flatMap(URL.init(string:))
         )
     }
 }
@@ -225,7 +228,7 @@ extension Notice {
             ),
             Notice(
                 id: 3,
-                category: .scholarship,
+                category: .studentCouncil,
                 title: "파자마파티즈의 노래 자랑 대회 신청 안내",
                 date: day,
                 deadlineDays: 6,

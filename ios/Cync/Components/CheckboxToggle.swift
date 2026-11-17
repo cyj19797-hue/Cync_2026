@@ -37,6 +37,8 @@ struct CheckboxToggle: View {
     var tracking: CGFloat = Tracking.categoryBadge
     /// Gap between the square and its label — "1-5 로그인" passes a tighter one.
     var spacing: CGFloat = Spacing.md
+    /// Height of the tap area, e.g. 44 when the row stands alone.
+    var minHeight: CGFloat? = nil
 
     var body: some View {
         Button {
@@ -50,6 +52,9 @@ struct CheckboxToggle: View {
                     .tracking(tracking)
                     .foregroundStyle(Color.textPrimary)
             }
+            // Square, gap and label are all one tap target.
+            .frame(minHeight: minHeight)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

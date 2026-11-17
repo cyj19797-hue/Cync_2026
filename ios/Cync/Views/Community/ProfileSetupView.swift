@@ -52,7 +52,7 @@ struct ProfileSetupView: View {
             PrimaryActionButton(
                 titleKey: .commonContinue,
                 isEnabled: viewModel.canSubmit && !viewModel.isSubmitting,
-                tint: .eventAccent
+                tint: .buttonAccent
             ) {
                 Task {
                     if await viewModel.submit() {
@@ -67,7 +67,7 @@ struct ProfileSetupView: View {
         .overlay {
             if let errorMessage = viewModel.errorMessage {
                 ZStack {
-                    Color.black.opacity(0.6)
+                    Color.dimOverlayStrong
                         .ignoresSafeArea()
 
                     ErrorDialog(

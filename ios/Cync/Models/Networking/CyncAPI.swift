@@ -25,11 +25,11 @@ enum CyncAPIError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unauthorized:
-            return String(localized: .apiUnauthorized)
+            return String(appLocalized: .apiUnauthorized)
         case .badStatus(let code):
-            return String(localized: .apiServerError(code))
+            return String(appLocalized: .apiServerError(code))
         case .decoding:
-            return String(localized: .apiDecoding)
+            return String(appLocalized: .apiDecoding)
         }
     }
 }
@@ -108,6 +108,36 @@ enum CyncAPI {
             .data(using: .utf8)!
     }
 
+    /// Every request in this file goes through here.
+    private static func perform(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        try await URLSession.shared.data(for: request)
+    }
+
+    /// `multipart/form-data` body — only the 학생회공지 endpoints take it
+    /// (`docs/API.md` §3); everything else is form-urlencoded.
+    /// The image part is always a JPEG named `notice.jpg` — the server keeps
+    /// the uploaded file name's extension when storing it.
+    private static func setMultipartBody(_ request: inout URLRequest, fields: [String: String], image: Data?) {
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        var body = Data()
+        for (name, value) in fields.sorted(by: { $0.key < $1.key }) {
+            body.append(Data("--\(boundary)\r\n".utf8))
+            body.append(Data("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n".utf8))
+            body.append(Data("\(value)\r\n".utf8))
+        }
+        if let image {
+            body.append(Data("--\(boundary)\r\n".utf8))
+            body.append(Data("Content-Disposition: form-data; name=\"image\"; filename=\"notice.jpg\"\r\n".utf8))
+            body.append(Data("Content-Type: image/jpeg\r\n\r\n".utf8))
+            body.append(image)
+            body.append(Data("\r\n".utf8))
+        }
+        body.append(Data("--\(boundary)--\r\n".utf8))
+        request.httpBody = body
+    }
+
     private static func checkStatus(_ response: URLResponse) throws {
         guard let http = response as? HTTPURLResponse else { return }
         guard (200..<300).contains(http.statusCode) else {
@@ -119,7 +149,7 @@ enum CyncAPI {
     }
 
     private static func send<T: Decodable>(_ request: URLRequest) async throws -> T {
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await perform(request)
         try checkStatus(response)
         do {
             return try JSONDecoder().decode(T.self, from: data)
@@ -129,8 +159,15 @@ enum CyncAPI {
     }
 
     private static func send(_ request: URLRequest) async throws {
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await perform(request)
         try checkStatus(response)
+    }
+
+    /// For endpoints that answer with plain text instead of JSON.
+    private static func sendText(_ request: URLRequest) async throws -> String {
+        let (data, response) = try await perform(request)
+        try checkStatus(response)
+        return String(data: data, encoding: .utf8) ?? ""
     }
 
     // MARK: - 0. 로그인
@@ -162,7 +199,7 @@ enum CyncAPI {
         var request = authorizedRequest(path: "/api/auth/login", method: "POST")
         request.httpBody = formBody(["id": studentId, "password": password])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await perform(request)
         guard let http = response as? HTTPURLResponse else { return false }
         return (200..<300).contains(http.statusCode)
     }
@@ -187,11 +224,35 @@ enum CyncAPI {
         try await send(authorizedRequest(path: "/api/posts", method: "GET"))
     }
 
+    /// One post — and the only call that bumps its view count (by 1 per
+    /// call; the list doesn't count). Not called anywhere right now: the
+    /// app doesn't use 조회수, so the detail screen shows the list's copy.
+    /// Kept for when a single fresh post is needed.
+    static func fetchPostDetail(id: Int) async throws -> CommunityPost {
+        try await send(authorizedRequest(path: "/api/posts/\(id)", method: "GET"))
+    }
+
+    /// Toggles this user's like: likes it if they hadn't, unlikes it if
+    /// they had. The server answers in plain text ("좋아요 완료" /
+    /// "좋아요 취소") with no updated count — returns `true` when it's now
+    /// liked. Fails for a banned user or a missing post.
+    @discardableResult
+    static func togglePostLike(id: Int) async throws -> Bool {
+        let message = try await sendText(authorizedRequest(path: "/api/posts/\(id)/like", method: "POST"))
+        return message.contains("완료")
+    }
+
     static func createPost(title: String, content: String, isAnonymous: Bool) async throws -> CommunityPost {
         var request = authorizedRequest(path: "/api/posts", method: "POST")
         request.httpBody = formBody(["title": title, "content": content, "isAnonymous": String(isAnonymous)])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         return try await send(request)
+    }
+
+    /// Hard delete — the server removes the post's comments and likes with
+    /// it. Allowed for the post's author or an ADMIN.
+    static func deletePost(id: Int) async throws {
+        try await send(authorizedRequest(path: "/api/posts/\(id)", method: "DELETE"))
     }
 
     static func fetchComments(postId: Int) async throws -> [Comment] {
@@ -213,10 +274,122 @@ enum CyncAPI {
         return try await send(request)
     }
 
+    /// Soft delete — the server keeps the row with `deleted = true` (so
+    /// replies under it survive) and answers with a plain-text body.
+    /// Allowed for the comment's author or an ADMIN.
+    static func deleteComment(id: Int) async throws {
+        try await send(authorizedRequest(path: "/api/comments/\(id)", method: "DELETE"))
+    }
+
+    /// One comment, for the admin report screen's preview. NOT on the
+    /// server yet — `CommentController` has no single-comment GET (only
+    /// `GET /api/posts/{postId}/comments`, and a report carries just the
+    /// comment id). Fails (404/405) until the backend adds it; the report
+    /// screen then shows "댓글 내용을 불러올 수 없어요".
+    static func fetchComment(id: Int) async throws -> Comment {
+        try await send(authorizedRequest(path: "/api/comments/\(id)", method: "GET"))
+    }
+
+    /// Moderator edit. NOT on the server yet — `CommentController` has no
+    /// update endpoint; this follows the same shape as `PUT /api/posts/{id}`
+    /// and fails (404/405) until the backend adds it.
+    static func updateComment(id: Int, content: String) async throws -> Comment {
+        var request = authorizedRequest(path: "/api/comments/\(id)", method: "PUT")
+        request.httpBody = formBody(["content": content])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        return try await send(request)
+    }
+
+    // MARK: - 9. 신고
+
+    /// One endpoint for both posts and comments — `targetType` says which.
+    /// The server rejects a second report of the same target by the same
+    /// user, and reports of already-deleted targets.
+    private static func report(targetType: String, targetId: Int, reason: ReportReason) async throws {
+        var request = authorizedRequest(path: "/api/reports", method: "POST")
+        request.httpBody = formBody([
+            "targetType": targetType,
+            "targetId": String(targetId),
+            "reason": reason.rawValue
+        ])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        try await send(request)
+    }
+
+    static func reportComment(id: Int, reason: ReportReason) async throws {
+        try await report(targetType: "COMMENT", targetId: id, reason: reason)
+    }
+
+    static func reportPost(id: Int, reason: ReportReason) async throws {
+        try await report(targetType: "POST", targetId: id, reason: reason)
+    }
+
+    /// ADMIN only — reports not yet resolved, newest first. One row per
+    /// report; the app groups them by target (`ReportGroup`).
+    static func fetchPendingReports() async throws -> [Report] {
+        try await send(authorizedRequest(path: "/api/reports/pending", method: "GET"))
+    }
+
+    /// ADMIN only — every report, pending and resolved, newest first.
+    static func fetchAllReports() async throws -> [Report] {
+        try await send(authorizedRequest(path: "/api/reports", method: "GET"))
+    }
+
+    /// ADMIN only — marks one report `RESOLVED`. Does nothing else: deleting
+    /// or banning are separate calls the admin screen makes first.
+    @discardableResult
+    static func resolveReport(id: Int) async throws -> Report {
+        try await send(authorizedRequest(path: "/api/reports/\(id)/resolve", method: "POST"))
+    }
+
+    // MARK: - 5. 활동 정지
+
+    /// ADMIN only. `days == nil` bans permanently. A 학번 that never signed
+    /// in to the app fails with 500 ("사용자를 찾을 수 없습니다").
+    static func banUser(studentId: String, days: Int?, reason: String) async throws {
+        var query = ["reason": reason]
+        if let days { query["days"] = String(days) }
+        try await send(authorizedRequest(path: "/api/admin/users/\(studentId)/ban", method: "POST", query: query))
+    }
+
+    /// ADMIN only. Same 500 as `banUser` for an unknown 학번.
+    static func unbanUser(studentId: String) async throws {
+        try await send(authorizedRequest(path: "/api/admin/users/\(studentId)/unban", method: "POST"))
+    }
+
     // MARK: - 3. 학생회공지
 
     static func fetchCouncilNotices() async throws -> [CouncilNotice] {
         try await send(authorizedRequest(path: "/api/notices/council", method: "GET"))
+    }
+
+    /// ADMIN only. The author isn't typed on screen — it's the signed-in
+    /// admin's `studentId`/`name` from `CurrentUserSession`. `image` is an
+    /// already-shrunk JPEG (see `UploadImagePreparer` — the server rejects
+    /// files over 1MB); nil leaves the part out and the server stores
+    /// `imageUrl: null`.
+    static func createCouncilNotice(title: String, content: String, image: Data?) async throws -> CouncilNotice {
+        guard let profile = await CurrentUserSession.shared.profile else { throw CyncAPIError.unauthorized }
+        var request = authorizedRequest(path: "/api/notices/council", method: "POST")
+        setMultipartBody(
+            &request,
+            fields: ["title": title, "content": content, "authorId": profile.studentId, "authorName": profile.name],
+            image: image
+        )
+        return try await send(request)
+    }
+
+    /// ADMIN only. `image` replaces the current one; nil keeps it — the
+    /// server has no way to remove a notice's image.
+    static func updateCouncilNotice(id: Int, title: String, content: String, image: Data?) async throws -> CouncilNotice {
+        var request = authorizedRequest(path: "/api/notices/council/\(id)", method: "PUT")
+        setMultipartBody(&request, fields: ["title": title, "content": content], image: image)
+        return try await send(request)
+    }
+
+    /// ADMIN only.
+    static func deleteCouncilNotice(id: Int) async throws {
+        try await send(authorizedRequest(path: "/api/notices/council/\(id)", method: "DELETE"))
     }
 
     // MARK: - 3b. 학과공지 (크롤링)
@@ -237,6 +410,86 @@ enum CyncAPI {
 
     static func applyLocker(id: Int) async throws -> Locker {
         try await send(authorizedRequest(path: "/api/lockers/\(id)/apply", method: "POST"))
+    }
+
+    /// ADMIN only — every locker waiting for approval (`PENDING`).
+    static func fetchPendingLockers() async throws -> [Locker] {
+        try await send(authorizedRequest(path: "/api/lockers/pending", method: "GET"))
+    }
+
+    /// ADMIN only — `PENDING` → `IN_USE`; the student can now see the
+    /// password. `assignedAt` becomes the approval time.
+    static func approveLocker(id: Int) async throws -> Locker {
+        try await send(authorizedRequest(path: "/api/lockers/\(id)/approve", method: "POST"))
+    }
+
+    /// ADMIN only — turns the request down; the locker goes back to
+    /// `AVAILABLE` and the student has to apply again.
+    static func rejectLocker(id: Int) async throws -> Locker {
+        try await send(authorizedRequest(path: "/api/lockers/\(id)/reject", method: "POST"))
+    }
+
+    /// The student themself or an ADMIN — `IN_USE` → `AVAILABLE`. Nothing
+    /// returns a locker automatically; it stays `IN_USE` until this.
+    static func returnLocker(id: Int) async throws -> Locker {
+        try await send(authorizedRequest(path: "/api/lockers/\(id)/return", method: "POST"))
+    }
+
+    /// The only statuses an admin may set directly — `IN_USE`/`PENDING`
+    /// come from approve/apply, and the server rejects them here (500).
+    enum AdminSettableLockerStatus: String {
+        case broken = "BROKEN"
+        case available = "AVAILABLE"
+    }
+
+    /// ADMIN only — mark a locker 고장 or back to 빈 칸.
+    static func setLockerStatus(id: Int, status: AdminSettableLockerStatus) async throws -> Locker {
+        try await send(authorizedRequest(
+            path: "/api/lockers/\(id)/status",
+            method: "PATCH",
+            query: ["status": status.rawValue]
+        ))
+    }
+
+    // MARK: - 8. 앱 공지사항
+
+    /// Every Cync 공지, newest first. No login needed.
+    static func fetchAppNotices() async throws -> [AppNotice] {
+        try await send(authorizedRequest(path: "/api/app-notices", method: "GET"))
+    }
+
+    /// Cync 공지 flagged to pop up at app launch. No login needed. The
+    /// server's order isn't newest-first — callers sort (see
+    /// `AppNoticePopupController`). DEBUG builds launched with
+    /// `-mockPopupNotices` get `MockServer`'s fixtures instead.
+    static func fetchPopupNotices() async throws -> [AppNotice] {
+        #if DEBUG
+        if let mock = MockServer.popupNotices { return mock }
+        #endif
+        return try await send(authorizedRequest(path: "/api/app-notices/popup", method: "GET"))
+    }
+
+    /// ADMIN only.
+    static func createAppNotice(title: String, content: String, isPopup: Bool) async throws -> AppNotice {
+        var request = authorizedRequest(path: "/api/app-notices", method: "POST")
+        request.httpBody = formBody(["title": title, "content": content, "isPopup": String(isPopup)])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        return try await send(request)
+    }
+
+    /// ADMIN only. Title, content and `isPopup` are all replaced — there's
+    /// no popup-only endpoint, so turning the popup on/off re-sends the
+    /// current title and content.
+    static func updateAppNotice(id: Int, title: String, content: String, isPopup: Bool) async throws -> AppNotice {
+        var request = authorizedRequest(path: "/api/app-notices/\(id)", method: "PUT")
+        request.httpBody = formBody(["title": title, "content": content, "isPopup": String(isPopup)])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        return try await send(request)
+    }
+
+    /// ADMIN only. Answers in plain text ("삭제 완료").
+    static func deleteAppNotice(id: Int) async throws {
+        try await send(authorizedRequest(path: "/api/app-notices/\(id)", method: "DELETE"))
     }
 
     // MARK: - 6. 학사일정

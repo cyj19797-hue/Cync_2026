@@ -33,6 +33,16 @@ enum LockerCellStatus: String, Codable {
     case selected
 }
 
+/// Which colors the locker map paints with.
+enum LockerMapPalette {
+    /// Students (사물함 탭, 사물함 신청): 사용 중 · 고장 · 정보 없음 share one
+    /// quiet "사용 불가" tile — `LockerCellStatus.color`, unchanged.
+    case student
+    /// 관리자 사물함 관리: 사용 가능 / 승인 대기 / 사용 중 (dark gray) / 고장
+    /// (light gray) / 정보 없음 each get their own look.
+    case admin
+}
+
 struct LockerCell: Identifiable, Codable {
     var id: String { "\(zoneId)_\(row)_\(col)" }
     let zoneId: String

@@ -8,10 +8,14 @@
 //  `TabView` in RootTabView.swift, this view is just its "공지사항" tab content.
 //
 //  Figma's "2-1 공지글" is a full-screen dialog with no tab bar behind it —
-//  `tabBarVisibility` hides `RootTabView`'s bottom tab bar while it's open
-//  (see `TabBarVisibility`'s header comment for why a plain
-//  `.toolbar(_:for: .tabBar)` can't do this against a hand-rolled tab bar),
-//  so the card gets the extra room instead of sharing the screen with it.
+//  the root's `.showsTabBar(selectedNotice == nil)` drops `RootTabView`'s
+//  bottom tab bar while it's open (see TabBarVisibility.swift), so the
+//  card gets the extra room instead of sharing the screen with it.
+//
+//  Admins only (`NoticeListViewModel.isAdmin`): a floating 공지 작성 button
+//  at the bottom right, and 수정/삭제 on a 학생회 notice's detail card —
+//  both open the shared `PostComposeView` (see NoticeComposeConfiguration).
+//  Everyone else sees neither.
 //
 
 import SwiftUI
@@ -20,7 +24,7 @@ struct NoticeListView: View {
     @StateObject private var viewModel = NoticeListViewModel()
     @State private var isSearchPresented = false
     @State private var selectedNotice: Notice?
-    @EnvironmentObject private var tabBarVisibility: TabBarVisibility
+    @State private var composeTarget: NoticeComposeTarget?
 
     var body: some View {
         ZStack {
@@ -39,19 +43,15 @@ struct NoticeListView: View {
                     },
                     onNext: viewModel.notice(after: notice).map { next in
                         { selectedNotice = next }
-                    }
+                    },
+                    onEdit: adminEditAction(for: notice),
+                    onDelete: adminDeleteAction(for: notice)
                 )
                 .transition(.opacity)
                 .zIndex(1)
             }
         }
         .animation(.default, value: selectedNotice?.id)
-        .onChange(of: selectedNotice?.id) { _, newValue in
-            tabBarVisibility.isHidden = newValue != nil
-        }
-        .onDisappear {
-            tabBarVisibility.isHidden = false
-        }
     }
 
     private var content: some View {
@@ -61,13 +61,9 @@ struct NoticeListView: View {
                 AppTopBar(title: .tabNotices) {
                     Image(systemName: "megaphone")
                 } trailing: {
-                    Button {
+                    TopBarIconButton(systemImage: "magnifyingglass", labelKey: .commonSearch) {
                         isSearchPresented = true
-                    } label: {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(Color.textPrimary)
                     }
-                    .accessibilityLabel(Text(.commonSearch))
                 }
 
                 if isSearchPresented {
@@ -76,8 +72,9 @@ struct NoticeListView: View {
                         .padding(.top, Spacing.xs)
                         .transition(.move(edge: .top).combined(with: .opacity))
                 } else {
+                    // The row pads its chips by `Spacing.xs` itself.
                     CategoryFilterRow(selectedCategory: $viewModel.selectedCategory)
-                        .padding(.top, Spacing.xs)
+                        .padding(.top, Spacing.screenContentTop - Spacing.xs)
                         .transition(.opacity)
                 }
 
@@ -94,10 +91,28 @@ struct NoticeListView: View {
                     }
                 }
                 .listStyle(.plain)
+                // Room under the last row so it isn't stuck behind the
+                // admin's floating button.
+                .contentMargins(.bottom, viewModel.isAdmin ? FloatingComposeButton.reservedHeight : 0, for: .scrollContent)
+                .overlay(alignment: .bottomTrailing) {
+                    if viewModel.isAdmin {
+                        FloatingComposeButton(labelKey: .noticeComposeTitle) {
+                            composeTarget = .create
+                        }
+                        .padding(Spacing.md)
+                    }
+                }
+            }
+            .navigationDestination(item: $composeTarget) { target in
+                composeView(for: target)
             }
             .background(Color.appBackground)
             .animation(.default, value: isSearchPresented)
             .toolbar(.hidden, for: .navigationBar)
+            // Main tab screen — the bottom tab bar shows only while this
+            // root is on screen and no notice detail covers it (see
+            // TabBarVisibility.swift).
+            .showsTabBar(selectedNotice == nil)
             .task {
                 await viewModel.load()
             }
@@ -112,6 +127,47 @@ struct NoticeListView: View {
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
+        }
+    }
+}
+
+extension NoticeListView {
+    @ViewBuilder
+    private func composeView(for target: NoticeComposeTarget) -> some View {
+        switch target {
+        case .create:
+            PostComposeView(configuration: .councilNoticeCreate { councilNotice in
+                _ = viewModel.insertCouncilNotice(councilNotice)
+            })
+        case let .edit(_, councilId, title, content, imageURL):
+            PostComposeView(configuration: .councilNoticeEdit(
+                councilId: councilId,
+                title: title,
+                content: content,
+                imageURL: imageURL
+            ) { councilNotice in
+                // Back on the edited notice's card once the screen closes.
+                selectedNotice = viewModel.replaceCouncilNotice(councilNotice)
+            })
+        }
+    }
+
+    /// 수정 on the detail card — admins, 학생회 notices only.
+    private func adminEditAction(for notice: Notice) -> (() -> Void)? {
+        guard viewModel.isAdmin, let target = NoticeComposeTarget(editing: notice) else { return nil }
+        return {
+            selectedNotice = nil
+            composeTarget = target
+        }
+    }
+
+    /// 삭제 on the detail card — admins, 학생회 notices only. The card asks
+    /// first and shows any error itself.
+    private func adminDeleteAction(for notice: Notice) -> (() async throws -> Void)? {
+        guard viewModel.isAdmin, notice.isCouncilNotice else { return nil }
+        return {
+            try await viewModel.deleteCouncilNotice(notice)
+            selectedNotice = nil
         }
     }
 }

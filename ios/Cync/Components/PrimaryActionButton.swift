@@ -19,7 +19,10 @@ import SwiftUI
 struct PrimaryActionButton: View {
     let titleKey: LocalizedStringResource
     var isEnabled: Bool = true
-    var tint: Color = .brandPrimary
+    /// Fill when enabled — `buttonAccent` (the app accent), white label.
+    var tint: Color = .buttonAccent
+    /// Label color when enabled.
+    var labelColor: Color = .white
     var font: Font = .primaryButtonLabel
     /// Matches `font`'s default (`.primaryButtonLabel`) — a call site overriding
     /// `font:` to a different token must also override this to
@@ -37,6 +40,10 @@ struct PrimaryActionButton: View {
     /// "1-4 이용약관 동의"'s button underlines its label; every other call
     /// site leaves this `false`.
     var isUnderlined: Bool = false
+    /// Fixed visible height, e.g. the app-launch popup's 52pt 확인 button.
+    /// `nil` (the default) keeps the padding-driven height of every
+    /// existing call site.
+    var minHeight: CGFloat? = nil
     let action: () -> Void
 
     var body: some View {
@@ -47,9 +54,10 @@ struct PrimaryActionButton: View {
                 .font(font)
                 .tracking(tracking)
                 .underline(isUnderlined)
-                .foregroundStyle(isEnabled ? Color.white : Color.gray400)
+                .foregroundStyle(isEnabled ? labelColor : Color.gray400)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.button)
+                .frame(minHeight: minHeight)
                 .background {
                     RoundedRectangle(cornerRadius: cornerRadius)
                         .fill(isEnabled ? tint : Color.surface)

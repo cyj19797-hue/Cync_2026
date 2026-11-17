@@ -36,6 +36,10 @@ enum Tracking {
     // MARK: - Shared navigation bar
     static let screenNavTitle: CGFloat = standard
     static let screenNavTitleCentered: CGFloat = standard
+    static let headerActionButton: CGFloat = standard
+    static let settingSectionTitle: CGFloat = standard
+    static let settingRowTitle: CGFloat = standard
+    static let settingRowSubtitle: CGFloat = standard
 
     // MARK: - "2-1 공지글" (notice detail)
     static let noticeDetailBackLabel: CGFloat = standard
@@ -73,9 +77,13 @@ enum Tracking {
     static let communityPostTitle: CGFloat = standard
     static let communityPostBody: CGFloat = standard
     static let communityReactionCount: CGFloat = standard
+    static let communityRowTitle: CGFloat = standard
+    static let communityRowPreview: CGFloat = standard
+    static let communityRowMeta: CGFloat = standard
 
     // MARK: - "5-1 게시글" (post detail)
     static let postDetailTitle: CGFloat = standard
+    static let communityPostDetailTitle: CGFloat = standard
     static let commentAuthor: CGFloat = standard
     static let commentsSectionTitle: CGFloat = standard
     static let commentReplyButton: CGFloat = standard
@@ -103,5 +111,43 @@ enum Tracking {
 
     // MARK: - "6-2 Cync 공지" / "6-2-1 공지사항 내용"
     static let cyncNoticeRowTitle: CGFloat = standard
+    static let cyncNoticeRowTitleRead: CGFloat = standard
     static let cyncNoticeDetailDate: CGFloat = standard
+
+    static let adminLockerRowTitle: CGFloat = standard
+    static let adminLockerRowSubtitle: CGFloat = standard
+    static let adminLockerRowAction: CGFloat = standard
+    static let adminSummaryValue: CGFloat = standard
+    static let adminSummaryLabel: CGFloat = standard
+    static let adminTabChipSelected: CGFloat = standard
+    static let adminTabChip: CGFloat = standard
+    static let adminListHeader: CGFloat = standard
+    static let adminTextAction: CGFloat = standard
+    static let adminFootnote: CGFloat = standard
+    static let adminFilterButton: CGFloat = standard
+    static let adminCardTitle: CGFloat = standard
+    static let adminCardInfoValue: CGFloat = standard
+    static let adminCardBody: CGFloat = standard
+    static let adminStatusPill: CGFloat = standard
+    static let adminReportTag: CGFloat = standard
+    static let adminReportCount: CGFloat = standard
+    static let adminReportAuthor: CGFloat = standard
+    static let adminReportTitle: CGFloat = standard
+    static let adminReportResult: CGFloat = standard
+    static let adminFormLabel: CGFloat = standard
+    static let adminFormCheckbox: CGFloat = standard
+    static let adminPrimaryAction: CGFloat = standard
+    static let popupTag: CGFloat = standard
+    static let commentRowAuthor: CGFloat = standard
+    static let commentRowMeta: CGFloat = standard
+    static let commentRowBody: CGFloat = standard
+    static let commentRowReactionCount: CGFloat = standard
+
+    // MARK: - App-launch popup notice
+    static let appNoticePopupLabel: CGFloat = standard
+    static let appNoticePopupTitle: CGFloat = standard
+    static let appNoticePopupBody: CGFloat = standard
+    static let appNoticePopupConfirm: CGFloat = standard
+    static let appNoticePopupDismiss: CGFloat = standard
+    static let appNoticePopupOrder: CGFloat = standard
 }

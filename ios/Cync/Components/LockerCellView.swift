@@ -40,10 +40,10 @@ struct LockerCellView: View {
         // 고장 is displayed as 사용중 (see `statusLabel`), so it's masked the
         // same way rather than standing out with a visible number.
         if maskOccupiedNumbers, locker.status == .inUse || locker.status == .broken, !isMine {
-            return String(localized: .lockerMaskedNumber)
+            return String(appLocalized: .lockerMaskedNumber)
         }
         let numberText = zeroPadded ? String(format: "%03d", locker.lockerNumber) : "\(locker.lockerNumber)"
-        return String(localized: .lockerNumber(numberText))
+        return String(appLocalized: .lockerNumber(numberText))
     }
 
     private var statusLabel: LocalizedStringResource {

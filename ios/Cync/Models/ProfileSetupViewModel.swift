@@ -43,7 +43,7 @@ final class ProfileSetupViewModel: ObservableObject {
             NicknameSetupStore.markCompleted(for: profile.studentId)
             return true
         } catch {
-            errorMessage = String(localized: .profileSaveFailedMessage)
+            errorMessage = String(appLocalized: .profileSaveFailedMessage)
             return false
         }
     }

@@ -26,14 +26,14 @@ struct LockerApplicationConfirmDialog: View {
                     .font(.categoryBadge).tracking(Tracking.categoryBadge)
             }
             .foregroundStyle(Color.textPrimary)
+            .dialogTitleGap()
 
             Text(.lockerConfirmApply)
                 .font(.dialogBody).tracking(Tracking.dialogBody)
                 .foregroundStyle(Color.textPrimary)
-                .padding(.vertical, Spacing.xxs)
+                .dialogBodyGap()
 
-            HStack(spacing: Spacing.xs) {
-                Spacer(minLength: 0)
+            DialogActionRow {
                 DialogActionButton(titleKey: .commonCancel, action: onCancel)
                 DialogActionButton(titleKey: .lockerApplyAction, style: .primary, action: onConfirm)
             }
@@ -43,7 +43,7 @@ struct LockerApplicationConfirmDialog: View {
 
 #Preview {
     ZStack {
-        Color.black.opacity(0.6).ignoresSafeArea()
+        Color.dimOverlayStrong.ignoresSafeArea()
         LockerApplicationConfirmDialog(
             locker: Locker(id: 128, lockerNumber: 128, location: "센 B03 뒷문 방향", status: .available, currentUserId: nil, assignedAt: nil, dueDate: nil, password: nil),
             location: "센 B03 뒷문 방향",

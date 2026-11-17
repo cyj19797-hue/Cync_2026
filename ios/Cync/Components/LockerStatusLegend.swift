@@ -8,32 +8,62 @@
 //  from `LockerCellStatus.color`/`legendLabel`, the same source the map's
 //  cells use.
 //
+//  One line when it fits; otherwise (very large text sizes) it drops to a
+//  2×2 grid instead of truncating the labels.
+//
 
 import SwiftUI
 
 struct LockerStatusLegend: View {
     private static let statuses: [LockerCellStatus] = [.empty, .pending, .occupied, .selected]
+    /// Admin map: 사용 가능 · 승인 대기 · 사용 중 · 고장.
+    private static let adminStatuses: [LockerCellStatus] = [.empty, .pending, .occupied, .broken]
+
+    /// `.student` (default) = 신청 가능 · 승인 대기중 · 사용 불가 · 내 사물함,
+    /// unchanged.
+    var palette: LockerMapPalette = .student
+
+    private var entries: [LockerCellStatus] {
+        palette == .admin ? Self.adminStatuses : Self.statuses
+    }
 
     var body: some View {
-        HStack(spacing: Spacing.md) {
-            ForEach(Self.statuses, id: \.self) { status in
-                HStack(spacing: Spacing.xxs + 2) {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(status.color)
-                        .overlay {
-                            if status.needsLegendBorder {
-                                RoundedRectangle(cornerRadius: 3)
-                                    .strokeBorder(Color.borderLight)
-                            }
-                        }
-                        .frame(width: 12, height: 12)
-                    Text(verbatim: status.legendLabel)
-                        .font(.lockerLocationText).tracking(Tracking.lockerLocationText)
-                        .foregroundStyle(Color.textPrimary)
-                        .lineLimit(1)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: Spacing.md) {
+                ForEach(entries, id: \.self) { status in
+                    entry(status)
+                        .fixedSize()
+                }
+            }
+
+            LazyVGrid(
+                columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)],
+                alignment: .leading,
+                spacing: Spacing.xs
+            ) {
+                ForEach(entries, id: \.self) { status in
+                    entry(status)
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func entry(_ status: LockerCellStatus) -> some View {
+        HStack(spacing: Spacing.xxs + 2) {
+            RoundedRectangle(cornerRadius: 3)
+                .fill(palette == .admin ? status.adminColor : status.color)
+                .overlay {
+                    if palette == .admin ? status.adminNeedsBorder : status.needsLegendBorder {
+                        RoundedRectangle(cornerRadius: 3)
+                            .strokeBorder(Color.borderLight)
+                    }
+                }
+                .frame(width: 12, height: 12)
+            Text(verbatim: palette == .admin ? status.adminLegendLabel : status.legendLabel)
+                .font(.lockerLocationText).tracking(Tracking.lockerLocationText)
+                .foregroundStyle(Color.textPrimary)
+                .lineLimit(1)
+        }
     }
 }

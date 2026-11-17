@@ -146,31 +146,12 @@ struct MyLockerCard: View {
         }
     }
 
-    @ViewBuilder
     private var statusBadge: some View {
-        let (dotColor, label): (Color, LocalizedStringResource) = {
-            switch state {
-            case .active: return (Color(.systemGreen), .lockerStatusInUse)
-            case .pendingApproval: return (Color.lockerPendingBadge, .lockerBadgePending)
-            case .awaitingPassword: return (Color.lockerApprovedBadge, .lockerBadgeApproved)
-            case .apply: return (.clear, "")
-            }
-        }()
-
-        HStack(spacing: Spacing.xs) {
-            Circle()
-                .fill(dotColor)
-                .frame(width: 8, height: 8)
-            Text(label)
-                .font(.lockerStatusBadge).tracking(Tracking.lockerStatusBadge)
-        }
-        // Figma specs this badge's horizontal padding at its `spacing-sm`
-        // token (12px) — `Spacing.cardInset`, not `Spacing.sm`, which is a
-        // pre-existing 24px mismatch documented on `Spacing.sm` itself.
-        .padding(.horizontal, Spacing.cardInset)
-        .padding(.vertical, Spacing.xs)
-        .background {
-            Capsule().fill(dotColor.opacity(0.3))
+        switch state {
+        case .active: return LockerStatusBadge.inUse
+        case .pendingApproval: return LockerStatusBadge(dotColor: .lockerPendingBadge, labelKey: .lockerBadgePending)
+        case .awaitingPassword: return LockerStatusBadge(dotColor: .lockerApprovedBadge, labelKey: .lockerBadgeApproved)
+        case .apply: return LockerStatusBadge(dotColor: .clear, labelKey: "")
         }
     }
 }

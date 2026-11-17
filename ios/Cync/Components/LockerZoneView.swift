@@ -19,6 +19,8 @@ final class LockerZoneView: UIView {
     static let titleSpacing: CGFloat = 6
 
     let zone: LockerZone
+    /// Set at init; `.student` (the default) paints exactly as before.
+    let palette: LockerMapPalette
 
     /// Fired when a cell is tapped, with that cell's full data. The map
     /// screen forwards this to its own delegate — no detail UI is opened
@@ -28,8 +30,9 @@ final class LockerZoneView: UIView {
     private let titleLabel = UILabel()
     private var cellViews: [(cell: LockerCell, view: LockerCellLabel)] = []
 
-    init(zone: LockerZone) {
+    init(zone: LockerZone, palette: LockerMapPalette = .student) {
         self.zone = zone
+        self.palette = palette
         super.init(frame: .zero)
         setUp()
     }
@@ -64,7 +67,7 @@ final class LockerZoneView: UIView {
         addSubview(titleLabel)
 
         for cell in zone.cells {
-            let cellView = LockerCellLabel(cell: cell)
+            let cellView = LockerCellLabel(cell: cell, palette: palette)
             cellView.isUserInteractionEnabled = true
             cellView.addGestureRecognizer(
                 UITapGestureRecognizer(target: self, action: #selector(handleCellTap(_:)))
@@ -103,6 +106,15 @@ final class LockerZoneView: UIView {
         }
     }
 
+    /// Draws a selection outline on `lockerNumber`'s cell (nil clears it)
+    /// without changing its color — the admin map's "this one is open in
+    /// the card" mark. Unlike `highlight`, the status stays as it is.
+    func setSelectedLockerNumber(_ lockerNumber: Int?) {
+        for (_, cellView) in cellViews {
+            cellView.setOutlined(lockerNumber != nil && cellView.cell.lockerNumber == lockerNumber)
+        }
+    }
+
     /// Tints the room name in the accent color while the map is focused on
     /// this room (see `LockerMapViewController.focusedZoneId`).
     func setTitleHighlighted(_ isHighlighted: Bool) {
@@ -126,17 +138,19 @@ final class LockerZoneView: UIView {
 /// One grid cell — the locker number over a status-colored background.
 final class LockerCellLabel: UILabel {
     private(set) var cell: LockerCell
+    private let palette: LockerMapPalette
+    private var isOutlined = false
 
-    init(cell: LockerCell) {
+    init(cell: LockerCell, palette: LockerMapPalette = .student) {
         self.cell = cell
+        self.palette = palette
         super.init(frame: .zero)
         text = cell.lockerNumber.map(String.init) ?? "-"
         textAlignment = .center
         font = .systemFont(ofSize: 12, weight: .medium)
-        textColor = cell.status.uiTextColor
         layer.cornerRadius = 6
         clipsToBounds = true
-        backgroundColor = cell.status.uiColor
+        applyColors()
     }
 
     required init?(coder: NSCoder) {
@@ -147,8 +161,40 @@ final class LockerCellLabel: UILabel {
     /// comes back) and recolors it to match.
     func updateStatus(_ status: LockerCellStatus) {
         cell.status = status
-        backgroundColor = status.uiColor
-        textColor = status.uiTextColor
+        applyColors()
+    }
+
+    /// Admin selection outline (see `LockerZoneView.setSelectedLockerNumber`).
+    func setOutlined(_ outlined: Bool) {
+        guard outlined != isOutlined else { return }
+        isOutlined = outlined
+        applyColors()
+    }
+
+    private func applyColors() {
+        switch palette {
+        case .student:
+            // Exactly the original painting.
+            backgroundColor = cell.status.uiColor
+            textColor = cell.status.uiTextColor
+        case .admin:
+            backgroundColor = UIColor(cell.status.adminColor)
+            textColor = UIColor(cell.status.adminTextColor)
+            if isOutlined {
+                layer.borderWidth = 2
+                layer.borderColor = UIColor(Color.eventAccent).cgColor
+            } else if cell.status.adminNeedsBorder {
+                layer.borderWidth = 1
+                layer.borderColor = UIColor(Color.borderLight).cgColor
+            } else {
+                layer.borderWidth = 0
+            }
+            // Color alone tells 사용 중 from 고장 apart on screen; VoiceOver
+            // reads the status too ("6, 고장").
+            accessibilityLabel = cell.lockerNumber.map { number in
+                String(appLocalized: .adminLockerMapCellAccessibility(String(number), cell.status.adminLegendLabel))
+            } ?? String(appLocalized: .lockerLegendTaken)
+        }
     }
 }
 
@@ -192,10 +238,53 @@ extension LockerCellStatus {
     /// Label shown next to this status's swatch in `LockerStatusLegendBar`.
     var legendLabel: String {
         switch self {
-        case .empty: return String(localized: .lockerStatusApplicable)
-        case .pending: return String(localized: .lockerStatusPending)
-        case .occupied, .broken, .reserved, .unknown: return String(localized: .lockerStatusUnavailable)
-        case .selected: return String(localized: .lockerMine)
+        // Legend-only keys: English needs short words here ("Open /
+        // Pending / Taken / Mine") so all four fit on one line; the longer
+        // `locker.status.*` wording stays for everywhere else.
+        case .empty: return String(appLocalized: .lockerLegendOpen)
+        case .pending: return String(appLocalized: .lockerLegendPending)
+        case .occupied, .broken, .reserved, .unknown: return String(appLocalized: .lockerLegendTaken)
+        case .selected: return String(appLocalized: .lockerLegendMine)
+        }
+    }
+}
+
+extension LockerCellStatus {
+    // MARK: Admin palette (Figma `690:3881`) — students never see these.
+
+    var adminColor: Color {
+        switch self {
+        case .empty: return .gray50
+        case .pending: return .lockerAdminPending
+        case .occupied: return .gray400
+        case .broken: return .gray300
+        case .unknown: return .appBackground
+        case .reserved: return .surface
+        case .selected: return .lockerMine
+        }
+    }
+
+    var adminTextColor: Color {
+        switch self {
+        case .empty, .pending, .occupied, .broken: return .textPrimary
+        case .unknown, .reserved: return .gray400
+        case .selected: return .white
+        }
+    }
+
+    /// Light tiles that would melt into the white canvas get an outline.
+    var adminNeedsBorder: Bool {
+        self == .empty || self == .unknown
+    }
+
+    var adminLegendLabel: String {
+        switch self {
+        case .empty: return String(appLocalized: .adminLockerLegendAvailable)
+        case .pending: return String(appLocalized: .adminLockerStatusPending)
+        case .occupied: return String(appLocalized: .adminLockerStatusInUse)
+        case .broken: return String(appLocalized: .adminLockerStatusBroken)
+        case .unknown: return String(appLocalized: .adminLockerLegendUnknown)
+        case .reserved, .selected: return String(appLocalized: .lockerLegendTaken)
         }
     }
 }

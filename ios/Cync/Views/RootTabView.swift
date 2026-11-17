@@ -55,17 +55,52 @@ private enum RootTab: CaseIterable, Hashable {
 }
 
 struct RootTabView: View {
-    @State private var selectedTab: RootTab = .notices
+    @State private var selectedTab: RootTab = Self.initialTab
+
+    /// 공지사항, or `-debugTab <name>` in DEBUG builds (see MockServer.swift).
+    private static var initialTab: RootTab {
+        #if DEBUG
+        switch MockServer.initialTab {
+        case "calendar": return .calendar
+        case "lockers": return .lockers
+        case "community": return .community
+        case "settings": return .settings
+        default: return .notices
+        }
+        #else
+        return .notices
+        #endif
+    }
     @StateObject private var tabBarVisibility = TabBarVisibility()
+    @ObservedObject private var languageSettings = LanguageSettings.shared
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         VStack(spacing: 0) {
             selectedContent
+                // Rebuilt on a language change so strings a screen computed
+                // once and kept in state (view models, loaded lists) come
+                // back in the new language. The selected tab lives outside
+                // this, so the user stays on the 설정 tab they changed it from.
+                // Same for the system 글자 크기 setting: every font token is
+                // scaled when it's read (see Typography.swift), so a rebuild
+                // re-reads them all at the new size.
+                .id(ContentIdentity(language: languageSettings.language, dynamicTypeSize: dynamicTypeSize))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .environmentObject(tabBarVisibility)
 
             if !tabBarVisibility.isHidden {
                 tabBar
+                    .overlay {
+                        // Same dim as the popup backdrop above it.
+                        if tabBarVisibility.isDimmed {
+                            Color.dimOverlayStrong
+                                .ignoresSafeArea(edges: .bottom)
+                                .contentShape(Rectangle())
+                                .transition(.opacity)
+                        }
+                    }
+                    .animation(.easeOut(duration: 0.2), value: tabBarVisibility.isDimmed)
             }
         }
         .animation(.default, value: tabBarVisibility.isHidden)
@@ -101,7 +136,7 @@ struct RootTabView: View {
         // against it. A fixed design-token value (not measured against one
         // specific device) keeps every tab readable on any iPhone size.
         .padding(.horizontal, Spacing.xs)
-        .padding(.top, Spacing.xs)
+        .padding(.top, Spacing.cardInset)
         .padding(.bottom, Spacing.xxs)
         .overlay(alignment: .top) {
             Divider().overlay(Color.borderLight)
@@ -115,16 +150,30 @@ struct RootTabView: View {
             selectedTab = tab
         } label: {
             VStack(spacing: Spacing.xxs) {
+                // Fixed icon box: SF Symbols differ in height (the calendar
+                // is shorter than the megaphone), and without this each
+                // label sat at a different height.
                 Image(systemName: tab.systemImage)
                     .font(.system(size: 22))
+                    .frame(width: 28, height: 26)
                 Text(tab.title)
                     .font(.tabItemLabel).tracking(Tracking.tabItemLabel)
             }
-            .foregroundStyle(isSelected ? Color.textPrimary : Color.gray400)
-            .frame(maxWidth: .infinity)
+            // Unselected labels use `textSecondary` (~5:1 on the bar), not
+            // `gray400` (~2.6:1), to clear the 4.5:1 text contrast minimum.
+            .foregroundStyle(isSelected ? Color.textPrimary : Color.textSecondary)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
+}
+
+/// What `selectedContent` is rebuilt on — see the `.id` there.
+private struct ContentIdentity: Hashable {
+    let language: AppLanguage
+    let dynamicTypeSize: DynamicTypeSize
 }
 
 #Preview {

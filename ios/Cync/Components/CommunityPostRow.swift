@@ -2,11 +2,19 @@
 //  CommunityPostRow.swift
 //  test
 //
-//  Figma node `139:1657` ("게시글") — one post row: title + 1-line body
-//  preview, and independent like/comment reaction badges. Each badge is
-//  shown only when its own count is at least 1 — a post with comments but
-//  no likes (or vice versa) shows just that one badge, not a "0" alongside
-//  it, and a post with neither shows no reaction row at all.
+//  Figma node `139:1657` ("게시글") — one post row: title, up to a 2-line
+//  body preview, then one meta line: "3분 전 • 💬 2 ♡ 5". The meta line
+//  mirrors `NoticeRow`'s "카테고리 · 날짜" line (same separator dot, same
+//  secondary tone) so the two feeds scan the same way. No author name —
+//  the feed only needs "when", and the detail screen already shows who.
+//
+//  Each reaction is shown only when its own count is at least 1 — a post
+//  with comments but no likes shows just the comment count, not a "0"
+//  alongside it. The dot sits only between the time and the reactions;
+//  the comment and like counts sit next to each other without one.
+//
+//  Spacing matches `NoticeRow` (4pt between lines, 4pt row padding) so
+//  roughly as many posts fit on screen as notices do.
 //
 //  The trailing "더보기" (kebab) button and its 공유하기/저장하기/신고하기
 //  action menu (formerly `.communityPostActionMenu(target:)`,
@@ -23,32 +31,50 @@ struct CommunityPostRow: View {
     var onSelect: (() -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
+        VStack(alignment: .leading, spacing: Spacing.xxs) {
             Text(post.title)
-                .font(.communityPostTitle).tracking(Tracking.communityPostTitle)
+                .font(.communityRowTitle).tracking(Tracking.communityRowTitle)
                 .foregroundStyle(Color.textPrimary)
                 .lineLimit(1)
 
             Text(post.content)
-                .font(.communityPostBody).tracking(Tracking.communityPostBody)
-                .foregroundStyle(Color.textPrimary)
-                .lineLimit(1)
+                .font(.communityRowPreview).tracking(Tracking.communityRowPreview)
+                .foregroundStyle(Color.textSecondary)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
 
-            if post.likeCount > 0 || post.commentCount > 0 {
-                HStack(spacing: Spacing.xs) {
-                    if post.likeCount > 0 {
-                        reaction(systemImage: "heart", count: post.likeCount)
-                    }
-                    if post.commentCount > 0 {
-                        reaction(systemImage: "bubble.right", count: post.commentCount)
-                    }
-                }
+            metaLine
                 .padding(.top, 2)
-            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .onTapGesture { onSelect?() }
-        .padding(.vertical, Spacing.xs)
+        .padding(.vertical, Spacing.xxs)
+    }
+
+    private var metaLine: some View {
+        HStack(spacing: Spacing.xs) {
+            Text(post.listTimeText)
+
+            if post.commentCount > 0 || post.likeCount > 0 {
+                separatorDot
+
+                HStack(spacing: Spacing.xs) {
+                    if post.commentCount > 0 {
+                        reaction(systemImage: "bubble.right", count: post.commentCount)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(Text(.communityCommentCount(post.commentCount)))
+                    }
+                    if post.likeCount > 0 {
+                        reaction(systemImage: "heart", count: post.likeCount)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(Text(.communityLikeCount(post.likeCount)))
+                    }
+                }
+            }
+        }
+        .font(.communityRowMeta).tracking(Tracking.communityRowMeta)
+        .foregroundStyle(Color.textSecondary)
     }
 
     private func reaction(systemImage: String, count: Int) -> some View {
@@ -56,8 +82,12 @@ struct CommunityPostRow: View {
             Image(systemName: systemImage)
             Text(count, format: .number)
         }
-        .font(.communityReactionCount).tracking(Tracking.communityReactionCount)
-        .foregroundStyle(Color.gray700)
+    }
+
+    private var separatorDot: some View {
+        Circle()
+            .fill(Color.gray400)
+            .frame(width: 4, height: 4)
     }
 }
 

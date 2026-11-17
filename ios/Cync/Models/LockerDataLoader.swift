@@ -31,11 +31,11 @@ enum LockerDataError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .fileNotFound(let name):
-            return String(localized: .lockerDataFileNotFound(name))
+            return String(appLocalized: .lockerDataFileNotFound(name))
         case .unreadable:
-            return String(localized: .lockerDataUnreadable)
+            return String(appLocalized: .lockerDataUnreadable)
         case .decoding:
-            return String(localized: .lockerDataInvalid)
+            return String(appLocalized: .lockerDataInvalid)
         }
     }
 }
@@ -75,5 +75,26 @@ enum LockerDataLoader {
         }
 
         return Dictionary(grouping: cells, by: \.zoneId)
+    }
+
+    /// Rooms in the order they first appear in `lockers.json`.
+    static func zoneIdsInFileOrder(resource: String = "lockers", bundle: Bundle = .main) -> [String] {
+        guard let url = bundle.url(forResource: resource, withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let layouts = try? JSONDecoder().decode([LockerCellLayout].self, from: data) else { return [] }
+        var seen = Set<String>()
+        return layouts.compactMap { seen.insert($0.zoneId).inserted ? $0.zoneId : nil }
+    }
+
+    /// Locker number → room ("B201"). Empty if `lockers.json` can't load.
+    static func zoneIdByLockerNumber(bundle: Bundle = .main) -> [Int: String] {
+        guard let grouped = try? loadGroupedByZone(bundle: bundle) else { return [:] }
+        var map: [Int: String] = [:]
+        for (zoneId, cells) in grouped {
+            for cell in cells {
+                if let number = cell.lockerNumber { map[number] = zoneId }
+            }
+        }
+        return map
     }
 }

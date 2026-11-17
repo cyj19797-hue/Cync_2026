@@ -6,10 +6,8 @@
 //  (registered schedule) list — mapped from the real `AcademicSchedule`
 //  shape returned by `GET /api/academic-schedule` (`docs/API.md` §6).
 //
-//  The server only distinguishes two sources (`SCHOOL`/`STUDENT_COUNCIL`),
-//  not the app's 5-way `NoticeCategory` filter (전체/학사/장학/학생회/국제교류)
-//  — see the gap table: 장학/국제교류 have no server category yet, so those
-//  two filter chips will always be empty against real data.
+//  The server distinguishes two sources (`SCHOOL`/`STUDENT_COUNCIL`), which
+//  map onto `NoticeCategory`'s 학사 / 학생회 filters.
 //
 
 import Foundation
@@ -152,7 +150,7 @@ extension CalendarEvent {
             CalendarEvent(id: 1, category: .academic, title: "2026학년도 2학기 수강정정 안내", startDate: day(10), endDate: day(10), kind: .deadline),
             CalendarEvent(id: 2, category: .studentCouncil, title: "학생회 정기 모임", startDate: day(10, hour: 18), endDate: day(10), hasTime: true, kind: .event),
             CalendarEvent(id: 3, category: .academic, title: "중간고사 기간", startDate: day(20), endDate: day(24)),
-            CalendarEvent(id: 4, category: .scholarship, title: "교내 장학금 신청", startDate: day(20), endDate: day(20), kind: .deadline)
+            CalendarEvent(id: 4, category: .academic, title: "교내 장학금 신청", startDate: day(20), endDate: day(20), kind: .deadline)
         ]
     }()
 

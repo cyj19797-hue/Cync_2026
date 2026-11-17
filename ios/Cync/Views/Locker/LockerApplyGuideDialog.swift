@@ -25,6 +25,7 @@ struct LockerApplyGuideDialog: View {
             Text(.lockerGuideTitle)
                 .font(.dialogTitle).tracking(Tracking.dialogTitle)
                 .foregroundStyle(Color.textPrimary)
+                .dialogTitleGap()
 
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
@@ -39,10 +40,9 @@ struct LockerApplyGuideDialog: View {
                     }
                 }
             }
-            .padding(.vertical, Spacing.xxs)
+            .dialogBodyGap()
 
-            HStack(spacing: Spacing.xs) {
-                Spacer(minLength: 0)
+            DialogActionRow {
                 DialogActionButton(titleKey: .commonOk, action: onClose)
                 if let onApply {
                     DialogActionButton(titleKey: .lockerGuideApply, style: .primary, action: onApply)
@@ -54,7 +54,7 @@ struct LockerApplyGuideDialog: View {
 
 #Preview {
     ZStack {
-        Color.black.opacity(0.6).ignoresSafeArea()
+        Color.dimOverlayStrong.ignoresSafeArea()
         LockerApplyGuideDialog(onApply: {}, onClose: {})
             .padding(.horizontal, Spacing.md)
     }

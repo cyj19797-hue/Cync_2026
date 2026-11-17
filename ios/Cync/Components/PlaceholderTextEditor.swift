@@ -14,15 +14,20 @@
 //  trick anyway, plus delegate boilerplate — not a case where UIKit buys
 //  anything.
 //
-//  The small top/leading padding below compensates for `TextEditor`'s own
-//  built-in text-container insets, which don't match a plain `Text`'s
-//  default position — without it the placeholder sits visibly offset from
-//  where typed text actually starts.
+//  `TextEditor` insets its text by 5pt on each side (the text container's
+//  line padding) and 8pt on top. The editor is pulled out by those 5pt so
+//  typed text starts exactly at this view's leading edge — level with a
+//  `TextField` above it given the same padding — and the placeholder sits
+//  at that same spot (8pt down, no leading offset).
 //
 
 import SwiftUI
 
 struct PlaceholderTextEditor: View {
+    /// `TextEditor`'s own space above the first line — callers subtract it
+    /// to get an exact gap to the text.
+    static let textTopInset: CGFloat = 8
+
     @Binding var text: String
     let placeholder: LocalizedStringResource
     var font: Font = .body
@@ -35,8 +40,7 @@ struct PlaceholderTextEditor: View {
                 Text(placeholder)
                     .font(font).tracking(Tracking.standard)
                     .foregroundStyle(placeholderColor)
-                    .padding(.top, 8)
-                    .padding(.leading, 5)
+                    .padding(.top, Self.textTopInset)
                     .allowsHitTesting(false)
             }
 
@@ -44,6 +48,7 @@ struct PlaceholderTextEditor: View {
                 .font(font).tracking(Tracking.standard)
                 .foregroundStyle(textColor)
                 .scrollContentBackground(.hidden)
+                .padding(.horizontal, -5)
         }
     }
 }

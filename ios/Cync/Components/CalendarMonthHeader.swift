@@ -38,7 +38,7 @@ struct CalendarMonthHeader: View {
     }
 
     private var monthLabel: some View {
-        Text(month.formatted(.dateTime.year().month(.wide)))
+        Text(month.formatted(.dateTime.year().month(.wide).locale(AppLanguage.currentLocale)))
             .font(.calendarMonthLabel).tracking(Tracking.calendarMonthLabel)
             .foregroundStyle(Color.textPrimary)
     }
