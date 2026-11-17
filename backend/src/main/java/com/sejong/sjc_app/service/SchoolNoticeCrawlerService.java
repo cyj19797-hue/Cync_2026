@@ -121,6 +121,8 @@ public class SchoolNoticeCrawlerService {
                     .viewCount(notice.getViewCount())
                     .sourceUrl(notice.getSourceUrl())
                     .crawledAt(notice.getCrawledAt())
+                    .eventStartDate(notice.getEventStartDate())
+                    .eventEndDate(notice.getEventEndDate())
                     .build();
 
             schoolNoticeRepository.save(updated);

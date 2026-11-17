@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import com.sejong.sjc_app.service.EventDateRules;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -37,7 +40,11 @@ public class StudentCouncilNoticeController {
                                              @RequestParam String content,
                                              @RequestParam String authorId,
                                              @RequestParam String authorName,
-                                             @RequestParam(required = false) MultipartFile image) throws IOException {
+                                             @RequestParam(required = false) MultipartFile image,
+                                             @RequestParam(required = false) LocalDate eventStartDate,
+                                             @RequestParam(required = false) LocalDate eventEndDate) throws IOException {
+
+        LocalDate[] dates = EventDateRules.normalize(eventStartDate, eventEndDate);
 
         String imageUrl = null;
         if (image != null && !image.isEmpty()) {
@@ -52,6 +59,8 @@ public class StudentCouncilNoticeController {
                 .authorName(authorName)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
+                .eventStartDate(dates[0])
+                .eventEndDate(dates[1])
                 .build();
         return repository.save(notice);
     }
@@ -61,7 +70,10 @@ public class StudentCouncilNoticeController {
     public StudentCouncilNotice updateNotice(@PathVariable Long id,
                                              @RequestParam String title,
                                              @RequestParam String content,
-                                             @RequestParam(required = false) MultipartFile image) throws IOException {
+                                             @RequestParam(required = false) MultipartFile image,
+                                             @RequestParam(required = false) LocalDate eventStartDate,
+                                             @RequestParam(required = false) LocalDate eventEndDate,
+                                             @RequestParam(defaultValue = "false") boolean clearEventDate) throws IOException {
 
         StudentCouncilNotice notice = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("공지를 찾을 수 없습니다."));
@@ -69,6 +81,18 @@ public class StudentCouncilNoticeController {
         String imageUrl = notice.getImageUrl();
         if (image != null && !image.isEmpty()) {
             imageUrl = azureBlobStorageService.uploadImage(image);
+        }
+
+        // 날짜: clearEventDate=true면 삭제, 날짜 파라미터가 없으면 기존 값 유지, 있으면 새 값으로 교체
+        LocalDate newStart = notice.getEventStartDate();
+        LocalDate newEnd = notice.getEventEndDate();
+        if (clearEventDate) {
+            newStart = null;
+            newEnd = null;
+        } else if (eventStartDate != null || eventEndDate != null) {
+            LocalDate[] dates = EventDateRules.normalize(eventStartDate, eventEndDate);
+            newStart = dates[0];
+            newEnd = dates[1];
         }
 
         StudentCouncilNotice updated = StudentCouncilNotice.builder()
@@ -80,6 +104,8 @@ public class StudentCouncilNoticeController {
                 .authorName(notice.getAuthorName())
                 .createdAt(notice.getCreatedAt())
                 .updatedAt(LocalDateTime.now())
+                .eventStartDate(newStart)
+                .eventEndDate(newEnd)
                 .build();
 
         return repository.save(updated);
