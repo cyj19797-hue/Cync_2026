@@ -150,9 +150,12 @@ extension Color {
 
     // MARK: - Category colors (calendar event dots / row accent bars)
 
-    /// Not in Figma — picked so the four categories stay distinguishable as
-    /// 4pt dots. 학사 keeps the app accent since it's the most common.
-    static let categoryAcademic = eventAccent
+    /// Figma style: `category` (#3982FF, "어떠한 카테고리") — the schedule
+    /// color bar ("일정색") on "3 캘린더" / "3-1 일정 전체보기".
+    static let category = Color(hex: 0x3982FF)
+
+    /// 학사 (and 전체) — Figma's `category` style.
+    static let categoryAcademic = category
     /// 학생회 = the brand's secondary color (pink).
     static let categoryStudentCouncil = secondaryAccent
 

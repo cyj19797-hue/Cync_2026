@@ -8228,6 +8228,57 @@
           }
         }
       }
+    },
+    "comment.replyingTo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replying to %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에게 답글 작성 중"
+          }
+        }
+      }
+    },
+    "comment.replyCancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel reply"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "답글 취소"
+          }
+        }
+      }
+    },
+    "comment.input.banned" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can’t comment while your account is suspended"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "활동이 정지되어 댓글을 쓸 수 없어요"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

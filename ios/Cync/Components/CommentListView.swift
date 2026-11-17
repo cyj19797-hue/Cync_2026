@@ -35,7 +35,7 @@ struct CommentListView: View {
     var body: some View {
         if threads.isEmpty {
             Text(.commentEmpty)
-                .font(.communityPostBody).tracking(Tracking.communityPostBody)
+                .font(.commentRowBody).tracking(Tracking.commentRowBody)
                 .foregroundStyle(Color.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.vertical, Spacing.xl)

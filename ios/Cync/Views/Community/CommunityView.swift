@@ -56,7 +56,16 @@ struct CommunityView: View {
                 feed
             }
         }
-        .task { await viewModel.load() }
+        .task {
+                await viewModel.load()
+                #if DEBUG
+                // `-debugOpenFirstPost` (MockServer.swift): the most-commented
+                // post, so the detail screen has comments to show.
+                if MockServer.opensFirstPost, selectedPost == nil {
+                    selectedPost = viewModel.posts.max { $0.commentCount < $1.commentCount }
+                }
+                #endif
+            }
     }
 
     private var feed: some View {

@@ -55,7 +55,22 @@ private enum RootTab: CaseIterable, Hashable {
 }
 
 struct RootTabView: View {
-    @State private var selectedTab: RootTab = .notices
+    @State private var selectedTab: RootTab = Self.initialTab
+
+    /// 공지사항, or `-debugTab <name>` in DEBUG builds (see MockServer.swift).
+    private static var initialTab: RootTab {
+        #if DEBUG
+        switch MockServer.initialTab {
+        case "calendar": return .calendar
+        case "lockers": return .lockers
+        case "community": return .community
+        case "settings": return .settings
+        default: return .notices
+        }
+        #else
+        return .notices
+        #endif
+    }
     @StateObject private var tabBarVisibility = TabBarVisibility()
     @ObservedObject private var languageSettings = LanguageSettings.shared
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize

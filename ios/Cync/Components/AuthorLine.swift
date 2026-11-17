@@ -16,12 +16,34 @@ import SwiftUI
 
 struct AuthorLine: View {
     enum Style {
-        /// Post header and comments (Semibold 16 name).
+        /// Post header (Semibold 16 name).
         case standard
         /// The admin report card's preview box (Semibold 14 name, Figma
         /// `729:3891`).
         case compact
+        /// A comment row on "5-1 게시글" (Semibold 14 name, 10pt meta).
+        case comment
     }
+
+    private var nameFont: Font {
+        switch style {
+        case .standard: .commentAuthor
+        case .compact: .adminReportAuthor
+        case .comment: .commentRowAuthor
+        }
+    }
+
+    private var nameTracking: CGFloat {
+        switch style {
+        case .standard: Tracking.commentAuthor
+        case .compact: Tracking.adminReportAuthor
+        case .comment: Tracking.commentRowAuthor
+        }
+    }
+
+    /// Date, separator and badge.
+    private var metaFont: Font { style == .comment ? .commentRowMeta : .calendarCaption }
+    private var metaTracking: CGFloat { style == .comment ? Tracking.commentRowMeta : Tracking.calendarCaption }
 
     let authorName: String
     let createdAt: Date
@@ -34,8 +56,7 @@ struct AuthorLine: View {
     var body: some View {
         HStack(spacing: Spacing.xxs) {
             Text(authorName)
-                .font(style == .compact ? .adminReportAuthor : .commentAuthor)
-                .tracking(style == .compact ? Tracking.adminReportAuthor : Tracking.commentAuthor)
+                .font(nameFont).tracking(nameTracking)
                 .foregroundStyle(Color.textPrimary)
                 .lineLimit(1)
 
@@ -45,11 +66,11 @@ struct AuthorLine: View {
 
             // Separator is punctuation, identical in every language.
             Text(verbatim: "·")
-                .font(.calendarCaption).tracking(Tracking.calendarCaption)
+                .font(metaFont).tracking(metaTracking)
                 .foregroundStyle(Color.textSecondary)
 
             Text(RelativeTime.text(for: createdAt))
-                .font(.calendarCaption).tracking(Tracking.calendarCaption)
+                .font(metaFont).tracking(metaTracking)
                 .foregroundStyle(Color.textSecondary)
                 .lineLimit(1)
         }
@@ -62,7 +83,7 @@ extension AuthorLine {
     /// "익명" look smaller than a plain "익명1"). Same size as the date.
     private func badge(_ key: LocalizedStringResource) -> some View {
         Text(key)
-            .font(.calendarCaption).tracking(Tracking.calendarCaption)
+            .font(metaFont).tracking(metaTracking)
             .foregroundStyle(Color.accentStrong)
             .lineLimit(1)
     }

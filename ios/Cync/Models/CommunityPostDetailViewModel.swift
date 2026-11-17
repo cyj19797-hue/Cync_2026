@@ -56,6 +56,9 @@ final class CommunityPostDetailViewModel: ObservableObject {
         self.currentUser = CurrentUserSession.shared.profile
     }
 
+    /// Under an active ban (`currentlyBanned`) — no commenting.
+    var isBanned: Bool { currentUser?.currentlyBanned ?? false }
+
     func loadComments() async {
         do {
             comments = try await CyncAPI.fetchComments(postId: post.id)

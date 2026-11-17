@@ -20,7 +20,11 @@
 //
 //  Commenting happens in `CommentInputBar`, pinned to the bottom with
 //  `.safeAreaInset(edge: .bottom)` so it rides up on top of the keyboard.
-//  "답글" on a comment switches the bar into reply mode and focuses it.
+//  It's always there: collapsed to a short pill until tapped (or the post's
+//  bubble / a comment's "답글 달기" is), and collapsed again — never hidden —
+//  when the keyboard goes away. Reply mode shows "OO에게 답글 작성 중 ✕"
+//  above the bar; ✕ goes back to a plain comment, keeping the draft. A
+//  banned user gets a disabled pill and a toast instead of the keyboard.
 //  No bottom tab bar here: only the five main tab screens show it — see
 //  TabBarVisibility.swift.
 //
@@ -70,6 +74,7 @@ struct CommunityPostDetailView: View {
     @State private var isOpeningComposer = false
     @State private var replyTarget: Comment?
     @State private var dialog: Dialog?
+    @State private var toastMessage: String?
     @FocusState private var isInputFocused: Bool
 
     init(
@@ -119,12 +124,17 @@ struct CommunityPostDetailView: View {
                         isAnonymous: $isAnonymous,
                         isComposing: $isComposing,
                         isSubmitting: viewModel.isSubmittingComment,
+                        replyingToName: replyTarget.map(replyName(for:)),
+                        isBanned: viewModel.isBanned,
                         isFocused: $isInputFocused,
+                        onExpand: resumeComposing,
+                        onCancelReply: cancelReply,
+                        onBannedTap: showBannedToast,
                         onSubmit: submitComment
                     )
                 }
                 .animation(.easeOut(duration: 0.2), value: isComposing)
-                // Keyboard swiped away → input closes too (draft kept).
+                // Keyboard swiped away → input collapses too (draft kept).
                 .onChange(of: isInputFocused) { _, isFocused in
                     if !isFocused && !isOpeningComposer { closeComposer() }
                 }
@@ -147,6 +157,9 @@ struct CommunityPostDetailView: View {
             // and 조회수 isn't used. The list's copy (with `likedByMe`) is
             // what this screen shows.
             await viewModel.loadComments()
+            #if DEBUG
+            applyDebugComposerState()
+            #endif
         }
         .onChange(of: viewModel.post) { _, post in
             onPostChanged(post)
@@ -164,6 +177,7 @@ struct CommunityPostDetailView: View {
         }
         .overlay { dialogOverlay }
         .animation(.easeOut(duration: 0.2), value: dialog?.id)
+        .toast(message: $toastMessage)
     }
 
     // MARK: - Post
@@ -411,6 +425,7 @@ struct CommunityPostDetailView: View {
     private static let postDraftOwner = -1
 
     private func startComposing(replyingTo comment: Comment?) {
+        guard !viewModel.isBanned else { return showBannedToast() }
         openMenuID = nil
         isOpeningComposer = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { isOpeningComposer = false }
@@ -430,12 +445,46 @@ struct CommunityPostDetailView: View {
         }
     }
 
-    /// Closes the input, keeping `draft` (and whom it was for) so reopening
-    /// it for the same target picks up where the user left off.
+    /// The collapsed pill was tapped: expand exactly as it was left — same
+    /// reply target, same draft — instead of `startComposing(nil)`, which
+    /// would drop a reply draft.
+    private func resumeComposing() {
+        guard !viewModel.isBanned else { return showBannedToast() }
+        openMenuID = nil
+        isOpeningComposer = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { isOpeningComposer = false }
+        isComposing = true
+    }
+
+    /// ✕ on the reply strip — a plain comment on the post from now on; the
+    /// typed text moves over with it.
+    private func cancelReply() {
+        replyTarget = nil
+        draftOwnerID = Self.postDraftOwner
+    }
+
+    /// Name on the reply strip — as the comment's row shows it ("익명2",
+    /// a nickname, or "글쓴이" for the post's author).
+    private func replyName(for comment: Comment) -> String {
+        let label = viewModel.authorLabel(for: comment)
+        return label == .postAuthor ? String(appLocalized: .commentPostAuthor) : label.text
+    }
+
+    private func showBannedToast() {
+        isInputFocused = false
+        toastMessage = String(appLocalized: .commentInputBanned)
+    }
+
+    /// Collapses the input (it never disappears), keeping `draft` and whom
+    /// it was for so tapping the pill picks up where the user left off. With
+    /// nothing typed, reply mode ends too.
     private func closeComposer() {
         guard isComposing else { return }
         isInputFocused = false
-        replyTarget = nil
+        if draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            replyTarget = nil
+            draftOwnerID = Self.postDraftOwner
+        }
         isComposing = false
     }
 
@@ -447,6 +496,23 @@ struct CommunityPostDetailView: View {
             closeComposer()
         }
     }
+
+    #if DEBUG
+    /// `-debugComposer expanded|reply` (see MockServer.swift) — opens the
+    /// input as if tapped, for screenshots without a tap.
+    private func applyDebugComposerState() {
+        switch MockServer.composerState {
+        case "expanded":
+            startComposing(replyingTo: nil)
+        case "reply":
+            guard let comment = viewModel.commentThreads.first?.comment else { return }
+            startComposing(replyingTo: comment)
+            draft = "저도 궁금해요!"
+        default:
+            break
+        }
+    }
+    #endif
 
     private func handle(_ comment: Comment, _ action: CommentAction) {
         isInputFocused = false

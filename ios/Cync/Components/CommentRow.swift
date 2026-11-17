@@ -74,7 +74,7 @@ struct CommentRow: View {
     /// in the ⋮ column instead of ⋮ → menu. Moderators (edit + delete)
     /// still get ⋮. Set to `false` to go back to ⋮ on every comment — the
     /// previous behavior; the menu path below is untouched.
-    static let showsSingleActionAsIcon = true
+    static let showsSingleActionAsIcon = false
 
     /// Heart / bubble / delete / report glyphs are drawn into the same
     /// square so they look the same size (SF Symbols at one font size
@@ -128,7 +128,7 @@ struct CommentRow: View {
         VStack(alignment: .leading, spacing: Spacing.xxs) {
             if comment.deleted {
                 Text(.commentDeleted)
-                    .font(.communityPostBody).tracking(Tracking.communityPostBody)
+                    .font(.commentRowBody).tracking(Tracking.commentRowBody)
                     .foregroundStyle(Color.textSecondary)
             } else {
                 ViewThatFits(in: .horizontal) {
@@ -147,7 +147,7 @@ struct CommentRow: View {
                 }
 
                 Text(comment.content)
-                    .font(.communityPostBody).tracking(Tracking.communityPostBody)
+                    .font(.commentRowBody).tracking(Tracking.commentRowBody)
                     .foregroundStyle(Color.textPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -158,7 +158,8 @@ struct CommentRow: View {
         AuthorLine(
             authorName: authorLabel == .postAuthor ? postAuthorName : authorLabel.text,
             createdAt: comment.createdAt,
-            badgeKey: authorLabel == .postAuthor ? .commentPostAuthor : nil
+            badgeKey: authorLabel == .postAuthor ? .commentPostAuthor : nil,
+            style: .comment
         )
     }
 
@@ -183,7 +184,7 @@ struct CommentRow: View {
                     Text(comment.likeCount, format: .number)
                 }
             }
-            .font(.communityReactionCount).tracking(Tracking.communityReactionCount)
+            .font(.commentRowReactionCount).tracking(Tracking.commentRowReactionCount)
             .foregroundStyle(comment.isLikedByMe ? Color.eventAccent : Color.textSecondary)
             .touchArea(iconSize: iconSize)
         }

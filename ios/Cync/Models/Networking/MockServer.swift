@@ -13,6 +13,12 @@
 //  - `-mockPopupNoticesEdited` (with the above): the long notice comes back
 //    with a newer `updatedAt`, as if an admin had edited it — to check that
 //    a notice dismissed with "다시 보지 않기" pops up again after an edit.
+//  - `-debugTab community`: starts on that main tab (notices / calendar /
+//    lockers / community / settings) instead of 공지사항.
+//  - `-debugOpenFirstPost` (with `-debugTab community`): opens the
+//    most-commented post's detail screen once the list loads.
+//  - `-debugComposer expanded|reply` (with the above): the comment input
+//    starts expanded, or replying to the first comment with a sample draft.
 //  - `-mockPopupOpenDetail`: opens the first card's 자세히 보기 detail screen
 //    right after loading — to check that screen without tapping.
 //
@@ -26,6 +32,16 @@ enum MockServer {
     private static var arguments: [String] { ProcessInfo.processInfo.arguments }
 
     static var opensPopupDetail: Bool { arguments.contains("-mockPopupOpenDetail") }
+
+    /// Value after `name` in the launch arguments ("-debugTab community").
+    private static func value(after name: String) -> String? {
+        guard let index = arguments.firstIndex(of: name), index + 1 < arguments.count else { return nil }
+        return arguments[index + 1]
+    }
+
+    static var initialTab: String? { value(after: "-debugTab") }
+    static var opensFirstPost: Bool { arguments.contains("-debugOpenFirstPost") }
+    static var composerState: String? { value(after: "-debugComposer") }
 
     /// `nil` unless launched with `-mockPopupNotices`.
     static var popupNotices: [AppNotice]? {

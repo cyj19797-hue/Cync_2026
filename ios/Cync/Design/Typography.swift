@@ -258,8 +258,21 @@ extension Font {
     /// "익명" author name (post header + every comment) — Pretendard SemiBold 16.
     static var commentAuthor: Font { .appDefault(.semibold, size: 16, relativeTo: .body) }
 
+    // MARK: - "5-1 게시글" comment rows — every comment-area size is 2pt
+    // under the post's own (author 16→14, meta 12→10, body 16→14,
+    // reaction count 16→14), so the comments read as secondary to the post.
+
+    /// Comment author name.
+    static var commentRowAuthor: Font { .appDefault(.semibold, size: 14, relativeTo: .subheadline) }
+    /// "· 9/4" and the "글쓴이" tag after a comment's author.
+    static var commentRowMeta: Font { .appDefault(.regular, size: 10, relativeTo: .caption2) }
+    /// Comment text, "삭제된 댓글입니다", and the no-comments message.
+    static var commentRowBody: Font { .appDefault(.medium, size: 14, relativeTo: .subheadline) }
+    /// Comment heart count.
+    static var commentRowReactionCount: Font { .appDefault(.semibold, size: 14, relativeTo: .subheadline) }
+
     /// "댓글" section title — Pretendard SemiBold 18.
-    static var commentsSectionTitle: Font { .appDefault(.semibold, size: 17, relativeTo: .title3) }
+    static var commentsSectionTitle: Font { .appDefault(.semibold, size: 15, relativeTo: .title3) }
 
     /// "답글 달기" reply button — Pretendard Medium 14.
     ///
