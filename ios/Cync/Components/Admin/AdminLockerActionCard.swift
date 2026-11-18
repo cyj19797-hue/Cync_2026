@@ -16,9 +16,9 @@
 //  사용중, a small gray pill for 빈 칸 / 고장) + X, room underneath.
 //  The password is shown as-is — the admin opened this cell on purpose.
 //
-//  Deviation from Figma (same as the list rows): the main action uses
-//  `accentStrong` so its white label clears 4.5:1, and both buttons share
-//  the 10pt corner.
+//  The main action is `buttonAccent`, like the app's other filled buttons.
+//  Deviation from Figma (same as the list rows): both buttons share the
+//  10pt corner.
 //
 
 import SwiftUI
@@ -227,7 +227,7 @@ struct AdminLockerActionCard: View {
                 .frame(maxWidth: .infinity, minHeight: Self.buttonHeight)
                 .background {
                     RoundedRectangle(cornerRadius: Radius.chipSelected)
-                        .fill(isPrimary ? Color.accentStrong : Color.surface)
+                        .fill(isPrimary ? Color.buttonAccent : Color.surface)
                 }
                 .contentShape(Rectangle())
         }

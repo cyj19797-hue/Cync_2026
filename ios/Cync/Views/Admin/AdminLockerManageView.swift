@@ -470,8 +470,7 @@ struct AdminLockerManageView: View {
     private var selectionBar: some View {
         PrimaryActionButton(
             titleKey: .adminLockerApproveSelected(viewModel.selectedIDs.count),
-            isEnabled: !viewModel.selectedIDs.isEmpty && !viewModel.isApprovingSelection,
-            tint: .accentStrong
+            isEnabled: !viewModel.selectedIDs.isEmpty && !viewModel.isApprovingSelection
         ) {
             Task { await viewModel.approveSelected() }
         }

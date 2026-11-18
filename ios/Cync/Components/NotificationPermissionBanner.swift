@@ -7,7 +7,7 @@
 //  주세요." + "알림 켜기" (shows the iOS prompt). Turned down: "알림이 꺼져
 //  있어요. 설정에서 알림을 켜 주세요." + "설정 열기" (the app's page in iOS
 //  설정). `surface` card; the button is the same 32pt filled button as
-//  글쓰기's "등록" (white on `accentStrong`, ~4.5:1; 44pt to tap).
+//  글쓰기's "등록" (white on `buttonAccent`; 44pt to tap).
 //
 
 import SwiftUI
@@ -42,7 +42,7 @@ struct NotificationPermissionBanner: View {
                         .frame(minWidth: 44, minHeight: Self.buttonHeight)
                         .background {
                             RoundedRectangle(cornerRadius: Radius.chipSelected)
-                                .fill(Color.accentStrong)
+                                .fill(Color.buttonAccent)
                         }
                         .padding(.vertical, Self.touchExtension)
                         .contentShape(Rectangle())

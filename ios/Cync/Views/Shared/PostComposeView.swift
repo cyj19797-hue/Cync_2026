@@ -19,7 +19,8 @@
 //
 //  Beyond Figma:
 //  - The submit button is gray on `surface` until both title and content
-//    are filled, then white on `accentStrong` (~4.5:1). It stays tappable
+//    are filled, then white on `buttonAccent`, like the app's other filled
+//    buttons. It stays tappable
 //    while gray: a tap then says what's missing in a toast and moves the
 //    cursor to the empty field.
 //  - Leaving (back button or edge swipe) with anything changed asks
@@ -355,9 +356,9 @@ struct PostComposeView: View {
                 .padding(.horizontal, Spacing.md)
                 .frame(minWidth: 44, minHeight: Self.submitButtonHeight)
                 .background {
-                    // Active: `accentStrong`, so the white label is ~4.5:1.
+                    // Active: `buttonAccent`, the app's filled-button blue.
                     RoundedRectangle(cornerRadius: Radius.chipSelected)
-                        .fill(viewModel.canSubmit ? Color.accentStrong : Color.surface)
+                        .fill(viewModel.canSubmit ? Color.buttonAccent : Color.surface)
                 }
                 .padding(.vertical, Self.submitTouchExtension)
                 .contentShape(Rectangle())
