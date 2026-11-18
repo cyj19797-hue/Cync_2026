@@ -37,6 +37,14 @@
 //    (`ComposeImageAttachmentRow`, one photo, shrunk to ≤1MB before upload).
 //    The submit button waits while a photo is being prepared and shows a
 //    spinner while uploading.
+//  - 학생회 공지 modes also get the 행사 날짜 section between the divider
+//    and 사진 첨부 (`ComposeEventDateSection`, from
+//    `PostComposeConfiguration.eventDate`). Its fold-out calendar can be
+//    taller than a small screen leaves, so in that mode everything above
+//    the editor sits in a scroll view capped to leave the editor
+//    `minEditorHeight`. Focusing the title or content folds the calendar;
+//    opening a calendar drops the keyboard. Other modes keep the plain
+//    stack — nothing changes for them.
 //  - Vertical rhythm (kept tight): header → title 12 (as on every screen),
 //    title → divider 12, divider → 익명 row 0 (the 44pt row has its own
 //    air), 익명 row → content text 8. Without the 익명 row: divider →
@@ -63,7 +71,7 @@ struct PostComposeView: View {
     /// extra switch).
     private var hasOptionRow: Bool {
         configuration.showsAnonymousToggle || configuration.showsImageAttachment
-            || configuration.extraToggle != nil
+            || configuration.extraToggle != nil || configuration.eventDate != nil
     }
 
     private enum Field {
@@ -74,6 +82,14 @@ struct PostComposeView: View {
     @FocusState private var focusedField: Field?
     @State private var isDiscardConfirmPresented = false
     @State private var toastMessage: String?
+    /// 행사 날짜 mode: height of everything above the editor, and of the
+    /// area shared by it and the editor.
+    @State private var topContentHeight: CGFloat = 0
+    @State private var bodyAreaHeight: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// What the editor keeps when a fold-out calendar fills the top.
+    private static let minEditorHeight: CGFloat = 120
 
     var body: some View {
         VStack(spacing: 0) {
@@ -81,48 +97,16 @@ struct PostComposeView: View {
                 submitButton
             }
 
-            titleRow
-
-            Divider()
-                .overlay(Color.borderLight)
-
-            if configuration.showsAnonymousToggle {
-                anonymousRow
+            if configuration.eventDate != nil {
+                VStack(spacing: 0) {
+                    scrollingTopContent
+                    editor
+                }
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { bodyAreaHeight = $0 }
+            } else {
+                topContent
+                editor
             }
-
-            if let extraToggle = configuration.extraToggle {
-                extraToggleRow(extraToggle)
-            }
-
-            if configuration.showsImageAttachment {
-                ComposeImageAttachmentRow(
-                    pickerItem: $viewModel.pickerItem,
-                    attachedImage: viewModel.attachedImage,
-                    existingImageURL: configuration.initialImageURL,
-                    isPreparing: viewModel.isPreparingImage,
-                    onRemove: viewModel.removeAttachedImage
-                )
-            }
-
-            // The editor fills the rest of the screen, so a tap anywhere
-            // below the text starts typing too.
-            PlaceholderTextEditor(
-                text: $viewModel.content,
-                placeholder: configuration.contentPlaceholderKey,
-                font: .communityPostBody,
-                placeholderColor: .textSecondary,
-                textColor: .textPrimary
-            )
-            .focused($focusedField, equals: .content)
-            .padding(.horizontal, Spacing.screenHorizontal)
-            // 8pt from the 익명 / 사진 첨부 row (its 44pt row has its own
-            // air), or 12pt from the divider without one, to the first line
-            // of text — minus the editor's own top inset.
-            .padding(
-                .top,
-                (hasOptionRow ? Spacing.xs : Spacing.cardInset)
-                    - PlaceholderTextEditor.textTopInset
-            )
         }
         .background(Color.appBackground)
         .toolbar(.hidden, for: .navigationBar)
@@ -152,11 +136,138 @@ struct PostComposeView: View {
         }
         .animation(.easeOut(duration: 0.2), value: isDiscardConfirmPresented)
         .animation(.easeOut(duration: 0.2), value: viewModel.errorMessage)
+        .onChange(of: focusedField) { _, field in
+            // Typing in the title or content folds an open calendar.
+            if field != nil, viewModel.expandedEventDateField != nil {
+                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
+                    viewModel.collapseEventCalendar()
+                }
+            }
+        }
         .task {
+            #if DEBUG
+            viewModel.applyDebugLaunchState()
+            if MockServer.autoSubmitsCompose {
+                try? await Task.sleep(for: .seconds(1))
+                submit()
+                return
+            }
+            // Focusing the title would fold the calendar it just opened.
+            if MockServer.eventDateState != nil { return }
+            #endif
             // Wait out the push transition, or the focus doesn't take.
             try? await Task.sleep(for: .milliseconds(150))
             focusedField = .title
         }
+    }
+
+    /// Title, divider and the option rows above the editor.
+    @ViewBuilder
+    private var topContent: some View {
+        titleRow
+
+        Divider()
+            .overlay(Color.borderLight)
+
+        if configuration.showsAnonymousToggle {
+            anonymousRow
+        }
+
+        if let extraToggle = configuration.extraToggle {
+            extraToggleRow(extraToggle)
+        }
+
+        if configuration.eventDate != nil {
+            eventDateSection
+        }
+
+        if configuration.showsImageAttachment {
+            ComposeImageAttachmentRow(
+                pickerItem: $viewModel.pickerItem,
+                attachedImage: viewModel.attachedImage,
+                existingImageURL: configuration.initialImageURL,
+                isPreparing: viewModel.isPreparingImage,
+                onRemove: viewModel.removeAttachedImage
+            )
+        }
+    }
+
+    /// `topContent` in a scroll view only as tall as its content, capped so
+    /// the editor keeps `minEditorHeight` — with a calendar open on a small
+    /// screen, the top scrolls instead of the calendar being cut off.
+    private var scrollingTopContent: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 0) {
+                    topContent
+                }
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                    if topContentHeight == 0 || reduceMotion {
+                        topContentHeight = height
+                    } else {
+                        withAnimation(.easeInOut(duration: 0.2)) { topContentHeight = height }
+                    }
+                }
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            .scrollDismissesKeyboard(.immediately)
+            .frame(height: topContentHeight > 0 ? min(topContentHeight, maxTopHeight) : nil)
+            .onChange(of: viewModel.expandedEventDateField) { _, field in
+                guard field != nil else { return }
+                // Bring the whole calendar into view once it's laid out.
+                Task {
+                    try? await Task.sleep(for: .milliseconds(250))
+                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
+                        proxy.scrollTo(ComposeEventDateSection.calendarScrollID, anchor: .bottom)
+                    }
+                }
+            }
+        }
+    }
+
+    private var maxTopHeight: CGFloat {
+        guard bodyAreaHeight > 0 else { return .infinity }
+        return max(bodyAreaHeight - Self.minEditorHeight, 0)
+    }
+
+    private var eventDateSection: some View {
+        ComposeEventDateSection(
+            selection: viewModel.eventDate,
+            expandedField: viewModel.expandedEventDateField,
+            onAdd: {
+                focusedField = nil
+                viewModel.addEventDate()
+            },
+            onClear: viewModel.clearEventDate,
+            onToggleCalendar: { field in
+                focusedField = nil
+                viewModel.toggleEventCalendar(field)
+            },
+            onSetRange: viewModel.setEventDateRange,
+            onSelect: { date, field in viewModel.selectEventDay(date, for: field) }
+        )
+    }
+
+    private var editor: some View {
+        // The editor fills the rest of the screen, so a tap anywhere
+        // below the text starts typing too.
+        PlaceholderTextEditor(
+            text: $viewModel.content,
+            placeholder: configuration.contentPlaceholderKey,
+            font: .communityPostBody,
+            placeholderColor: .textSecondary,
+            textColor: .textPrimary
+        )
+        .focused($focusedField, equals: .content)
+        .padding(.horizontal, Spacing.screenHorizontal)
+        // 8pt from the 익명 / 사진 첨부 row (its 44pt row has its own
+        // air), or 12pt from the divider without one, to the first line
+        // of text — minus the editor's own top inset.
+        .padding(
+            .top,
+            (hasOptionRow ? Spacing.xs : Spacing.cardInset)
+                - PlaceholderTextEditor.textTopInset
+        )
     }
 
     private var titleRow: some View {
@@ -349,8 +460,54 @@ struct PostComposeView: View {
     }
 }
 
-#Preview("공지 작성") {
+#Preview("공지 작성 — 날짜 없음") {
     NavigationStack {
         PostComposeView(configuration: .councilNoticeCreate(onCreated: { _ in }))
     }
+}
+
+/// 학생회 공지 작성 with a preset 행사 날짜 (preview only).
+private func councilComposePreview(
+    start: Date?,
+    end: Date? = nil,
+    expanded: EventDateField? = nil,
+    title: String = "",
+    content: String = ""
+) -> some View {
+    var configuration = PostComposeConfiguration.councilNoticeCreate(onCreated: { _ in })
+    configuration.initialTitle = title
+    configuration.initialContent = content
+    configuration.eventDate = PostComposeEventDateOption(initialStart: start, initialEnd: end, initialExpandedField: expanded)
+    return NavigationStack { PostComposeView(configuration: configuration) }
+}
+
+private var previewToday: Date { Calendar.current.startOfDay(for: Date()) }
+private func previewDay(_ offset: Int) -> Date {
+    Calendar.current.date(byAdding: .day, value: offset, to: previewToday)!
+}
+
+#Preview("공지 작성 — 하루, 달력 펼침") {
+    councilComposePreview(start: previewToday, expanded: .start)
+}
+
+#Preview("공지 작성 — 기간, 마감일 달력") {
+    councilComposePreview(start: previewToday, end: previewDay(4), expanded: .end)
+}
+
+#Preview("공지 수정 — 기존 기간") {
+    NavigationStack {
+        PostComposeView(configuration: .councilNoticeEdit(
+            councilId: 1,
+            title: "학생회 체육대회 참가 신청 안내",
+            content: "학과 체육대회 참가 신청을 받습니다.",
+            imageURL: nil,
+            eventStart: previewDay(2),
+            eventEnd: previewDay(4),
+            onUpdated: { _ in }
+        ))
+    }
+}
+
+#Preview("작은 화면 — 기간, 마감일 달력", traits: .fixedLayout(width: 375, height: 667)) {
+    councilComposePreview(start: previewToday, end: previewDay(4), expanded: .end, title: "체육대회 안내")
 }

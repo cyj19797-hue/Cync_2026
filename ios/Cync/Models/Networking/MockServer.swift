@@ -26,6 +26,21 @@
 //    month in the detail card.
 //  - `-debugOpenNotice`: opens the first notice (under `-debugCategory`, if
 //    given) in the 공지사항 detail card.
+//  - `-debugCompose councilCreate|councilEdit`: pushes the 학생회 공지
+//    작성 screen, or 수정 pre-filled with a sample period notice, once
+//    공지사항 loads (no admin login needed to look at it).
+//  - `-debugEventDate start|end|clear` (with `-debugCompose`): the 행사 날짜
+//    section starts with today's 시작일 calendar open (start), a 4-day
+//    period with the 마감일 calendar open (end), or the existing date
+//    removed (clear, edit only).
+//  - `-debugComposeAutoSubmit` (with `-debugCompose`): fills any empty
+//    title/content with a sample and presses 등록/저장 after a second — with
+//    `-mockCouncilCompose`, to read the sent fields without tapping.
+//  - `-mockCouncilCompose`: 학생회 공지 작성/수정 don't call the server —
+//    the multipart fields that would be sent are printed to the console
+//    (`[MockServer] POST /api/notices/council …`) and a fake notice comes
+//    back. Applies the server's date rules (end without start, or end
+//    before start → 400) so the "날짜를 다시 확인해 주세요" popup can be checked.
 //  - `-mockPopupOpenDetail`: opens the first card's 자세히 보기 detail screen
 //    right after loading — to check that screen without tapping.
 //
@@ -57,6 +72,70 @@ enum MockServer {
         case "studentCouncil": return .studentCouncil
         default: return nil
         }
+    }
+
+    /// `-debugCompose` — handed out once, so coming back to 공지사항 after
+    /// the screen closes doesn't push it again.
+    @MainActor private static var didOpenComposeScreen = false
+    @MainActor static func takeComposeScreen() -> String? {
+        guard !didOpenComposeScreen else { return nil }
+        didOpenComposeScreen = true
+        return value(after: "-debugCompose")
+    }
+    static var mocksCouncilCompose: Bool { arguments.contains("-mockCouncilCompose") }
+    static var eventDateState: String? { value(after: "-debugEventDate") }
+    static var autoSubmitsCompose: Bool { arguments.contains("-debugComposeAutoSubmit") }
+
+    /// Sample for `-debugCompose councilEdit`: a 3-day event starting the
+    /// day after tomorrow.
+    static var councilEditSample: NoticeComposeTarget {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        return .edit(
+            noticeId: 0,
+            councilId: 1,
+            title: "학생회 체육대회 참가 신청 안내",
+            content: "학과 체육대회 참가 신청을 받습니다.",
+            imageURL: nil,
+            eventStart: calendar.date(byAdding: .day, value: 2, to: today),
+            eventEnd: calendar.date(byAdding: .day, value: 4, to: today)
+        )
+    }
+
+    /// `-mockCouncilCompose`: logs what would be sent and answers like the
+    /// server would.
+    static func councilNoticeResponse(
+        method: String,
+        path: String,
+        fields: [String: String],
+        hasImage: Bool
+    ) throws -> CouncilNotice {
+        let logged = fields
+            .filter { $0.key != "content" }
+            .sorted { $0.key < $1.key }
+            .map { "\($0.key)=\($0.value)" }
+            .joined(separator: " ")
+        print("[MockServer] \(method) \(path) \(logged) image=\(hasImage)")
+
+        let start = fields["eventStartDate"]
+        let end = fields["eventEndDate"]
+        if end != nil && (start == nil || end! < start!) {
+            print("[MockServer] → 400")
+            throw CyncAPIError.badStatus(400)
+        }
+        let now = "2026-11-18T12:00:00"
+        return CouncilNotice(
+            id: 1,
+            title: fields["title"] ?? "",
+            content: fields["content"] ?? "",
+            imageUrl: nil,
+            authorId: "mock",
+            authorName: "mock",
+            createdAt: now,
+            updatedAt: now,
+            eventStartDate: start,
+            eventEndDate: start == nil ? nil : (end ?? start)
+        )
     }
 
     /// `nil` unless launched with `-mockPopupNotices`.

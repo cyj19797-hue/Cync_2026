@@ -123,6 +123,13 @@ struct NoticeListView: View {
                 if MockServer.opensFirstNotice, selectedNotice == nil {
                     selectedNotice = viewModel.filteredNotices.first
                 }
+                // `-debugCompose councilCreate|councilEdit`: the 학생회 공지
+                // compose screen, to check the 행사 날짜 section.
+                switch MockServer.takeComposeScreen() {
+                case "councilCreate": composeTarget = .create
+                case "councilEdit": composeTarget = MockServer.councilEditSample
+                default: break
+                }
                 #endif
             }
             .alert(
@@ -148,12 +155,14 @@ extension NoticeListView {
             PostComposeView(configuration: .councilNoticeCreate { councilNotice in
                 _ = viewModel.insertCouncilNotice(councilNotice)
             })
-        case let .edit(_, councilId, title, content, imageURL):
+        case let .edit(_, councilId, title, content, imageURL, eventStart, eventEnd):
             PostComposeView(configuration: .councilNoticeEdit(
                 councilId: councilId,
                 title: title,
                 content: content,
-                imageURL: imageURL
+                imageURL: imageURL,
+                eventStart: eventStart,
+                eventEnd: eventEnd
             ) { councilNotice in
                 // Back on the edited notice's card once the screen closes.
                 selectedNotice = viewModel.replaceCouncilNotice(councilNotice)

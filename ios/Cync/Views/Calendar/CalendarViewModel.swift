@@ -109,31 +109,9 @@ final class CalendarViewModel: ObservableObject {
         events = (isAdmin ? scheduleEvents : []) + bookmarkEvents
     }
 
-    /// Full weeks (7-day rows) covering `displayedMonth`, trimmed so a
-    /// trailing week made up entirely of next-month days is dropped —
-    /// matches how Apple's own Calendar app sizes the grid (5 or 6 rows
-    /// depending on the month), rather than always rendering 6.
+    /// Full weeks covering `displayedMonth` (see `CalendarMonthGrid`).
     var visibleDays: [CalendarDay] {
-        guard
-            let monthInterval = calendar.dateInterval(of: .month, for: displayedMonth),
-            let firstWeek = calendar.dateInterval(of: .weekOfMonth, for: monthInterval.start)
-        else {
-            return []
-        }
-
-        var days: [CalendarDay] = []
-        var cursor = firstWeek.start
-        for _ in 0..<42 {
-            let isCurrentMonth = calendar.isDate(cursor, equalTo: displayedMonth, toGranularity: .month)
-            days.append(CalendarDay(date: cursor, isWithinDisplayedMonth: isCurrentMonth))
-            cursor = calendar.date(byAdding: .day, value: 1, to: cursor) ?? cursor
-        }
-
-        var weeks = stride(from: 0, to: days.count, by: 7).map { Array(days[$0..<$0 + 7]) }
-        while let lastWeek = weeks.last, lastWeek.allSatisfy({ !$0.isWithinDisplayedMonth }) {
-            weeks.removeLast()
-        }
-        return weeks.flatMap { $0 }
+        CalendarMonthGrid.days(for: displayedMonth, calendar: calendar)
     }
 
     /// Events passing the category chip + search text filters.

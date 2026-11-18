@@ -93,6 +93,11 @@ struct Notice: Identifiable, Codable {
     /// Photo attached to a 학생회 notice (`CouncilNotice.imageUrl`) — a
     /// public URL, no auth needed. `nil` for everything else.
     var imageURL: URL? = nil
+    /// 행사 날짜 (local midnight days). `eventEndDate` is nil or equal to
+    /// the start for a one-day event. Pre-fills the 학생회 공지 수정 screen;
+    /// not shown on the 캘린더 tab yet.
+    var eventStartDate: Date? = nil
+    var eventEndDate: Date? = nil
 
     /// Written in-app on the 학생회 board (so admins can edit/delete it).
     var isCouncilNotice: Bool { councilId != nil }
@@ -136,6 +141,9 @@ struct CouncilNotice: Decodable {
     let authorName: String
     let createdAt: String
     let updatedAt: String
+    /// `yyyy-MM-dd`; absent/null when the notice has no event date.
+    var eventStartDate: String? = nil
+    var eventEndDate: String? = nil
 }
 
 extension Notice {
@@ -155,7 +163,9 @@ extension Notice {
             originalText: councilNotice.content,
             translatedText: nil,
             councilId: councilNotice.id,
-            imageURL: councilNotice.imageUrl.flatMap(URL.init(string:))
+            imageURL: councilNotice.imageUrl.flatMap(URL.init(string:)),
+            eventStartDate: EventDateFormat.date(fromServer: councilNotice.eventStartDate),
+            eventEndDate: EventDateFormat.date(fromServer: councilNotice.eventEndDate)
         )
     }
 }
@@ -179,9 +189,13 @@ struct SchoolNotice: Decodable {
     let viewCount: Int
     let sourceUrl: String
     let crawledAt: String
+    /// `yyyy-MM-dd`; absent/null when the notice has no event date.
+    let eventStartDate: String?
+    let eventEndDate: String?
 
     enum CodingKeys: String, CodingKey {
         case id, articleNo, title, content, category, postedDate, viewCount, sourceUrl, crawledAt
+        case eventStartDate, eventEndDate
         case isNotice = "notice"
     }
 }
@@ -210,7 +224,9 @@ extension Notice {
             isBookmarked: false,
             originalText: schoolNotice.content ?? "",
             translatedText: nil,
-            sourceURL: URL(string: schoolNotice.sourceUrl)
+            sourceURL: URL(string: schoolNotice.sourceUrl),
+            eventStartDate: EventDateFormat.date(fromServer: schoolNotice.eventStartDate),
+            eventEndDate: EventDateFormat.date(fromServer: schoolNotice.eventEndDate)
         )
     }
 }
