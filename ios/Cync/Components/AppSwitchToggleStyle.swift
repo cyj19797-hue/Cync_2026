@@ -3,9 +3,11 @@
 //  Cync
 //
 //  A drawn on/off switch in place of iOS's, whose "off" track can't be
-//  recolored and is nearly invisible on white (~1.2:1). Same 51×31 shape
-//  as the iOS switch. Both tracks come from color tokens and reach 3:1
-//  against white: `switchOnTrack` (#0099FE) and `switchOffTrack` (#8A95A9).
+//  recolored and is nearly invisible on white (~1.2:1). 44×26 — smaller
+//  than iOS's 51×31, which looked heavy beside the app's 14–16pt labels;
+//  the whole row stays the (44pt) tap target. Tracks come from color
+//  tokens: `switchOnTrack` (the app accent, #36AFFF) and `switchOffTrack`
+//  (#8A95A9, 3:1 against white).
 //
 //  The whole row is the tap target — label included — and toggling gives
 //  a light haptic. VoiceOver still treats it as a native switch ("마감 임박
@@ -49,7 +51,7 @@ private struct AppSwitchRow: View {
 private struct AppSwitchTrack: View {
     let isOn: Bool
 
-    private static let size = CGSize(width: 51, height: 31)
+    private static let size = CGSize(width: 44, height: 26)
     private static let knobInset: CGFloat = 2
 
     var body: some View {

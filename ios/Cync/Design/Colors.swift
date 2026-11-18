@@ -112,9 +112,10 @@ extension Color {
     /// minimum; chosen by the team for the brand look.
     static let buttonAccent = eventAccent
 
-    /// Not in Figma — "on" track of `AppSwitchToggleStyle`. The lightest
-    /// blue of `eventAccent`'s hue that's 3:1 against white (~3.01:1).
-    static let switchOnTrack = Color(hex: 0x0099FE)
+    /// "On" track of `AppSwitchToggleStyle` — the app accent, matching the
+    /// filled buttons and chips. ~2.4:1 against white (below the 3:1 UI
+    /// minimum), like `buttonAccent`; the knob's side still shows the state.
+    static let switchOnTrack = eventAccent
 
     /// Not in Figma — "off" track of `AppSwitchToggleStyle`. `gray400`'s
     /// hue darkened to 3:1 against white (~3.02:1); iOS's own off track
