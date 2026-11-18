@@ -23,6 +23,24 @@ final class NoticeListViewModel: ObservableObject {
     /// Shows the 공지 작성 button and the detail's 수정/삭제 menu. Only the
     /// server enforces it — these are just hidden for everyone else.
     @Published private(set) var isAdmin = CurrentUserSession.shared.profile?.isAdmin ?? false
+    private var bookmarkSubscription: AnyCancellable?
+
+    init() {
+        // Bookmarks also change outside this tab (removed from a 캘린더
+        // event's detail card). Without following them, the row kept its
+        // filled bookmark — and tapping it then *added* the bookmark back,
+        // since `BookmarkStore.toggle` saw it as not saved.
+        bookmarkSubscription = BookmarkStore.shared.$bookmarkedNotices
+            .sink { [weak self] saved in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    let ids = Set(saved.map(\.id))
+                    for index in self.notices.indices where self.notices[index].isBookmarked != ids.contains(self.notices[index].id) {
+                        self.notices[index].isBookmarked.toggle()
+                    }
+                }
+            }
+    }
 
     func load() async {
         // Who's signed in decides the admin controls; a failure here just
@@ -91,9 +109,6 @@ final class NoticeListViewModel: ObservableObject {
         BookmarkStore.shared.remove(noticeId: notice.id)
     }
 
-    /// The notice shown before/after `notice` in the currently filtered,
-    /// on-screen order — backs the "이전 글"/"다음 글" controls on
-    /// NoticeDetailView. `nil` at either end disables that control.
     func notice(before notice: Notice) -> Notice? {
         guard let index = filteredNotices.firstIndex(where: { $0.id == notice.id }), index > 0 else { return nil }
         return filteredNotices[index - 1]

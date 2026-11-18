@@ -47,11 +47,10 @@ struct NoticeListView: View {
                     onEdit: adminEditAction(for: notice),
                     onDelete: adminDeleteAction(for: notice)
                 )
-                .transition(.opacity)
-                .zIndex(1)
+                .noticeDetailTransition()
             }
         }
-        .animation(.default, value: selectedNotice?.id)
+        .animation(.noticeDetail, value: selectedNotice?.id)
     }
 
     private var content: some View {
@@ -114,7 +113,17 @@ struct NoticeListView: View {
             // TabBarVisibility.swift).
             .showsTabBar(selectedNotice == nil)
             .task {
+                #if DEBUG
+                if let category = MockServer.initialCategory { viewModel.selectedCategory = category }
+                #endif
                 await viewModel.load()
+                #if DEBUG
+                // `-debugOpenNotice` (MockServer.swift): the first notice
+                // under the selected category, to check the detail card.
+                if MockServer.opensFirstNotice, selectedNotice == nil {
+                    selectedNotice = viewModel.filteredNotices.first
+                }
+                #endif
             }
             .alert(
                 Text(.commonError),

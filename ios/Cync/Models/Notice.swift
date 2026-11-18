@@ -46,6 +46,23 @@ enum NoticeCategory: String, CaseIterable, Identifiable, Codable {
         case .studentCouncil: return .categoryStudentCouncil
         }
     }
+
+    /// Fill of this category's selected filter chip (`FilterChip`).
+    var chipSelectedColor: Color {
+        switch self {
+        case .all, .academic: return .categoryAcademic
+        case .studentCouncil: return .categoryStudentCouncilChip
+        }
+    }
+
+    /// Label on that fill — white on blue, dark on the light pink
+    /// (white on #FFBCD9 is only ~1.6:1).
+    var chipSelectedLabelColor: Color {
+        switch self {
+        case .all, .academic: return .white
+        case .studentCouncil: return .textPrimary
+        }
+    }
 }
 
 /// A single 공지사항 (notice/announcement) list entry.

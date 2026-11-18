@@ -19,6 +19,13 @@
 //    most-commented post's detail screen once the list loads.
 //  - `-debugComposer expanded|reply` (with the above): the comment input
 //    starts expanded, or replying to the first comment with a sample draft.
+//  - `-debugCategory academic|studentCouncil`: 공지사항 and 캘린더 start
+//    with that category chip selected.
+//  - `-debugCalendarEvent notice|schedule` (with `-debugTab calendar`):
+//    opens the first bookmarked-notice event, or server schedule, of the
+//    month in the detail card.
+//  - `-debugOpenNotice`: opens the first notice (under `-debugCategory`, if
+//    given) in the 공지사항 detail card.
 //  - `-mockPopupOpenDetail`: opens the first card's 자세히 보기 detail screen
 //    right after loading — to check that screen without tapping.
 //
@@ -42,6 +49,15 @@ enum MockServer {
     static var initialTab: String? { value(after: "-debugTab") }
     static var opensFirstPost: Bool { arguments.contains("-debugOpenFirstPost") }
     static var composerState: String? { value(after: "-debugComposer") }
+    static var calendarEvent: String? { value(after: "-debugCalendarEvent") }
+    static var opensFirstNotice: Bool { arguments.contains("-debugOpenNotice") }
+    static var initialCategory: NoticeCategory? {
+        switch value(after: "-debugCategory") {
+        case "academic": return .academic
+        case "studentCouncil": return .studentCouncil
+        default: return nil
+        }
+    }
 
     /// `nil` unless launched with `-mockPopupNotices`.
     static var popupNotices: [AppNotice]? {

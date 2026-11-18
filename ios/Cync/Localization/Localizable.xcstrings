@@ -1109,6 +1109,23 @@
         }
       }
     },
+    "calendar.detail.period" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ – %2$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ~ %2$@"
+          }
+        }
+      }
+    },
     "calendar.empty" : {
       "extractionState" : "manual",
       "localizations" : {

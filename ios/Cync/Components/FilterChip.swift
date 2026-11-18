@@ -8,17 +8,16 @@
 //  are individual capsule buttons rather than one segmented-control
 //  container, so a custom chip is used instead of `Picker(.segmented)`.
 //
-//  Also covers the small category tag in front of each notice title (Figma
-//  node `I44:269;184:1577`, formerly its own `NoticeCategoryBadge`
-//  component) via `Style.badge` — same capsule shape and category label as
-//  the filter chip, just a filled accent-blue background
-//  (`categoryBadgeBackground`, no border) and no tap action, so it
-//  was folded into this component instead of duplicating the capsule layout
-//  in a second file.
+//  Also covers the category tag on the notice detail card (Figma node
+//  `I44:269;184:1577`, formerly its own `NoticeCategoryBadge` component)
+//  via `Style.badge` — drawn exactly like the selected filter chip (학사
+//  blue + white, 학생회 light pink + dark text), just without a tap action.
 //
-//  `.selected` is a brand-blue (`eventAccent`) fill with a white label
-//  instead of Figma's light-gray `surface` fill — the gray was too close to
-//  the unselected chips to tell which filter is active.
+//  `.selected` is filled with the category's chip color
+//  (`chipSelectedColor`: 학사·전체 blue, 학생회 light pink) with a white
+//  label (dark on the light pink — `chipSelectedLabelColor`), instead of Figma's light-gray
+//  `surface` fill — the gray was too close to the unselected chips to tell
+//  which filter is active.
 //
 //  `Style.selected`/`.unselected` only ever switch the fill/border/corner-radius
 //  below — Figma specs the same `p-[8px]` on every chip regardless of
@@ -37,7 +36,7 @@ struct FilterChip: View {
     enum Style: Equatable {
         case selected
         case unselected
-        /// The non-interactive notice-category tag (filled accent blue).
+        /// The non-interactive notice-category tag — looks like `.selected`.
         case badge
     }
 
@@ -55,7 +54,13 @@ struct FilterChip: View {
     var body: some View {
         if style != .badge, let action {
             // The tappable filter chip is the shared `SelectableChip`.
-            SelectableChip(titleKey: category.label, isSelected: style == .selected, action: action)
+            SelectableChip(
+                titleKey: category.label,
+                isSelected: style == .selected,
+                selectedTint: category.chipSelectedColor,
+                selectedLabelColor: category.chipSelectedLabelColor,
+                action: action
+            )
         } else if let action {
             Button(action: action) { label }
                 .buttonStyle(.plain)
@@ -64,51 +69,29 @@ struct FilterChip: View {
         }
     }
 
+    /// Draws `.badge` (and a non-tappable `.selected`) exactly like the
+    /// selected filter chip — same font, padding, corners, and the
+    /// category's chip fill and label color — so the tag inside a notice
+    /// matches the chip row above the list.
     private var label: some View {
         Text(category.label)
-            .font(font).tracking(tracking)
-            .foregroundStyle(style == .selected ? Color.white : Color.textPrimary)
+            .font(.categoryFilterChipLabel).tracking(Tracking.categoryFilterChipLabel)
+            .foregroundStyle(isFilled ? category.chipSelectedLabelColor : Color.textPrimary)
             .padding(.horizontal, Self.chipHorizontalPadding)
             .padding(.vertical, Self.chipVerticalPadding)
             .background {
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(fillColor)
+                RoundedRectangle(cornerRadius: isFilled ? Radius.chipSelected : Radius.chipDefault)
+                    .fill(isFilled ? category.chipSelectedColor : Color.white)
                     .overlay {
-                        if let borderColor {
-                            RoundedRectangle(cornerRadius: cornerRadius)
-                                .strokeBorder(borderColor, lineWidth: 0.5)
+                        if !isFilled {
+                            RoundedRectangle(cornerRadius: Radius.chipDefault)
+                                .strokeBorder(Color.borderLight, lineWidth: 0.5)
                         }
                     }
             }
     }
 
-    private var font: Font {
-        style == .badge ? .categoryBadge : .categoryFilterChipLabel
-    }
-
-    private var tracking: CGFloat {
-        style == .badge ? Tracking.categoryBadge : Tracking.categoryFilterChipLabel
-    }
-
-    private var cornerRadius: CGFloat {
-        style == .selected ? Radius.chipSelected : Radius.chipDefault
-    }
-
-    private var fillColor: Color {
-        switch style {
-        case .selected: return .eventAccent
-        case .unselected: return .white
-        case .badge: return .categoryBadgeBackground
-        }
-    }
-
-    private var borderColor: Color? {
-        switch style {
-        case .selected: return nil
-        case .unselected: return .borderLight
-        case .badge: return nil
-        }
-    }
+    private var isFilled: Bool { style != .unselected }
 }
 
 #Preview {
