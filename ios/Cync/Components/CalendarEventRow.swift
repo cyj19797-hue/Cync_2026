@@ -3,12 +3,18 @@
 //  test
 //
 //  Figma node `240:1688` ("캘린더 세부 일정") — one row in the "등록된 일정"
-//  card: a category-colored accent bar, title + bookmark, then a meta line.
+//  card: a category-colored accent bar (full row height), title over a meta
+//  line, and the bookmark centered on the title's first line like
+//  `NoticeRow` (filled in the category's color when on).
 //  Title and meta follow `NoticeRow`'s rules (title up to two lines, gray
 //  "카테고리 • …" line) since these are often the same notices, but the meta
 //  line carries schedule info instead of a posting date:
 //  "학사 • 오전 10:00 • 마감 D-3" / "학사 • 9월 20일~24일" / "학사".
 //  The date itself isn't repeated — the card/section header already shows it.
+//
+//  Tapping the row (`onSelect`) opens the notice detail card. Like
+//  `NoticeRow`, the row is a `Button` with `BookmarkButton` nested inside
+//  its label, so the two taps never overlap.
 //
 
 import SwiftUI
@@ -22,34 +28,50 @@ struct CalendarEventRow: View {
     /// tappable so it never looks disabled.
     var isDimmed = false
     let onToggleBookmark: () -> Void
+    /// Opens the detail card. `nil` keeps the row static (previews).
+    var onSelect: (() -> Void)? = nil
 
     private static let dimmedOpacity = 0.45
     private var contentOpacity: Double { isDimmed ? Self.dimmedOpacity : 1 }
 
     var body: some View {
-        HStack(alignment: .top, spacing: Spacing.xs) {
-            RoundedRectangle(cornerRadius: 2)
-                .fill(event.category.accentColor)
-                .frame(width: 4)
-                .opacity(contentOpacity)
-
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                HStack(alignment: .top, spacing: Spacing.xs) {
-                    Text(event.title)
-                        .font(.noticeTitle).tracking(Tracking.noticeTitle)
-                        .foregroundStyle(Color.textPrimary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .opacity(contentOpacity)
-
-                    BookmarkButton(isBookmarked: event.isBookmarked, action: onToggleBookmark)
-                }
-
-                metaLine
+        Button {
+            onSelect?()
+        } label: {
+            HStack(spacing: Spacing.xs) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(event.category.accentColor)
+                    .frame(width: 4)
+                    .frame(maxHeight: .infinity)
                     .opacity(contentOpacity)
+
+                HStack(alignment: .firstTextBaseline, spacing: Spacing.cardInset) {
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
+                        Text(event.title)
+                            .font(.noticeTitle).tracking(Tracking.noticeTitle)
+                            .foregroundStyle(Color.textPrimary)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        metaLine
+                    }
+                    .opacity(contentOpacity)
+
+                    BookmarkButton(
+                        isBookmarked: event.isBookmarked,
+                        tint: event.category.accentColor,
+                        action: onToggleBookmark
+                    )
+                    .centeredOnFirstLine(titleSize: 16)
+                    .padding(.trailing, Spacing.xxs)
+                }
             }
+            // The bar stretches to the text's height, not beyond.
+            .fixedSize(horizontal: false, vertical: true)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
         .padding(.vertical, Spacing.xxs)
     }
 
@@ -117,6 +139,10 @@ struct CalendarEventRow: View {
         ForEach(CalendarEvent.mockList) { event in
             CalendarEventRow(event: event) {}
         }
+        // Bookmarked, two-line title — bookmark centered on the row.
+        CalendarEventRow(
+            event: CalendarEvent(id: 99, category: .studentCouncil, title: "[학생회] 기말고사 응원 간식 행사 안내 — 장소와 시간이 변경되었습니다", startDate: CalendarEvent.mockReferenceDate, endDate: CalendarEvent.mockReferenceDate, kind: .event, isBookmarked: true, sourceNoticeId: 1)
+        ) {}
     }
     .padding()
 }

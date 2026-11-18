@@ -36,12 +36,45 @@ struct CalendarView: View {
     @StateObject private var viewModel = CalendarViewModel()
     @State private var slideDirection: MonthSlideDirection = .forward
     @GestureState private var dragTranslation: CGFloat = 0
+    /// Event whose detail card is open (see CalendarEventDetailOverlay).
+    @State private var selectedEvent: CalendarEvent?
 
     /// Minimum horizontal drag distance before a swipe commits to changing
     /// the month, mirroring the iOS Calendar app's forgiving swipe zone.
     private let swipeCommitThreshold: CGFloat = 60
 
     var body: some View {
+        ZStack {
+            content
+            CalendarEventDetailOverlay(viewModel: viewModel, selectedEvent: $selectedEvent)
+        }
+        .animation(.noticeDetail, value: selectedEvent?.id)
+    }
+
+    #if DEBUG
+    /// `-debugCalendarEvent notice|schedule` (MockServer.swift): opens the
+    /// first event of that kind this month. With no server schedule visible
+    /// (they're admin-only), a sample one is added on today for the shot.
+    private func openDebugEvent() {
+        guard let kind = MockServer.calendarEvent else { return }
+        let monthEvents = viewModel.sectionsForDisplayedMonth.flatMap(\.events)
+        if kind == "notice" {
+            selectedEvent = monthEvents.first { $0.sourceNoticeId != nil }
+        } else if let schedule = monthEvents.first(where: { $0.sourceNoticeId == nil }) {
+            selectedEvent = schedule
+        } else {
+            let today = Calendar.current.startOfDay(for: Date())
+            let sample = CalendarEvent(
+                id: -1, category: .academic, title: "2학기 기말고사 기간",
+                startDate: today, endDate: Calendar.current.date(byAdding: .day, value: 2, to: today)!
+            )
+            viewModel.events.append(sample)
+            selectedEvent = sample
+        }
+    }
+    #endif
+
+    private var content: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 // No search here — the calendar is browsed by month and
@@ -77,9 +110,15 @@ struct CalendarView: View {
             .toolbar(.hidden, for: .navigationBar)
             // Main tab screen — the bottom tab bar shows only while this
             // root is on screen (see TabBarVisibility.swift).
-            .showsTabBar()
+            .showsTabBar(selectedEvent == nil)
             .task {
+                #if DEBUG
+                if let category = MockServer.initialCategory { viewModel.selectedCategory = category }
+                #endif
                 await viewModel.load()
+                #if DEBUG
+                openDebugEvent()
+                #endif
             }
             .alert(
                 Text(.commonError),
@@ -224,9 +263,12 @@ struct CalendarView: View {
                 EmptyScheduleView(message: viewModel.emptyDayMessage)
             } else {
                 ForEach(viewModel.eventsForSelectedDate) { event in
-                    CalendarEventRow(event: event, showsCategory: viewModel.selectedCategory == .all) {
-                        viewModel.toggleBookmark(for: event)
-                    }
+                    CalendarEventRow(
+                        event: event,
+                        showsCategory: viewModel.selectedCategory == .all,
+                        onToggleBookmark: { viewModel.toggleBookmark(for: event) },
+                        onSelect: { selectedEvent = event }
+                    )
                 }
             }
         }

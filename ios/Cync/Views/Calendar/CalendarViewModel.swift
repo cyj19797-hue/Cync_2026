@@ -306,6 +306,18 @@ final class CalendarViewModel: ObservableObject {
     /// un-bookmark for real — removed from the store and the list. Events
     /// straight from the schedule API have no bookmark backing store, so
     /// their flag just flips locally (existing behavior, resets on reload).
+    /// What the detail card shows for `event`: the bookmarked notice itself
+    /// when the event came from one, otherwise the schedule's own fields.
+    /// `nil` once the event is gone (its bookmark was just removed).
+    func detailContent(for event: CalendarEvent) -> NoticeDetailContent? {
+        if let noticeId = event.sourceNoticeId {
+            guard var notice = BookmarkStore.shared.bookmarkedNotices.first(where: { $0.id == noticeId }) else { return nil }
+            notice.isBookmarked = true
+            return NoticeDetailContent(notice: notice)
+        }
+        return events.first { $0.id == event.id }.map(NoticeDetailContent.init(schedule:))
+    }
+
     func toggleBookmark(for event: CalendarEvent) {
         guard let index = events.firstIndex(where: { $0.id == event.id }) else { return }
         if let sourceNoticeId = events[index].sourceNoticeId {
