@@ -109,31 +109,9 @@ final class CalendarViewModel: ObservableObject {
         events = (isAdmin ? scheduleEvents : []) + bookmarkEvents
     }
 
-    /// Full weeks (7-day rows) covering `displayedMonth`, trimmed so a
-    /// trailing week made up entirely of next-month days is dropped —
-    /// matches how Apple's own Calendar app sizes the grid (5 or 6 rows
-    /// depending on the month), rather than always rendering 6.
+    /// Full weeks covering `displayedMonth` (see `CalendarMonthGrid`).
     var visibleDays: [CalendarDay] {
-        guard
-            let monthInterval = calendar.dateInterval(of: .month, for: displayedMonth),
-            let firstWeek = calendar.dateInterval(of: .weekOfMonth, for: monthInterval.start)
-        else {
-            return []
-        }
-
-        var days: [CalendarDay] = []
-        var cursor = firstWeek.start
-        for _ in 0..<42 {
-            let isCurrentMonth = calendar.isDate(cursor, equalTo: displayedMonth, toGranularity: .month)
-            days.append(CalendarDay(date: cursor, isWithinDisplayedMonth: isCurrentMonth))
-            cursor = calendar.date(byAdding: .day, value: 1, to: cursor) ?? cursor
-        }
-
-        var weeks = stride(from: 0, to: days.count, by: 7).map { Array(days[$0..<$0 + 7]) }
-        while let lastWeek = weeks.last, lastWeek.allSatisfy({ !$0.isWithinDisplayedMonth }) {
-            weeks.removeLast()
-        }
-        return weeks.flatMap { $0 }
+        CalendarMonthGrid.days(for: displayedMonth, calendar: calendar)
     }
 
     /// Events passing the category chip + search text filters.
@@ -306,6 +284,18 @@ final class CalendarViewModel: ObservableObject {
     /// un-bookmark for real — removed from the store and the list. Events
     /// straight from the schedule API have no bookmark backing store, so
     /// their flag just flips locally (existing behavior, resets on reload).
+    /// What the detail card shows for `event`: the bookmarked notice itself
+    /// when the event came from one, otherwise the schedule's own fields.
+    /// `nil` once the event is gone (its bookmark was just removed).
+    func detailContent(for event: CalendarEvent) -> NoticeDetailContent? {
+        if let noticeId = event.sourceNoticeId {
+            guard var notice = BookmarkStore.shared.bookmarkedNotices.first(where: { $0.id == noticeId }) else { return nil }
+            notice.isBookmarked = true
+            return NoticeDetailContent(notice: notice)
+        }
+        return events.first { $0.id == event.id }.map(NoticeDetailContent.init(schedule:))
+    }
+
     func toggleBookmark(for event: CalendarEvent) {
         guard let index = events.firstIndex(where: { $0.id == event.id }) else { return }
         if let sourceNoticeId = events[index].sourceNoticeId {

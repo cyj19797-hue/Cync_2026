@@ -47,11 +47,10 @@ struct NoticeListView: View {
                     onEdit: adminEditAction(for: notice),
                     onDelete: adminDeleteAction(for: notice)
                 )
-                .transition(.opacity)
-                .zIndex(1)
+                .noticeDetailTransition()
             }
         }
-        .animation(.default, value: selectedNotice?.id)
+        .animation(.noticeDetail, value: selectedNotice?.id)
     }
 
     private var content: some View {
@@ -114,7 +113,24 @@ struct NoticeListView: View {
             // TabBarVisibility.swift).
             .showsTabBar(selectedNotice == nil)
             .task {
+                #if DEBUG
+                if let category = MockServer.initialCategory { viewModel.selectedCategory = category }
+                #endif
                 await viewModel.load()
+                #if DEBUG
+                // `-debugOpenNotice` (MockServer.swift): the first notice
+                // under the selected category, to check the detail card.
+                if MockServer.opensFirstNotice, selectedNotice == nil {
+                    selectedNotice = viewModel.filteredNotices.first
+                }
+                // `-debugCompose councilCreate|councilEdit`: the 학생회 공지
+                // compose screen, to check the 행사 날짜 section.
+                switch MockServer.takeComposeScreen() {
+                case "councilCreate": composeTarget = .create
+                case "councilEdit": composeTarget = MockServer.councilEditSample
+                default: break
+                }
+                #endif
             }
             .alert(
                 Text(.commonError),
@@ -139,12 +155,14 @@ extension NoticeListView {
             PostComposeView(configuration: .councilNoticeCreate { councilNotice in
                 _ = viewModel.insertCouncilNotice(councilNotice)
             })
-        case let .edit(_, councilId, title, content, imageURL):
+        case let .edit(_, councilId, title, content, imageURL, eventStart, eventEnd):
             PostComposeView(configuration: .councilNoticeEdit(
                 councilId: councilId,
                 title: title,
                 content: content,
-                imageURL: imageURL
+                imageURL: imageURL,
+                eventStart: eventStart,
+                eventEnd: eventEnd
             ) { councilNotice in
                 // Back on the edited notice's card once the screen closes.
                 selectedNotice = viewModel.replaceCouncilNotice(councilNotice)

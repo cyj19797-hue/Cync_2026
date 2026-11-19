@@ -31,11 +31,21 @@ struct CalendarEventListView: View {
     @ObservedObject var viewModel: CalendarViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var slideDirection: MonthSlideDirection = .forward
+    /// Event whose detail card is open (see CalendarEventDetailOverlay).
+    @State private var selectedEvent: CalendarEvent?
 
     /// Same forgiving threshold as CalendarView's grid swipe.
     private let swipeCommitThreshold: CGFloat = 60
 
     var body: some View {
+        ZStack {
+            screen
+            CalendarEventDetailOverlay(viewModel: viewModel, selectedEvent: $selectedEvent)
+        }
+        .animation(.noticeDetail, value: selectedEvent?.id)
+    }
+
+    private var screen: some View {
         VStack(spacing: 0) {
             ScreenNavigationBar(titleKey: .calendarMonthlyEvents, onBack: { dismiss() })
 
@@ -126,10 +136,10 @@ struct CalendarEventListView: View {
                 CalendarEventRow(
                     event: event,
                     showsCategory: viewModel.selectedCategory == .all,
-                    isDimmed: isDimmed
-                ) {
-                    viewModel.toggleBookmark(for: event)
-                }
+                    isDimmed: isDimmed,
+                    onToggleBookmark: { viewModel.toggleBookmark(for: event) },
+                    onSelect: { selectedEvent = event }
+                )
             }
         }
         .modifier(CalendarCardSurface())

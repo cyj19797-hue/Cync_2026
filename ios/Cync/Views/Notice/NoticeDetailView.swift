@@ -13,6 +13,18 @@
 //  `ScrollView` reproduces the dim-backdrop-plus-card look and the
 //  scrollable body natively.
 //
+//  Two layouts (`showsNavigationBar`):
+//  - 공지사항 tab (`true`, default): the 이전 글 / 목록 / 다음 글 bar at
+//    the bottom of a full-height card.
+//  - 캘린더 (`false`): no bar — just the notice, in a card that hugs its
+//    content (up to 92% of the screen, then scrolls).
+//  Both share the top bar: 원문 / AI 번역 on the left, ✕ on the right
+//  (a tap on the dim area closes it too).
+//
+//  Takes a `NoticeDetailContent`, so it also shows a 캘린더 schedule that
+//  has no notice behind it (title, category and period only — the body,
+//  the 원문/AI번역 toggle and "원문 보기" are dropped).
+//
 //  Admin actions: when `onEdit`/`onDelete` are given (NoticeListView passes
 //  them only to admins, only for 학생회 notices), a ⋮ in the top bar opens a
 //  `PopupMenu` with 수정/삭제. 삭제 asks first (`CommentDeleteDialog`, the
@@ -22,17 +34,63 @@
 import SwiftUI
 
 struct NoticeDetailView: View {
-    let notice: Notice
+    let content: NoticeDetailContent
     let onToggleBookmark: () -> Void
     let onDismiss: () -> Void
-    var onPrevious: (() -> Void)?
-    var onNext: (() -> Void)?
+    /// 이전 글 / 다음 글 — `nil` disables that side of the bar.
+    var onPrevious: (() -> Void)? = nil
+    var onNext: (() -> Void)? = nil
+    /// `false` on 캘린더 — see the header comment.
+    var showsNavigationBar = true
     /// Admin 수정 — `nil` hides it.
     var onEdit: (() -> Void)? = nil
     /// Admin 삭제, run after the confirm — `nil` hides it.
     var onDelete: (() async throws -> Void)? = nil
 
+    init(
+        content: NoticeDetailContent,
+        onToggleBookmark: @escaping () -> Void,
+        onDismiss: @escaping () -> Void,
+        onPrevious: (() -> Void)? = nil,
+        onNext: (() -> Void)? = nil,
+        showsNavigationBar: Bool = true,
+        onEdit: (() -> Void)? = nil,
+        onDelete: (() async throws -> Void)? = nil
+    ) {
+        self.content = content
+        self.onToggleBookmark = onToggleBookmark
+        self.onDismiss = onDismiss
+        self.onPrevious = onPrevious
+        self.onNext = onNext
+        self.showsNavigationBar = showsNavigationBar
+        self.onEdit = onEdit
+        self.onDelete = onDelete
+    }
+
+    init(
+        notice: Notice,
+        onToggleBookmark: @escaping () -> Void,
+        onDismiss: @escaping () -> Void,
+        onPrevious: (() -> Void)? = nil,
+        onNext: (() -> Void)? = nil,
+        onEdit: (() -> Void)? = nil,
+        onDelete: (() async throws -> Void)? = nil
+    ) {
+        self.init(
+            content: NoticeDetailContent(notice: notice),
+            onToggleBookmark: onToggleBookmark,
+            onDismiss: onDismiss,
+            onPrevious: onPrevious,
+            onNext: onNext,
+            onEdit: onEdit,
+            onDelete: onDelete
+        )
+    }
+
     @State private var isShowingTranslation = false
+    /// Drives the open motion — see the card's `.mask`.
+    @State private var isRevealed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isAdminMenuOpen = false
     @State private var isDeleteConfirmPresented = false
     @State private var deleteErrorMessage: String?
@@ -64,46 +122,100 @@ struct NoticeDetailView: View {
         }
     }
 
+    /// Height of the strip the card unrolls from (about its top bar).
+    private static let revealStartHeight: CGFloat = 96
+
     /// Height of `NoticeDetailNavigationBar` (its own fixed `frame(height:)`).
     private static let navigationBarHeight: CGFloat = 42
 
-    /// 이전 글/다음 글 is part of the scroll content, so a long body only
-    /// reveals it once scrolled to the end. The content is also stretched to
-    /// at least the scroll viewport's height with the bar overlaid at its
-    /// bottom, so under a short body the bar still sits flush with the
+    private func card(maxHeight: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            topSection
+
+            if showsNavigationBar {
+                scrollWithNavigationBar
+            } else {
+                huggingScroll
+            }
+        }
+        .padding(Spacing.sm)
+        .background(Color.appBackground)
+        // Opens by unrolling from the middle: the card is laid out at its
+        // final size from the start, and only this rounded mask grows from
+        // a strip to the full card. Nothing inside moves, so no part (the
+        // 원문/AI 번역 tabs used to) trails behind — animating the layout
+        // itself made text views run their own, later position animation.
+        .mask {
+            GeometryReader { proxy in
+                let full = proxy.size.height
+                let start = min(Self.revealStartHeight, full)
+                RoundedRectangle(cornerRadius: Radius.card)
+                    .frame(height: isRevealed ? full : start)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .onAppear {
+            // 동작 줄이기: fade only, no unrolling.
+            if reduceMotion {
+                isRevealed = true
+            } else {
+                withAnimation(.noticeDetail) { isRevealed = true }
+            }
+        }
+    }
+
+    /// 공지사항 tab. 이전 글/다음 글 is part of the scroll content, so a long
+    /// body only reveals it once scrolled to the end. The content is also
+    /// stretched to at least the viewport's height with the bar overlaid at
+    /// its bottom, so under a short body the bar still sits flush with the
     /// bottom of the card instead of floating right under the text.
     ///
     /// (A `Spacer` between body and bar can't do this: a `ScrollView`
     /// proposes unbounded height, so the `Spacer` collapses even under
     /// `.frame(minHeight:)`. The overlay is sized by that frame instead, so
     /// it lands on the frame's bottom edge either way.)
-    private func card(maxHeight: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
-            topSection
+    private var scrollWithNavigationBar: some View {
+        GeometryReader { viewport in
+            ScrollView {
+                VStack(alignment: .leading, spacing: Spacing.xl) {
+                    mainContent
 
-            GeometryReader { viewport in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: Spacing.xl) {
-                        mainContent
-
-                        // Reserves the bar's space so it never covers text.
-                        Color.clear
-                            .frame(height: Self.navigationBarHeight)
-                    }
-                    .frame(minHeight: viewport.size.height, alignment: .top)
-                    .overlay(alignment: .bottom) {
-                        NoticeDetailNavigationBar(
-                            onPrevious: onPrevious,
-                            onGoToList: onDismiss,
-                            onNext: onNext
-                        )
-                    }
+                    // Reserves the bar's space so it never covers text.
+                    Color.clear
+                        .frame(height: Self.navigationBarHeight)
                 }
+                .frame(minHeight: viewport.size.height, alignment: .top)
+                .overlay(alignment: .bottom) {
+                    NoticeDetailNavigationBar(
+                        onPrevious: onPrevious,
+                        onGoToList: onDismiss,
+                        onNext: onNext
+                    )
+                }
+                .padding(.horizontal, Self.scrollIndicatorGutter)
             }
+            .padding(.horizontal, -Self.scrollIndicatorGutter)
         }
-        .padding(Spacing.sm)
-        .background(Color.appBackground)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.card))
+    }
+
+    /// The scroll views reach this far into the card's side padding while
+    /// their content stays put, so the scroll bar runs in that margin
+    /// instead of over the text's right edge.
+    private static let scrollIndicatorGutter: CGFloat = Spacing.cardInset
+
+    /// 캘린더: as tall as the content, never taller — the card's own max
+    /// height still caps it, and then it scrolls.
+    private var huggingScroll: some View {
+        ViewThatFits(in: .vertical) {
+            mainContent
+                .padding(.bottom, Spacing.xs)
+            ScrollView {
+                mainContent
+                    .padding(.bottom, Spacing.xs)
+                    .padding(.horizontal, Self.scrollIndicatorGutter)
+            }
+            .padding(.horizontal, -Self.scrollIndicatorGutter)
+        }
     }
 
     /// Height held for a 학생회 notice's photo while it loads (or failed).
@@ -113,20 +225,22 @@ struct NoticeDetailView: View {
         VStack(alignment: .leading, spacing: Spacing.xl) {
             header
 
-            if let imageURL = notice.imageURL {
+            if let imageURL = content.imageURL {
                 RemoteImage(url: imageURL, contentMode: .fit, placeholderHeight: Self.imagePlaceholderHeight)
                     .frame(maxWidth: .infinity)
                     .clipShape(RoundedRectangle(cornerRadius: Radius.inputField))
                     .accessibilityLabel(Text(.noticeImage))
             }
 
-            bodyContent
-                .font(.noticeDetailBody).tracking(Tracking.noticeDetailBody)
-                .foregroundStyle(Color.textPrimary)
-                .lineSpacing(6)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            if let body = content.body {
+                bodyContent(body)
+                    .font(.noticeDetailBody).tracking(Tracking.noticeDetailBody)
+                    .foregroundStyle(Color.textPrimary)
+                    .lineSpacing(6)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
-            if let sourceURL = notice.sourceURL {
+            if let sourceURL = content.sourceURL {
                 originalLink(sourceURL)
             }
         }
@@ -154,21 +268,46 @@ struct NoticeDetailView: View {
     private var topSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             topBar
-            Divider()
-                .overlay(Color.borderLight)
+            // Separates the 원문/AI번역 toggle from the notice; with only ✕
+            // up there (a schedule) it would just box in empty space.
+            if content.body != nil {
+                Divider()
+                    .overlay(Color.borderLight)
+            }
         }
     }
 
-    /// "목록으로" back button + the 원문/AI번역 토글, side by side.
+    /// 원문/AI번역 toggle on the left (notices only), admin ⋮ and ✕ on the
+    /// right — the same on 공지사항 and 캘린더.
     private var topBar: some View {
-        HStack(spacing: Spacing.xs) {
-            backButton
+        HStack(spacing: Spacing.sm) {
+            if content.body != nil {
+                TranslationToggle(isShowingTranslation: $isShowingTranslation)
+            }
             Spacer(minLength: Spacing.xs)
-            TranslationToggle(isShowingTranslation: $isShowingTranslation)
             if hasAdminActions {
                 adminMenuButton
             }
+            closeButton
         }
+        // Keeps the bar's height when it holds only ✕ (schedules).
+        .frame(minHeight: 28)
+    }
+
+    private static let closeIconSize: CGFloat = 16
+
+    private var closeButton: some View {
+        Button(action: onDismiss) {
+            Image(systemName: "xmark")
+                .resizable()
+                .scaledToFit()
+                .fontWeight(.semibold)
+                .frame(width: Self.closeIconSize, height: Self.closeIconSize)
+                .foregroundStyle(Color.textSecondary)
+                .minimumHitTarget(inset: (44 - Self.closeIconSize) / 2)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(.commonClose))
     }
 
     // MARK: - Admin
@@ -252,28 +391,16 @@ struct NoticeDetailView: View {
         }
     }
 
-    private var backButton: some View {
-        Button(action: onDismiss) {
-            HStack(spacing: 2) {
-                NavigationChevron(direction: .left, color: .textSecondary)
-                Text(.noticeBackToList)
-                    .font(.noticeDetailBackLabel).tracking(Tracking.noticeDetailBackLabel)
-                    .foregroundStyle(Color.textSecondary)
-            }
-        }
-        .buttonStyle(.plain)
-    }
-
     private var header: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             HStack(spacing: Spacing.xs) {
-                FilterChip(category: notice.category, style: .badge)
+                FilterChip(category: content.category, style: .badge)
 
-                Text(notice.dateText)
+                Text(content.dateText)
                     .font(.noticeDetailDate).tracking(Tracking.noticeDetailDate)
                     .foregroundStyle(Color.textSecondary)
 
-                if let deadlineDays = notice.deadlineDays {
+                if let deadlineDays = content.deadlineDays {
                     separatorDot
 
                     Text(.noticeDeadline(deadlineDays))
@@ -283,14 +410,18 @@ struct NoticeDetailView: View {
             }
 
             HStack(alignment: .top, spacing: Spacing.xs) {
-                Text(notice.title)
+                Text(content.title)
                     .font(.noticeDetailTitle).tracking(Tracking.noticeDetailTitle)
                     .foregroundStyle(Color.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Spacer(minLength: 0)
 
-                BookmarkButton(isBookmarked: notice.isBookmarked, action: onToggleBookmark)
+                BookmarkButton(
+                    isBookmarked: content.isBookmarked,
+                    tint: content.category.accentColor,
+                    action: onToggleBookmark
+                )
             }
         }
     }
@@ -302,29 +433,64 @@ struct NoticeDetailView: View {
     }
 
     @ViewBuilder
-    private var bodyContent: some View {
+    private func bodyContent(_ body: String) -> some View {
         if isShowingTranslation {
-            if let translatedText = notice.translatedText {
+            if let translatedText = content.translatedText {
                 Text(translatedText)
             } else {
                 Text(.noticeNoTranslation)
                     .foregroundStyle(Color.gray400)
             }
-        } else if notice.originalText.isEmpty {
+        } else if body.isEmpty {
             Text(.noticeOriginalUnavailable)
                 .foregroundStyle(Color.gray400)
         } else {
-            Text(notice.originalText)
+            Text(body)
         }
     }
 }
 
-#Preview {
+#Preview("공지") {
     NoticeDetailView(
         notice: Notice.mockList[2],
         onToggleBookmark: {},
         onDismiss: {},
-        onPrevious: nil,
-        onNext: { }
+        onNext: {}
     )
+}
+
+#Preview("캘린더 — 공지 일정") {
+    var notice = Notice.mockList[0]
+    notice.category = .studentCouncil
+    notice.isBookmarked = true
+    return NoticeDetailView(content: NoticeDetailContent(notice: notice), onToggleBookmark: {}, onDismiss: {}, showsNavigationBar: false)
+}
+
+#Preview("캘린더 — 학사일정") {
+    let start = Calendar.current.date(from: DateComponents(year: 2026, month: 11, day: 20))!
+    let end = Calendar.current.date(from: DateComponents(year: 2026, month: 11, day: 22))!
+    return NoticeDetailView(
+        content: NoticeDetailContent(schedule: CalendarEvent(id: 1, category: .academic, title: "2학기 기말고사 기간", startDate: start, endDate: end)),
+        onToggleBookmark: {},
+        onDismiss: {},
+        showsNavigationBar: false
+    )
+}
+
+// MARK: - Shared motion
+
+extension Animation {
+    /// How the notice detail card comes and goes — 공지사항 and 캘린더 use
+    /// this one value so both open with exactly the same motion: the fade
+    /// (`noticeDetailTransition`) and the card unrolling from the middle
+    /// (the card's mask in `NoticeDetailView`).
+    static let noticeDetail: Animation = .default
+}
+
+extension View {
+    /// Transition for the notice detail card (a plain fade), paired with
+    /// `.animation(.noticeDetail, value:)` on the screen hosting it.
+    func noticeDetailTransition() -> some View {
+        transition(.opacity).zIndex(1)
+    }
 }

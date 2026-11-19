@@ -8,6 +8,8 @@
 //  typed on screen: `CyncAPI.createCouncilNotice` takes it from
 //  `CurrentUserSession`. Editing previews the current image; it can be
 //  replaced but not removed (the server has no way to delete it).
+//  Both modes have the 행사 날짜 section (`PostComposeEventDateOption`);
+//  editing opens with the notice's current date.
 //
 //  `NoticeComposeTarget` is what NoticeListView pushes to open it.
 //
@@ -18,7 +20,15 @@ import SwiftUI
 enum NoticeComposeTarget: Hashable {
     case create
     /// `noticeId` is the list's `Notice.id`, `councilId` the server row.
-    case edit(noticeId: Int, councilId: Int, title: String, content: String, imageURL: URL?)
+    case edit(
+        noticeId: Int,
+        councilId: Int,
+        title: String,
+        content: String,
+        imageURL: URL?,
+        eventStart: Date?,
+        eventEnd: Date?
+    )
 
     init?(editing notice: Notice) {
         guard let councilId = notice.councilId else { return nil }
@@ -27,7 +37,9 @@ enum NoticeComposeTarget: Hashable {
             councilId: councilId,
             title: notice.title,
             content: notice.originalText,
-            imageURL: notice.imageURL
+            imageURL: notice.imageURL,
+            eventStart: notice.eventStartDate,
+            eventEnd: notice.eventEndDate
         )
     }
 }
@@ -38,13 +50,17 @@ extension PostComposeConfiguration {
             navigationTitleKey: .noticeComposeTitle,
             contentPlaceholderKey: .noticeComposeContentPlaceholder,
             showsImageAttachment: true,
+            eventDate: PostComposeEventDateOption(),
             failureMessage: { String(appLocalized: .noticeComposeCreateFailed($0)) },
             submit: { draft in
-                let notice = try await CyncAPI.createCouncilNotice(
-                    title: draft.title,
-                    content: draft.content,
-                    image: draft.image
-                )
+                let notice = try await withEventDateErrors(draft) {
+                    try await CyncAPI.createCouncilNotice(
+                        title: draft.title,
+                        content: draft.content,
+                        image: draft.image,
+                        eventDate: draft.eventDate
+                    )
+                }
                 await MainActor.run { onCreated(notice) }
             }
         )
@@ -55,6 +71,8 @@ extension PostComposeConfiguration {
         title: String,
         content: String,
         imageURL: URL?,
+        eventStart: Date? = nil,
+        eventEnd: Date? = nil,
         onUpdated: @escaping (CouncilNotice) -> Void
     ) -> Self {
         PostComposeConfiguration(
@@ -65,16 +83,35 @@ extension PostComposeConfiguration {
             initialContent: content,
             showsImageAttachment: true,
             initialImageURL: imageURL,
+            eventDate: PostComposeEventDateOption(initialStart: eventStart, initialEnd: eventEnd),
             failureMessage: { String(appLocalized: .noticeComposeUpdateFailed($0)) },
             submit: { draft in
-                let notice = try await CyncAPI.updateCouncilNotice(
-                    id: councilId,
-                    title: draft.title,
-                    content: draft.content,
-                    image: draft.image
-                )
+                let notice = try await withEventDateErrors(draft) {
+                    try await CyncAPI.updateCouncilNotice(
+                        id: councilId,
+                        title: draft.title,
+                        content: draft.content,
+                        image: draft.image,
+                        eventDate: draft.eventDate
+                    )
+                }
                 await MainActor.run { onUpdated(notice) }
             }
         )
+    }
+
+    /// The server answers a bad date range (end without start, end before
+    /// start) with 400 — shown as "날짜를 다시 확인해 주세요" instead of the
+    /// generic failure message. Without date parameters a 400 isn't about
+    /// the date, so it falls through unchanged.
+    private static func withEventDateErrors<T>(
+        _ draft: PostComposeDraft,
+        _ send: () async throws -> T
+    ) async throws -> T {
+        do {
+            return try await send()
+        } catch CyncAPIError.badStatus(400) where draft.eventDate != .none {
+            throw PostComposeDisplayError(message: String(appLocalized: .noticeEventDateInvalid))
+        }
     }
 }

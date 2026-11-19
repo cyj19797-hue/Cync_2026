@@ -27,6 +27,31 @@ struct PostComposeDraft {
     let image: Data?
     /// The `extraToggle` switch's value; `false` when the mode has none.
     let extraToggle: Bool
+    /// What to send about the 행사 날짜 — `.none` when the mode has no date
+    /// section or the date wasn't changed (edit: keep it).
+    var eventDate: EventDateChange = .none
+}
+
+/// The 행사 날짜 section (학생회 공지 only) under the divider: "행사 날짜
+/// 추가", or 시작일 / 기간으로 설정 / 마감일 rows with a fold-out calendar.
+struct PostComposeEventDateOption {
+    /// Edit mode: the notice's current date. `initialEnd` nil or equal to
+    /// the start opens as a one-day event (기간 switch off).
+    var initialStart: Date? = nil
+    var initialEnd: Date? = nil
+    /// Opens with this row's calendar folded out (previews).
+    var initialExpandedField: EventDateField? = nil
+
+    var initialSelection: EventDateSelection? {
+        initialStart.map { EventDateSelection(start: $0, end: initialEnd).normalized }
+    }
+}
+
+/// An error whose message is shown as is, not wrapped in
+/// `PostComposeConfiguration.failureMessage` — e.g. "날짜를 다시 확인해 주세요".
+struct PostComposeDisplayError: LocalizedError {
+    let message: String
+    var errorDescription: String? { message }
 }
 
 /// An on/off row under the divider, in place of 익명 — e.g. Cync 공지's
@@ -68,7 +93,12 @@ struct PostComposeConfiguration {
     /// default — draws nothing, so the other modes are unaffected.
     var extraToggle: PostComposeExtraToggle? = nil
 
+    /// The 행사 날짜 section (학생회 공지 only). `nil` — the default — draws
+    /// nothing, so the other modes are unaffected.
+    var eventDate: PostComposeEventDateOption? = nil
+
     /// Popup message when `submit` throws — gets the error's description.
+    /// A `PostComposeDisplayError` skips this and shows its own message.
     var failureMessage: (String) -> String
 
     /// Sends the draft. Throwing shows `failureMessage` and keeps the

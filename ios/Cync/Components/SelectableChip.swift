@@ -6,8 +6,9 @@
 //  (`FilterChip` wraps it for `NoticeCategory`). Two looks:
 //
 //  - `.filter` — the 공지사항/캘린더 category chips (Figma `42:108`): 8pt
-//    padding, selected = `eventAccent` fill + white label (Figma's gray was
-//    too close to the unselected chips), unselected = white + hairline.
+//    padding, selected = `selectedTint` fill (default `eventAccent`; the
+//    category chips pass the category's color) + white label (Figma's gray
+//    was too close to the unselected chips), unselected = white + hairline.
 //  - `.tab` — "관리자 - 사물함 관리" tabs (Figma `690:3719`): 12×8pt padding,
 //    7.5pt corners, selected = `surface` fill + Semibold label, unselected =
 //    white + 1pt `borderLight` + Medium label. An optional count follows
@@ -30,6 +31,12 @@ struct SelectableChip: View {
     var count: Int? = nil
     /// The count's color — orange by default (사물함 "승인 대기").
     var countColor: Color = .lockerPendingBadge
+    /// Selected fill of a `.filter` chip — the category's color on the
+    /// 공지사항/캘린더 chips (`FilterChip`). `.tab` ignores it.
+    var selectedTint: Color = .eventAccent
+    /// Label on that selected fill — white by default; dark on a light
+    /// fill (the 학생회 chip's light pink) so it stays readable.
+    var selectedLabelColor: Color = .white
     let action: () -> Void
 
     var body: some View {
@@ -75,7 +82,7 @@ struct SelectableChip: View {
     }
 
     private var labelColor: Color {
-        appearance == .filter && isSelected ? .white : .textPrimary
+        appearance == .filter && isSelected ? selectedLabelColor : .textPrimary
     }
 
     private var horizontalPadding: CGFloat {
@@ -91,7 +98,7 @@ struct SelectableChip: View {
 
     private var fillColor: Color {
         switch appearance {
-        case .filter: return isSelected ? .eventAccent : .white
+        case .filter: return isSelected ? selectedTint : .white
         case .tab: return isSelected ? .surface : .white
         }
     }

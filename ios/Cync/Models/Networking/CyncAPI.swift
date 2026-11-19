@@ -367,23 +367,56 @@ enum CyncAPI {
     /// admin's `studentId`/`name` from `CurrentUserSession`. `image` is an
     /// already-shrunk JPEG (see `UploadImagePreparer` — the server rejects
     /// files over 1MB); nil leaves the part out and the server stores
-    /// `imageUrl: null`.
-    static func createCouncilNotice(title: String, content: String, image: Data?) async throws -> CouncilNotice {
+    /// `imageUrl: null`. `eventDate`: `.none` sends no date (no event date),
+    /// `.set` sends `eventStartDate` (+ `eventEndDate` for a period). A
+    /// bad date range comes back as `badStatus(400)`.
+    static func createCouncilNotice(
+        title: String,
+        content: String,
+        image: Data?,
+        eventDate: EventDateChange = .none
+    ) async throws -> CouncilNotice {
+        let dateFields = eventDate.formFields(allowsClear: false)
+        #if DEBUG
+        if MockServer.mocksCouncilCompose {
+            return try MockServer.councilNoticeResponse(
+                method: "POST", path: "/api/notices/council",
+                fields: ["title": title, "content": content].merging(dateFields) { $1 },
+                hasImage: image != nil
+            )
+        }
+        #endif
         guard let profile = await CurrentUserSession.shared.profile else { throw CyncAPIError.unauthorized }
         var request = authorizedRequest(path: "/api/notices/council", method: "POST")
         setMultipartBody(
             &request,
-            fields: ["title": title, "content": content, "authorId": profile.studentId, "authorName": profile.name],
+            fields: ["title": title, "content": content, "authorId": profile.studentId, "authorName": profile.name]
+                .merging(dateFields) { $1 },
             image: image
         )
         return try await send(request)
     }
 
     /// ADMIN only. `image` replaces the current one; nil keeps it — the
-    /// server has no way to remove a notice's image.
-    static func updateCouncilNotice(id: Int, title: String, content: String, image: Data?) async throws -> CouncilNotice {
+    /// server has no way to remove a notice's image. `eventDate`: `.none`
+    /// keeps the current date, `.set` replaces it, `.clear` removes it.
+    static func updateCouncilNotice(
+        id: Int,
+        title: String,
+        content: String,
+        image: Data?,
+        eventDate: EventDateChange = .none
+    ) async throws -> CouncilNotice {
+        let fields = ["title": title, "content": content].merging(eventDate.formFields(allowsClear: true)) { $1 }
+        #if DEBUG
+        if MockServer.mocksCouncilCompose {
+            return try MockServer.councilNoticeResponse(
+                method: "PUT", path: "/api/notices/council/\(id)", fields: fields, hasImage: image != nil
+            )
+        }
+        #endif
         var request = authorizedRequest(path: "/api/notices/council/\(id)", method: "PUT")
-        setMultipartBody(&request, fields: ["title": title, "content": content], image: image)
+        setMultipartBody(&request, fields: fields, image: image)
         return try await send(request)
     }
 

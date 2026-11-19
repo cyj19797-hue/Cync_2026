@@ -112,9 +112,10 @@ extension Color {
     /// minimum; chosen by the team for the brand look.
     static let buttonAccent = eventAccent
 
-    /// Not in Figma — "on" track of `AppSwitchToggleStyle`. The lightest
-    /// blue of `eventAccent`'s hue that's 3:1 against white (~3.01:1).
-    static let switchOnTrack = Color(hex: 0x0099FE)
+    /// "On" track of `AppSwitchToggleStyle` — the app accent, matching the
+    /// filled buttons and chips. ~2.4:1 against white (below the 3:1 UI
+    /// minimum), like `buttonAccent`; the knob's side still shows the state.
+    static let switchOnTrack = eventAccent
 
     /// Not in Figma — "off" track of `AppSwitchToggleStyle`. `gray400`'s
     /// hue darkened to 3:1 against white (~3.02:1); iOS's own off track
@@ -125,6 +126,8 @@ extension Color {
     /// comment you're currently replying to on "5-1 게시글" (~3.1:1 on the
     /// comments' gray, above the 3:1 minimum for icons).
     static let secondaryAccent = Color(hex: 0xFF4194)
+    /// `light_secondary` (#FFBCD9) — light tint of `secondaryAccent`.
+    static let secondaryAccentLight = Color(hex: 0xFFBCD9)
 
     /// Not in Figma — border of an unchecked checkbox. `borderLight` was
     /// ~1.3:1 against the card behind it (nearly invisible); this clears
@@ -148,16 +151,24 @@ extension Color {
     /// `eventAccent` so it doesn't read as the "today"/selected accent.
     static let calendarSaturday = Color(hex: 0x3478F6)
 
-    // MARK: - Category colors (calendar event dots / row accent bars)
+    // MARK: - Category colors
+    //
+    // The one place a category's color is decided. Everything colored by
+    // category goes through `NoticeCategory.accentColor`, which reads only
+    // these two: the selected filter chip, the bookmark fill, the category
+    // text on notice rows, the calendar's dots and event bars.
 
-    /// Figma style: `category` (#3982FF, "어떠한 카테고리") — the schedule
-    /// color bar ("일정색") on "3 캘린더" / "3-1 일정 전체보기".
+    /// Figma style: `category` (#3982FF, "어떠한 카테고리") — no longer used
+    /// for 학사 (that's primary now); kept so the Figma style has a token.
     static let category = Color(hex: 0x3982FF)
 
-    /// 학사 (and 전체) — Figma's `category` style.
-    static let categoryAcademic = category
+    /// 학사 (and 전체) = the brand's primary color (blue).
+    static let categoryAcademic = eventAccent
     /// 학생회 = the brand's secondary color (pink).
     static let categoryStudentCouncil = secondaryAccent
+    /// Selected 학생회 filter chip on 공지사항/캘린더 — the light tint, so
+    /// the chip reads softer than the pink bookmarks and dots.
+    static let categoryStudentCouncilChip = secondaryAccentLight
 
     // MARK: - "4 사물함" (locker)
 

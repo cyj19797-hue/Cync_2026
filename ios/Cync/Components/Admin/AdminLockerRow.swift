@@ -15,9 +15,9 @@
 //  In selection mode (`isSelecting`) the actions give way to a leading
 //  `CheckboxSquare` and the whole card toggles the selection.
 //
-//  Deviation from Figma: 승인 uses `accentStrong` instead of #36AFFF so the
-//  white label clears 4.5:1 (same reason as the compose screen's 등록), and
-//  both buttons share the 10pt corner (Figma has 10 / 7.5).
+//  승인 is `buttonAccent` (#36AFFF, as in Figma) like the app's other filled
+//  buttons. Deviation from Figma: both buttons share the 10pt corner
+//  (Figma has 10 / 7.5).
 //
 
 import SwiftUI
@@ -112,7 +112,7 @@ struct AdminLockerRow: View {
         case let .pending(onReject, onApprove):
             HStack(spacing: Spacing.xs) {
                 actionButton(.adminLockerReject, fill: .surface, label: .textPrimary, action: onReject)
-                actionButton(.adminLockerApprove, fill: .accentStrong, label: .white, action: onApprove)
+                actionButton(.adminLockerApprove, fill: .buttonAccent, label: .white, action: onApprove)
             }
             .disabled(isProcessing)
         case let .inUse(_, _, _, _, onReturn):
