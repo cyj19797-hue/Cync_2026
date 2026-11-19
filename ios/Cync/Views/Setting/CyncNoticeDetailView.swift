@@ -17,7 +17,7 @@
 //  bar here: only the five main tab screens show it — see
 //  TabBarVisibility.swift.
 //
-//  A "팝업" tag (`PopupTag`) sits under the date when the notice pops up at
+//  For admins, a "팝업" tag (`PopupTag`) sits under the date when the notice pops up at
 //  launch. Admins get a ⋮ button on the bar opening the same `.popupMenu`
 //  as 학생회 공지 (`NoticeDetailView`) — Figma `734:4342` draws a bottom
 //  sheet, but the app's admin menus are kept alike:
@@ -203,7 +203,8 @@ struct CyncNoticeDetailView: View {
                 .font(.cyncNoticeDetailDate).tracking(Tracking.cyncNoticeDetailDate)
                 .foregroundStyle(Color.textSecondary)
 
-            if notice.isPopup {
+            // Admins only — students don't need to know it pops up.
+            if viewModel.isAdmin && notice.isPopup {
                 PopupTag()
                     .padding(.top, Spacing.xxs)
             }

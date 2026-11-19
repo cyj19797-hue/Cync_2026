@@ -19,6 +19,9 @@ import SwiftUI
 struct CyncNoticeRow: View {
     let notice: CyncNotice
     var isRead: Bool = false
+    /// The "팝업" tag is admin information (which notices pop up at
+    /// launch) — students don't see it.
+    var showsPopupTag: Bool = false
     let onSelect: () -> Void
 
     /// Unread dot's diameter, and the column it sits in.
@@ -53,7 +56,7 @@ struct CyncNoticeRow: View {
                             .lineLimit(1)
                             .frame(maxWidth: .infinity, alignment: .leading)
 
-                        if notice.isPopup {
+                        if showsPopupTag && notice.isPopup {
                             PopupTag()
                         }
                     }

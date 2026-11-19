@@ -75,7 +75,11 @@ struct CyncNoticeListView: View {
     private var list: some View {
         List {
             ForEach(viewModel.notices) { notice in
-                CyncNoticeRow(notice: notice, isRead: readStore.isRead(notice.id)) {
+                CyncNoticeRow(
+                    notice: notice,
+                    isRead: readStore.isRead(notice.id),
+                    showsPopupTag: viewModel.isAdmin
+                ) {
                     selectedNotice = notice
                 }
                 .listRowSeparatorTint(Color.borderLight)
