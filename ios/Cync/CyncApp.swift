@@ -4,6 +4,14 @@ import SwiftUI
 struct CyncApp: App {
     @StateObject private var sessionStore = SessionStore()
 
+    init() {
+        #if DEBUG
+        // `[MockServer]` lines reach a `simctl launch --stdout=` file
+        // right away instead of when the buffer fills.
+        setvbuf(stdout, nil, _IOLBF, 0)
+        #endif
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()
@@ -12,12 +20,18 @@ struct CyncApp: App {
     }
 }
 
-/// Overlays `LaunchScreenView` on top of `AppIntroView`/`TermsAgreementView`/
-/// `LoginView`/`RootTabView` for a beat on cold launch, then fades it out —
-/// so the splash is always the first thing shown. Underneath it: "1-3 앱
-/// 소개" (`AppIntroView`) until "연결하기", then "1-4 이용약관 동의"
-/// (`TermsAgreementView`) until "세종대학교 계정으로 시작하기", then
-/// `LoginView` — matching Figma's own 1-3 → 1-4 → 1-5 screen numbering.
+/// Overlays `LaunchScreenView` on top of everything on cold launch, then
+/// fades it out — so the splash is always the first thing shown. It stays
+/// at least `launchScreenDuration`, and with a saved "자동 로그인" token
+/// until `SessionStore.restoreSession()` knows whether the terms were
+/// agreed, so the main tabs never flash before the terms screen.
+///
+/// Underneath, `SessionStore.entryState` picks the screen:
+/// - `.loggedOut`: "1-3 앱 소개" (`AppIntroView`) until "연결하기", then
+///   `LoginView`.
+/// - `.needsTermsAgreement`: `TermsAgreementView` only (it's a root
+///   screen, so there's no back or swipe out of it).
+/// - `.ready`: `RootTabView`, plus the app-launch popup notices.
 private struct RootView: View {
     @EnvironmentObject private var sessionStore: SessionStore
     /// 설정 > 언어 설정 — its locale is injected below so every `Text(.key)`
@@ -25,7 +39,6 @@ private struct RootView: View {
     @ObservedObject private var languageSettings = LanguageSettings.shared
     @State private var isShowingLaunchScreen = true
     @State private var hasSeenIntro = false
-    @State private var hasAgreedToTerms = false
     /// App-launch popup notices (설정 > Cync 공지 with "팝업" on).
     @StateObject private var popupController = AppNoticePopupController()
 
@@ -34,34 +47,40 @@ private struct RootView: View {
     /// enough for the logo to register before the intro screen appears.
     private static let launchScreenDuration: Duration = .seconds(1.2)
 
+    /// Splash: the minimum time, and any auto-login check.
+    private var isSplashVisible: Bool {
+        isShowingLaunchScreen || sessionStore.entryState == .checking
+    }
+
     private var isShowingMainTabs: Bool {
-        sessionStore.isLoggedIn && !isShowingLaunchScreen
+        sessionStore.entryState == .ready && !isSplashVisible
     }
 
     var body: some View {
         ZStack {
-            if sessionStore.isLoggedIn {
-            //if true{
+            switch sessionStore.entryState {
+            case .ready:
                 RootTabView()
-            } else if hasAgreedToTerms {
-                LoginView()
-            } else if hasSeenIntro {
-                TermsAgreementView {
-                    withAnimation {
-                        hasAgreedToTerms = true
+            case .needsTermsAgreement:
+                TermsAgreementView()
+            case .loggedOut:
+                if hasSeenIntro {
+                    LoginView()
+                } else {
+                    AppIntroView {
+                        withAnimation {
+                            hasSeenIntro = true
+                        }
                     }
                 }
-            } else {
-                AppIntroView {
-                    withAnimation {
-                        hasSeenIntro = true
-                    }
-                }
+            case .checking:
+                // Hidden under the splash until the check is done.
+                Color.appBackground.ignoresSafeArea()
             }
 
             // Above the whole logged-in app (tabs, pushed screens, tab bar),
-            // under the splash.
-            if sessionStore.isLoggedIn {
+            // under the splash. Never before the terms are agreed.
+            if sessionStore.entryState == .ready {
                 if let notice = popupController.detailNotice {
                     AppNoticePopupDetailHost(notice: notice) {
                         popupController.closeDetail()
@@ -71,7 +90,7 @@ private struct RootView: View {
                 AppNoticePopupOverlay(controller: popupController)
             }
 
-            if isShowingLaunchScreen {
+            if isSplashVisible {
                 LaunchScreenView()
                     .transition(.opacity)
             }
@@ -85,11 +104,19 @@ private struct RootView: View {
                 await popupController.loadIfNeeded()
             }
         }
+        // The splash fades out also when it ends with the auto-login check.
+        .animation(.default, value: isSplashVisible)
         .task {
             try? await Task.sleep(for: Self.launchScreenDuration)
             withAnimation {
                 isShowingLaunchScreen = false
             }
+        }
+        .task {
+            #if DEBUG
+            if MockServer.skipsIntro { hasSeenIntro = true }
+            #endif
+            await sessionStore.restoreSession()
         }
     }
 }

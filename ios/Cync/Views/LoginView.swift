@@ -74,6 +74,17 @@ struct LoginView: View {
                 }
             }
         }
+        #if DEBUG
+        .task {
+            // `-debugLogin <학번>` (MockServer.swift): fills the form with
+            // 자동 로그인 on and presses 로그인 — once per launch.
+            guard let studentId = MockServer.takeDebugLoginStudentId() else { return }
+            viewModel.studentId = studentId
+            viewModel.password = "mock"
+            viewModel.autoLogin = true
+            submit()
+        }
+        #endif
     }
 
     private var logo: some View {
@@ -210,8 +221,8 @@ struct LoginView: View {
     private func submit() {
         guard viewModel.canSubmit, !viewModel.isSubmitting else { return }
         Task {
-            if await viewModel.submit() {
-                sessionStore.logIn()
+            if let response = await viewModel.submit() {
+                sessionStore.logIn(termsAgreed: response.termsAgreed)
             }
         }
     }

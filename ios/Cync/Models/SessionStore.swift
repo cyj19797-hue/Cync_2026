@@ -2,13 +2,22 @@
 //  SessionStore.swift
 //  Cync
 //
-//  App-wide login state, driving whether `CyncApp` shows `LoginView` or
-//  `RootTabView`.
+//  App-wide entry state, driving what `CyncApp`'s `RootView` shows:
+//  `entryState` is the one place that decides between the intro/login,
+//  the terms screen and the main tabs.
+//
+//  - `.checking`: launched with a saved "자동 로그인" token — waiting for
+//    `GET /api/me` to say whether the terms were agreed. The splash stays
+//    up meanwhile, so the main tabs never flash before the terms screen.
+//  - `.loggedOut`: 앱 소개 → 로그인.
+//  - `.needsTermsAgreement`: logged in but not agreed — only
+//    `TermsAgreementView`; no tabs, no popups.
+//  - `.ready`: the main tabs (and app-launch popup notices).
 //
 //  "자동 로그인" (`LoginView`): when it was checked at the last login, the
-//  JWT is kept in the Keychain and `isLoggedIn` starts `true` on launch —
-//  as long as that token hasn't expired yet (its `exp` claim). Otherwise
-//  the app starts logged out and `LoginView` shows as before.
+//  JWT is kept in the Keychain and the app starts in `.checking` — as long
+//  as that token hasn't expired yet (its `exp` claim). Otherwise it starts
+//  `.loggedOut`.
 //
 //  The on/off preference lives in `UserDefaults`, not the Keychain, on
 //  purpose: Keychain items survive deleting the app, `UserDefaults` doesn't,
@@ -17,11 +26,26 @@
 
 import Foundation
 
+enum AppEntryState: Equatable {
+    case checking
+    case loggedOut
+    case needsTermsAgreement
+    case ready
+}
+
 @MainActor
 final class SessionStore: ObservableObject {
-    @Published private(set) var isLoggedIn: Bool
+    @Published private(set) var entryState: AppEntryState
+
+    /// Any logged-in state (terms agreed or not).
+    var isLoggedIn: Bool {
+        entryState == .ready || entryState == .needsTermsAgreement
+    }
 
     private static let autoLoginEnabledKey = "autoLoginEnabled"
+    /// How long auto login waits for `/api/me` before falling back to
+    /// `TermsAgreementCache`.
+    private static let profileCheckTimeout: Duration = .seconds(5)
 
     /// Last "자동 로그인" checkbox value — also prefills that checkbox.
     static var isAutoLoginEnabled: Bool {
@@ -30,28 +54,83 @@ final class SessionStore: ObservableObject {
     }
 
     init() {
+        #if DEBUG
+        MockServer.resetAuthIfNeeded()
+        if MockServer.startsLoggedOut { CyncAPI.logout() }
+        #endif
         if Self.isAutoLoginEnabled,
            let token = CyncAPI.accessToken,
            !JWT.isExpired(token) {
-            isLoggedIn = true
+            entryState = .checking
         } else {
             // Drop any leftover token (auto login off, expired, or left
             // behind by a previous install) so requests don't send it.
             CyncAPI.logout()
-            isLoggedIn = false
+            entryState = .loggedOut
         }
     }
 
-    func logIn() {
+    /// Previews: start in a given state without touching the token.
+    init(previewState: AppEntryState) {
+        entryState = previewState
+    }
+
+    /// `.checking` only: asks `/api/me` whether the terms were agreed.
+    /// 401/403 → logged out; offline or too slow → the cached answer, or
+    /// the terms screen if there's none.
+    func restoreSession() async {
+        guard entryState == .checking else { return }
+        let studentId = CyncAPI.accessToken.flatMap(JWT.subject)
+        do {
+            let profile = try await fetchProfileWithTimeout()
+            TermsAgreementCache.save(profile.termsAgreed, studentId: profile.studentId)
+            entryState = profile.termsAgreed ? .ready : .needsTermsAgreement
+        } catch CyncAPIError.unauthorized {
+            logOut()
+        } catch {
+            let cached = studentId.flatMap { TermsAgreementCache.value(studentId: $0) } ?? false
+            entryState = cached ? .ready : .needsTermsAgreement
+        }
+    }
+
+    private struct ProfileCheckTimedOut: Error {}
+
+    private func fetchProfileWithTimeout() async throws -> UserProfile {
+        try await withThrowingTaskGroup(of: UserProfile.self) { group in
+            group.addTask { try await CurrentUserSession.shared.refresh() }
+            group.addTask {
+                try await Task.sleep(for: Self.profileCheckTimeout)
+                throw ProfileCheckTimedOut()
+            }
+            defer { group.cancelAll() }
+            guard let profile = try await group.next() else { throw ProfileCheckTimedOut() }
+            return profile
+        }
+    }
+
+    /// After a successful login — the response says whether the terms
+    /// screen comes first.
+    func logIn(termsAgreed: Bool) {
+        let studentId = CyncAPI.accessToken.flatMap(JWT.subject)
         // Bookmarks are kept per account — load this one's.
-        BookmarkStore.shared.switchAccount(to: CyncAPI.accessToken.flatMap(JWT.subject))
-        isLoggedIn = true
+        BookmarkStore.shared.switchAccount(to: studentId)
+        if let studentId { TermsAgreementCache.save(termsAgreed, studentId: studentId) }
+        entryState = termsAgreed ? .ready : .needsTermsAgreement
+    }
+
+    /// "모두 동의하고 시작하기": records it on the server, then the main
+    /// tabs. Throws (and stays put) if the server didn't take it.
+    func agreeToTerms() async throws {
+        let profile = try await CyncAPI.agreeToTerms()
+        CurrentUserSession.shared.update(profile)
+        TermsAgreementCache.save(true, studentId: profile.studentId)
+        entryState = .ready
     }
 
     func logOut() {
         CyncAPI.logout()
         BookmarkStore.shared.switchAccount(to: nil)
-        isLoggedIn = false
+        entryState = .loggedOut
     }
 }
 

@@ -56,6 +56,21 @@
 //    `-debugReturnAllIncludePending` ticks "승인 대기 신청도 함께 취소",
 //    and `-debugReturnAllExecute` presses the red button 3s later.
 //  - `-debugLockerExpand`: pushes the 전체 사물함 크게 보기 screen.
+//  - `-mockAuth`: 로그인, `GET /api/me` and `POST /api/me/terms-agreement`
+//    don't call the server. Any 학번/password logs in with a fake token
+//    (`sub` = that 학번); `termsAgreed` is remembered per 학번 on the device
+//    (so agreeing once sticks), and `99999999` (admin) is always agreed.
+//    Calls are printed (`[MockServer] POST /api/auth/login …`).
+//  - `-mockAuthReset` (with `-mockAuth`): forgets every agreement first.
+//  - `-mockMeFails network|unauthorized` (with `-mockAuth`): `/api/me`
+//    fails offline, or with 401.
+//  - `-mockAgreeFails` (with `-mockAuth`): the agreement request fails (500).
+//  - `-debugLogin <학번>`: fills the login form (자동 로그인 on) and presses
+//    로그인 once the login screen shows — once per launch.
+//  - `-debugLoggedOut`: starts logged out (drops any saved token) — to
+//    log in again without tapping 로그아웃.
+//  - `-debugAgree` / `-debugDecline`: on the terms screen, presses 모두
+//    동의하고 시작하기 / 동의하지 않고 로그아웃 after a second.
 //  - `-mockPopupOpenDetail`: opens the first card's 자세히 보기 detail screen
 //    right after loading — to check that screen without tapping.
 //
@@ -151,6 +166,97 @@ enum MockServer {
             eventStartDate: start,
             eventEndDate: start == nil ? nil : (end ?? start)
         )
+    }
+
+    // MARK: - 로그인·약관 (`-mockAuth`)
+
+    static var mocksAuth: Bool { arguments.contains("-mockAuth") }
+    static var autoAgreesToTerms: Bool { arguments.contains("-debugAgree") }
+    static var startsLoggedOut: Bool { arguments.contains("-debugLoggedOut") }
+    /// `-debugLogin` goes straight to the login screen (no 앱 소개 tap).
+    static var skipsIntro: Bool { arguments.contains("-debugLogin") }
+    static var autoDeclinesTerms: Bool { arguments.contains("-debugDecline") }
+
+    @MainActor private static var didTakeDebugLogin = false
+    @MainActor static func takeDebugLoginStudentId() -> String? {
+        guard !didTakeDebugLogin else { return nil }
+        didTakeDebugLogin = true
+        return value(after: "-debugLogin")
+    }
+
+    private static func agreedKey(_ studentId: String) -> String { "mockTermsAgreed.\(studentId)" }
+
+    /// `-mockAuthReset` — called once at launch (SessionStore.init).
+    static func resetAuthIfNeeded() {
+        guard mocksAuth, arguments.contains("-mockAuthReset") else { return }
+        for key in UserDefaults.standard.dictionaryRepresentation().keys where key.hasPrefix("mockTermsAgreed.") {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+        print("[MockServer] agreements reset")
+    }
+
+    private static func isAgreed(_ studentId: String) -> Bool {
+        studentId == "99999999" || UserDefaults.standard.bool(forKey: agreedKey(studentId))
+    }
+
+    /// An unsigned JWT-shaped token: `sub` = 학번, expiring in a year.
+    private static func token(for studentId: String) -> String {
+        func encode(_ json: String) -> String {
+            Data(json.utf8).base64EncodedString()
+                .replacingOccurrences(of: "+", with: "-")
+                .replacingOccurrences(of: "/", with: "_")
+                .replacingOccurrences(of: "=", with: "")
+        }
+        let exp = Int(Date().addingTimeInterval(365 * 24 * 3600).timeIntervalSince1970)
+        return encode(#"{"alg":"none"}"#) + "." + encode(#"{"sub":"\#(studentId)","exp":\#(exp)}"#) + ".mock"
+    }
+
+    private static func profile(for studentId: String) -> UserProfile {
+        var profile = studentId == "99999999" ? UserProfile.adminMock : UserProfile.mock
+        profile.studentId = studentId
+        profile.termsAgreed = isAgreed(studentId)
+        return profile
+    }
+
+    /// `nil` unless `-mockAuth`.
+    static func loginResponse(studentId: String) -> LoginResponse? {
+        guard mocksAuth else { return nil }
+        let agreed = isAgreed(studentId)
+        print("[MockServer] POST /api/auth/login id=\(studentId) → termsAgreed=\(agreed)")
+        return LoginResponse(accessToken: token(for: studentId), tokenType: "Bearer", memberInfo: nil, termsAgreed: agreed)
+    }
+
+    /// `nil` unless `-mockAuth`; throws for `-mockMeFails`.
+    static func myProfileResponse() throws -> UserProfile? {
+        guard mocksAuth else { return nil }
+        let studentId = CyncAPI.accessToken.flatMap(JWT.subject) ?? "unknown"
+        switch value(after: "-mockMeFails") {
+        case "network":
+            print("[MockServer] GET /api/me → offline")
+            throw URLError(.notConnectedToInternet)
+        case "unauthorized":
+            print("[MockServer] GET /api/me → 401")
+            throw CyncAPIError.unauthorized
+        default:
+            let profile = profile(for: studentId)
+            print("[MockServer] GET /api/me id=\(studentId) → termsAgreed=\(profile.termsAgreed)")
+            return profile
+        }
+    }
+
+    /// `nil` unless `-mockAuth`; throws (500) for `-mockAgreeFails`.
+    /// Takes a second, so the button's spinner shows.
+    static func termsAgreementResponse() async throws -> UserProfile? {
+        guard mocksAuth else { return nil }
+        try? await Task.sleep(for: .seconds(1))
+        let studentId = CyncAPI.accessToken.flatMap(JWT.subject) ?? "unknown"
+        if arguments.contains("-mockAgreeFails") {
+            print("[MockServer] POST /api/me/terms-agreement id=\(studentId) → 500")
+            throw CyncAPIError.badStatus(500)
+        }
+        UserDefaults.standard.set(true, forKey: agreedKey(studentId))
+        print("[MockServer] POST /api/me/terms-agreement id=\(studentId) → termsAgreed=true")
+        return profile(for: studentId)
     }
 
     // MARK: - 사물함 (`-mockLockers`)

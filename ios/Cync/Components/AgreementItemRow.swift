@@ -14,34 +14,53 @@ import SwiftUI
 
 struct AgreementItemRow: View {
     let titleKey: LocalizedStringResource
-    @Binding var isAgreed: Bool
+    /// `nil` — no checkbox: the whole row opens the detail (the terms
+    /// screen agrees with one button instead of per-item checks).
+    var isAgreed: Binding<Bool>?
     var onViewDetail: () -> Void = {}
 
     var body: some View {
-        HStack(spacing: Spacing.xs) {
-            Button {
-                isAgreed.toggle()
-            } label: {
-                HStack(spacing: Spacing.xs) {
-                    CheckboxSquare(isChecked: isAgreed, style: .accent)
-
-                    Text(titleKey)
-                        .font(.termsItemLabel).tracking(Tracking.termsItemLabel)
-                        .foregroundStyle(Color.textPrimary)
+        if let isAgreed {
+            HStack(spacing: Spacing.xs) {
+                Button {
+                    isAgreed.wrappedValue.toggle()
+                } label: {
+                    HStack(spacing: Spacing.xs) {
+                        CheckboxSquare(isChecked: isAgreed.wrappedValue, style: .accent)
+                        label
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+
+                Spacer(minLength: 0)
+
+                Button(action: onViewDetail) {
+                    NavigationChevron()
+                        .padding(Spacing.xxs)
+                }
+                .buttonStyle(.plain)
+            }
+            .frame(height: 52)
+        } else {
+            Button(action: onViewDetail) {
+                HStack(spacing: Spacing.xs) {
+                    label
+                    Spacer(minLength: 0)
+                    NavigationChevron()
+                        .padding(Spacing.xxs)
+                }
+                .frame(height: 52)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-
-            Spacer(minLength: 0)
-
-            Button(action: onViewDetail) {
-                NavigationChevron()
-                    .padding(Spacing.xxs)
-            }
-            .buttonStyle(.plain)
         }
-        .frame(height: 52)
+    }
+
+    private var label: some View {
+        Text(titleKey)
+            .font(.termsItemLabel).tracking(Tracking.termsItemLabel)
+            .foregroundStyle(Color.textPrimary)
     }
 }
 

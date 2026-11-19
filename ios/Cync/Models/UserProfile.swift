@@ -19,6 +19,25 @@ struct UserProfile: Codable {
     var banExpiresAt: String?
     var banReason: String?
     var currentlyBanned: Bool
+    /// Agreed to the required terms (`POST /api/me/terms-agreement`).
+    /// Always true for the admin account; missing in older responses → false.
+    var termsAgreed: Bool = false
+}
+
+extension UserProfile {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        studentId = try c.decode(String.self, forKey: .studentId)
+        name = try c.decode(String.self, forKey: .name)
+        role = try c.decode(String.self, forKey: .role)
+        nickname = try c.decode(String.self, forKey: .nickname)
+        profileColor = try c.decode(ProfileColor.self, forKey: .profileColor)
+        banned = try c.decode(Bool.self, forKey: .banned)
+        banExpiresAt = try c.decodeIfPresent(String.self, forKey: .banExpiresAt)
+        banReason = try c.decodeIfPresent(String.self, forKey: .banReason)
+        currentlyBanned = try c.decode(Bool.self, forKey: .currentlyBanned)
+        termsAgreed = try c.decodeIfPresent(Bool.self, forKey: .termsAgreed) ?? false
+    }
 }
 
 /// The 9-color palette `PUT /api/me/profile` accepts.

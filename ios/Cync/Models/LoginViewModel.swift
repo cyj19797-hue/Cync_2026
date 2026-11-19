@@ -39,28 +39,30 @@ final class LoginViewModel: ObservableObject {
         !studentId.trimmingCharacters(in: .whitespaces).isEmpty && !password.isEmpty
     }
 
-    /// Returns whether login succeeded, so callers know when to flip
-    /// `SessionStore.isLoggedIn`.
+    /// The login response on success (its `termsAgreed` tells
+    /// `SessionStore` whether the terms screen comes first); nil on failure,
+    /// with `errorMessage` set.
     @discardableResult
-    func submit() async -> Bool {
+    func submit() async -> LoginResponse? {
         isSubmitting = true
         errorMessage = nil
         defer { isSubmitting = false }
 
+        let response: LoginResponse
         do {
-            _ = try await CyncAPI.login(studentId: studentId, password: password, persistToken: autoLogin)
+            response = try await CyncAPI.login(studentId: studentId, password: password, persistToken: autoLogin)
         } catch is URLError {
             // No connection / timeout — the request never got an answer, so
             // "check your id/password" would send the user the wrong way.
             errorMessage = String(appLocalized: .loginNetworkError)
-            return false
+            return nil
         } catch {
             // Any answer from the server — a login screen shouldn't surface
             // raw HTTP/decoding detail, and the server reports a wrong
             // password as a plain error status, so it all reads as wrong
             // id/password to the user.
             errorMessage = String(appLocalized: .loginFailedMessage)
-            return false
+            return nil
         }
 
         if rememberStudentId {
@@ -71,6 +73,6 @@ final class LoginViewModel: ObservableObject {
 
         SessionStore.isAutoLoginEnabled = autoLogin
 
-        return true
+        return response
     }
 }

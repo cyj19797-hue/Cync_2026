@@ -6328,53 +6328,53 @@
         }
       }
     },
-    "terms.agreeAll" : {
+    "terms.agreeAllNotice" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Agree to All"
+            "value" : "Tapping ‘Agree to all and start’ means you agree to all of the terms above."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "전체 동의"
+            "value" : "‘모두 동의하고 시작하기’를 누르면 위 약관에 모두 동의한 것으로 봐요."
           }
         }
       }
     },
-    "terms.optionalNotification" : {
+    "terms.agreeAndStart" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "[Optional] Important department news alerts"
+            "value" : "Agree to all and start"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "[선택] 중요한 학과 소식 알림"
+            "value" : "모두 동의하고 시작하기"
           }
         }
       }
     },
-    "terms.optionalSection" : {
+    "terms.declineAndLogout" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Optional"
+            "value" : "Decline and log out"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "선택 동의 항목"
+            "value" : "동의하지 않고 로그아웃"
           }
         }
       }
@@ -6413,23 +6413,6 @@
         }
       }
     },
-    "terms.requiredSection" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Required"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "필수 동의 항목"
-          }
-        }
-      }
-    },
     "terms.requiredTerms" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6443,23 +6426,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "[필수] 이용약관"
-          }
-        }
-      }
-    },
-    "terms.start" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "👉 Continue with Sejong University account"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "👉 세종대학교 계정으로 시작하기"
           }
         }
       }
@@ -6504,13 +6470,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Before you start Cync,\nplease review what the service needs."
+            "value" : "To use the service,\nplease agree to the terms"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cync를 시작하기 전에,\n서비스 이용에 필요한 내용을 확인해주세요."
+            "value" : "서비스 이용을 위해\n약관에 동의해 주세요"
           }
         }
       }

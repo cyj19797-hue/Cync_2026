@@ -141,6 +141,9 @@ enum CyncAPI {
     private static func checkStatus(_ response: URLResponse) throws {
         guard let http = response as? HTTPURLResponse else { return }
         guard (200..<300).contains(http.statusCode) else {
+            #if DEBUG
+            print("[CyncAPI] \(http.statusCode) \(http.url?.path ?? "")")
+            #endif
             if http.statusCode == 401 || http.statusCode == 403 {
                 throw CyncAPIError.unauthorized
             }
@@ -179,7 +182,16 @@ enum CyncAPI {
         var request = authorizedRequest(path: "/api/auth/login", method: "POST")
         request.httpBody = formBody(["id": studentId, "password": password])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        let response: LoginResponse = try await send(request)
+        let response: LoginResponse
+        #if DEBUG
+        if let mock = MockServer.loginResponse(studentId: studentId) {
+            response = mock
+        } else {
+            response = try await send(request)
+        }
+        #else
+        response = try await send(request)
+        #endif
         if persistToken {
             KeychainTokenStore.save(response.accessToken)
         } else {
@@ -207,7 +219,19 @@ enum CyncAPI {
     // MARK: - 1. 닉네임 / 프로필 색상
 
     static func fetchMyProfile() async throws -> UserProfile {
-        try await send(authorizedRequest(path: "/api/me", method: "GET"))
+        #if DEBUG
+        if let mock = try MockServer.myProfileResponse() { return mock }
+        #endif
+        return try await send(authorizedRequest(path: "/api/me", method: "GET"))
+    }
+
+    /// Records agreement to the required terms; answers the profile with
+    /// `termsAgreed == true`. Safe to call more than once.
+    static func agreeToTerms() async throws -> UserProfile {
+        #if DEBUG
+        if let mock = try await MockServer.termsAgreementResponse() { return mock }
+        #endif
+        return try await send(authorizedRequest(path: "/api/me/terms-agreement", method: "POST"))
     }
 
     static func updateMyProfile(nickname: String, color: ProfileColor) async throws -> UserProfile {
