@@ -47,12 +47,14 @@ public class AdminLoginService {
                         .role(User.Role.ADMIN)
                         .withdrawn(false)
                         .withdrawnAt(null)
+                        .termsAgreed(true)
                         .build())
                 .orElseGet(() -> User.builder()
                         .studentId(adminLoginId)
                         .name(ADMIN_NAME)
                         .nickname(ADMIN_NAME)
                         .role(User.Role.ADMIN)
+                        .termsAgreed(true)
                         .build());
         userRepository.save(admin);
 
@@ -68,6 +70,7 @@ public class AdminLoginService {
                 .accessToken(token)
                 .tokenType("Bearer")
                 .memberInfo(memberInfo)
+                .termsAgreed(true)
                 .build();
     }
 }

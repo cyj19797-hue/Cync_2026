@@ -40,6 +40,12 @@ public class User {
 
     private LocalDateTime withdrawnAt;
 
+    // 이용약관·개인정보처리방침 동의 여부 (최초 로그인 때 한 번만 받음)
+    @Builder.Default
+    private boolean termsAgreed = false;
+
+    private LocalDateTime termsAgreedAt;
+
     public enum Role {
         USER, ADMIN
     }
@@ -67,6 +73,19 @@ public class User {
                 .role(Role.USER)
                 .withdrawn(true)
                 .withdrawnAt(LocalDateTime.now())
+                .termsAgreed(false)
+                .termsAgreedAt(null)
+                .build();
+    }
+
+    // 약관 동의 처리: 이미 동의했으면 최초 동의 시각을 그대로 유지
+    public User agreeTerms() {
+        if (termsAgreed) {
+            return this;
+        }
+        return this.toBuilder()
+                .termsAgreed(true)
+                .termsAgreedAt(LocalDateTime.now())
                 .build();
     }
 

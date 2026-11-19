@@ -22,6 +22,18 @@ public class MeController {
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
     }
 
+    // 이용약관·개인정보처리방침 동의 기록 (로그인 필요)
+    // 이미 동의한 사용자가 다시 호출해도 최초 동의 시각은 바뀌지 않음
+    @PostMapping("/terms-agreement")
+    public User agreeTerms(Authentication authentication) {
+        String studentId = authentication.getName();
+
+        User user = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        return userRepository.save(user.agreeTerms());
+    }
+
     // 닉네임 / 프로필 색상 설정 (로그인 필요)
     @PutMapping("/profile")
     public User updateMyProfile(Authentication authentication,

@@ -56,6 +56,7 @@ public class AuthController {
                 .accessToken(token)
                 .tokenType("Bearer")
                 .memberInfo(memberInfo)
+                .termsAgreed(user.isTermsAgreed())
                 .build();
     }
 
