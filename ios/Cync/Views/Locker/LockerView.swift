@@ -184,7 +184,7 @@ struct LockerView: View {
             } label: {
                 MyLockerCard(locker: nil)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(MyLockerCardButtonStyle())
         } else {
             MyLockerCard(
                 locker: viewModel.myLocker,

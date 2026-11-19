@@ -7,6 +7,14 @@
 //  `속성 1` variant property has 4 states, each mapped to a `CardState` case
 //  here:
 //    - `속성 1=신청`     (`243:4595`) → `.apply`             — no locker yet.
+//      Beyond Figma (whose ">> 신청하러가기" read like a web link): built on
+//      the same skeleton as the other states so switching between them
+//      doesn't jolt — big line + right-side capsule, then one smaller line.
+//      "아직 없어요" sits where "133번" goes, a filled "신청하기 ›" capsule
+//      (same size and shape as the status badges) where the badge goes, and
+//      a gray hint below. The whole card is the button (LockerView wraps it
+//      in a NavigationLink with `MyLockerCardButtonStyle` for press
+//      feedback).
 //    - `속성 1=승인대기` (`243:4542`) → `.pendingApproval`   — `status == .pending`
 //      (`docs/API.md` §4: apply moves a locker to `PENDING` until an admin
 //      approves it).
@@ -19,8 +27,10 @@
 //  The status pill's fill for `.active` (`rgba(52,199,89,0.3)`) is exactly
 //  Apple's system green (#34C759), so it's mapped to `Color(.systemGreen)`
 //  instead of a raw hex — see design-to-code guide §4. The other two
-//  states' pill fills (`#FF8D28`, `#00C0E8`) aren't exact system-color
-//  matches, so those are `Color.lockerPendingBadge`/`lockerApprovedBadge`.
+//  states' pill fills aren't exact system-color matches: 승인 대기 uses the
+//  map's 승인 대기 yellow (`Color.lockerPending`, #FFC542 — not Figma's
+//  #FF8D28, so the card and the map cell match), 승인 완료
+//  `lockerApprovedBadge` (#00C0E8).
 //
 //  `LockerView` renders `.apply` inside its own `NavigationLink` (tapping
 //  the whole card opens the apply flow); the other three states aren't
@@ -85,11 +95,44 @@ struct MyLockerCard: View {
         }
     }
 
-    /// `속성 1=신청` — just a big "신청하러가기" prompt, no locker number/badge.
+    /// `속성 1=신청` — same rows as `lockerInfo`: "아직 없어요" + the
+    /// "신청하기 ›" capsule, then a gray hint.
     private var applyContent: some View {
-        Text(.lockerApplyLink)
-            .font(.lockerNumberLarge).tracking(Tracking.lockerNumberLarge)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack(alignment: .center) {
+                Text(.lockerMyLockerEmpty)
+                    .font(.lockerNumberLarge).tracking(Tracking.lockerNumberLarge)
+                    .lineLimit(1)
+
+                Spacer(minLength: Spacing.xs)
+
+                applyCapsule
+            }
+
+            Text(.lockerApplyHint)
+                .font(.lockerPeriodText).tracking(Tracking.lockerPeriodText)
+                .foregroundStyle(Color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+    }
+
+    /// Same padding, font and capsule as `LockerStatusBadge`, but filled
+    /// (an action, not a status) with a chevron in place of the dot.
+    private var applyCapsule: some View {
+        HStack(spacing: Spacing.xxs) {
+            Text(.lockerApplyCta)
+                .font(.lockerStatusBadge).tracking(Tracking.lockerStatusBadge)
+            Image(systemName: "chevron.right")
+                .font(.navigationChevron)
+        }
+        .foregroundStyle(Color.white)
+        .padding(.horizontal, Spacing.cardInset)
+        .padding(.vertical, Spacing.xs)
+        .background {
+            Capsule().fill(Color.buttonAccent)
+        }
     }
 
     @ViewBuilder
@@ -149,10 +192,26 @@ struct MyLockerCard: View {
     private var statusBadge: some View {
         switch state {
         case .active: return LockerStatusBadge.inUse
-        case .pendingApproval: return LockerStatusBadge(dotColor: .lockerPendingBadge, labelKey: .lockerBadgePending)
+        // Same yellow as a 승인 대기 cell on the map below, so the two read
+        // as one state.
+        case .pendingApproval: return LockerStatusBadge(dotColor: .lockerPending, labelKey: .lockerBadgePending)
         case .awaitingPassword: return LockerStatusBadge(dotColor: .lockerApprovedBadge, labelKey: .lockerBadgeApproved)
         case .apply: return LockerStatusBadge(dotColor: .clear, labelKey: "")
         }
+    }
+}
+
+/// Press feedback for the 신청 card (it's one big button): a slight dim
+/// and shrink, like a tapped list row.
+struct MyLockerCardButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(
+                RoundedRectangle(cornerRadius: Radius.scheduleCard)
+                    .fill(configuration.isPressed ? Color.surfaceSubtle : Color.appBackground)
+            )
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
     }
 }
 

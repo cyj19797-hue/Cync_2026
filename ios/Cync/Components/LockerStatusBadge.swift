@@ -38,7 +38,7 @@ struct LockerStatusBadge: View {
 #Preview {
     VStack(spacing: Spacing.md) {
         LockerStatusBadge.inUse
-        LockerStatusBadge(dotColor: .lockerPendingBadge, labelKey: .lockerBadgePending)
+        LockerStatusBadge(dotColor: .lockerPending, labelKey: .lockerBadgePending)
     }
     .padding()
 }

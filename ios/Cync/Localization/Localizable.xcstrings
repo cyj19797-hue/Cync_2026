@@ -3185,6 +3185,40 @@
         }
       }
     },
+    "locker.apply.cta" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "신청하기"
+          }
+        }
+      }
+    },
+    "locker.apply.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick an empty locker to apply."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "빈 사물함을 골라 신청해 보세요."
+          }
+        }
+      }
+    },
     "locker.applyAction" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3198,23 +3232,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "신청"
-          }
-        }
-      }
-    },
-    "locker.applyLink" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : ">> Apply Now"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : ">> 신청하러가기"
           }
         }
       }
@@ -3640,6 +3657,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이동할 구역"
+          }
+        }
+      }
+    },
+    "locker.myLocker.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None yet"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 없어요"
           }
         }
       }
