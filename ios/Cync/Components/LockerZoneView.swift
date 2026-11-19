@@ -96,12 +96,14 @@ final class LockerZoneView: UIView {
         }
     }
 
-    /// Overrides `lockerNumber`'s cell to `.selected`, regardless of its
-    /// server status — used by `LockerMapViewController.focusLockerNumber`
-    /// to highlight "내 사물함" on the map. No-op if this zone has no cell
-    /// with that number.
+    /// Paints `lockerNumber`'s cell as "내 사물함" (`.selected`) — only once
+    /// it's in use (`.occupied`). A request still waiting for approval
+    /// keeps the 승인 대기 color, like the legend says. Used by
+    /// `LockerMapViewController.focusLockerNumber`. No-op if this zone has
+    /// no cell with that number.
     func highlight(lockerNumber: Int) {
-        for (_, cellView) in cellViews where cellView.cell.lockerNumber == lockerNumber {
+        for (_, cellView) in cellViews
+        where cellView.cell.lockerNumber == lockerNumber && cellView.cell.status == .occupied {
             cellView.updateStatus(.selected)
         }
     }

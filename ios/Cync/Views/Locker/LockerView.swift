@@ -22,14 +22,24 @@
 //    that room's title) and opens a small dropdown of rooms beneath it
 //    (name order: B201, B202, B203(1) …; tap outside to close); picking one
 //    warps the map to it
-//    (`LockerMapViewController.warp`, `.fitWithNeighbors` so the room and
-//    the one under it both fit side to side, pinned to the top). The
+//    (`LockerMapViewController.warp` — sideways only, see below). The
 //    MyLockerCard shows the room ("B201", small gray) before the number.
 //    Below it, the color legend (`LockerStatusLegend`), then the original
 //    embedded floor-plan map (`LockerMapScreenView`, same layout/zoom as
 //    before) — its own bottom legend bar is turned off since the legend
 //    now sits above it. The map is rebuilt once "내 사물함" is known so it
 //    can highlight that cell.
+//
+//  The embedded map moves sideways only (`.horizontalOnly`): its scale is
+//  fixed at the fit-height value (no pinch, no vertical scroll), and the
+//  room button / "◎" only change the horizontal position. "내 사물함" is
+//  painted as such only once it's in use — a pending request keeps the
+//  승인 대기 color. The round "⤢" beside "전체 사물함" (same style as "◎")
+//  opens the same map full screen (`LockerApplicationMapView(mode: .viewOnly)`).
+//
+//  A request that didn't go through (rejected, or cancelled by the admin's
+//  전체 반납) shows `LockerRejectedDialog` once — checked whenever the list
+//  loads: opening the tab, and coming back to the foreground.
 //
 //  Spacing: header → first card is `Spacing.md`, matching the other tabs'
 //  header → filter-chip gap.
@@ -52,6 +62,8 @@ struct LockerView: View {
     @State private var mapFocusedZoneId: String?
     /// Whether the map has been moved off its first view — shows "◎".
     @State private var isMapDisplaced = false
+    @State private var isExpandedMapPresented = false
+    @Environment(\.scenePhase) private var scenePhase
 
     init(viewModel: LockerViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -104,15 +116,29 @@ struct LockerView: View {
             // Main tab screen — the bottom tab bar shows only while this
             // root is on screen (see TabBarVisibility.swift).
             .showsTabBar()
-            .dimsTabBar(isGuidePresented || isPasswordVerifyPresented)
+            .dimsTabBar(isGuidePresented || isPasswordVerifyPresented || viewModel.rejectedLocker != nil)
             .navigationDestination(isPresented: $isApplying) {
                 applicationScreen
             }
             .navigationDestination(isPresented: $isAdminManagePresented) {
                 AdminLockerManageView()
             }
+            .navigationDestination(isPresented: $isExpandedMapPresented) {
+                LockerApplicationMapView(mode: .viewOnly(focusLockerNumber: viewModel.myLocker?.lockerNumber))
+            }
             .task {
                 await viewModel.load()
+                #if DEBUG
+                if MockServer.opensAdminLocker { isAdminManagePresented = true }
+                if MockServer.opensLockerExpand { isExpandedMapPresented = true }
+                #endif
+            }
+            // Back from the background: reload, which also re-checks for a
+            // request that didn't go through.
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active, viewModel.hasLoaded {
+                    Task { await viewModel.load() }
+                }
             }
             .overlay { popups }
             .lockerZoneDropdown(isPresented: $isZonePickerPresented, currentZoneId: currentZoneId) { zoneId in
@@ -142,7 +168,7 @@ struct LockerView: View {
         LockerApplicationMapView { locker in
             // 신청 완료: 서버가 배정한 실제 사물함(비밀번호 포함)을 "나의
             // 사물함"으로 승격.
-            viewModel.myLocker = locker
+            viewModel.didApply(locker)
         }
     }
 
@@ -181,6 +207,14 @@ struct LockerView: View {
                 Text(.lockerAll)
                     .font(.myLockerTitle).tracking(Tracking.myLockerTitle)
                     .foregroundStyle(Color.textPrimary)
+
+                // Full-screen map — same round icon button as "◎".
+                LockerCircleIconButton(
+                    systemImage: "arrow.up.left.and.arrow.down.right",
+                    labelKey: .lockerAllExpand
+                ) {
+                    isExpandedMapPresented = true
+                }
 
                 Spacer(minLength: 0)
 
@@ -231,7 +265,7 @@ struct LockerView: View {
             initialZoomFit: .fitHeight(padding: 0),
             showsLegend: false,
             focusLockerNumber: viewModel.myLocker?.lockerNumber,
-            warpStyle: .fitWithNeighbors,
+            interaction: .horizontalOnly,
             onFocusedZoneChange: { zoneId in
                 mapFocusedZoneId = zoneId
                 // A manual scroll overrides the last dropdown pick.
@@ -245,7 +279,8 @@ struct LockerView: View {
                 DispatchQueue.main.async { isMapDisplaced = false }
             }
         )
-        .id(viewModel.myLocker?.lockerNumber)
+        // Rebuilt when "내 사물함" changes (number or pending → in use).
+        .id("\(viewModel.myLocker?.lockerNumber ?? -1)-\(viewModel.myLocker?.status.rawValue ?? "")")
         // Two rows of rooms at the "내 사물함" warp's scale (~440pt) —
         // shorter than the original 520 so there's no empty band below.
         .frame(height: 460)
@@ -253,7 +288,23 @@ struct LockerView: View {
 
     @ViewBuilder
     private var popups: some View {
-        if isGuidePresented {
+        if let rejected = viewModel.rejectedLocker {
+            ZStack {
+                Color.dimOverlayStrong
+                    .ignoresSafeArea()
+                    .onTapGesture { viewModel.rejectedLocker = nil }
+                LockerRejectedDialog(
+                    zoneId: rejected.zoneId,
+                    lockerNumber: rejected.lockerNumber,
+                    onClose: { viewModel.rejectedLocker = nil },
+                    onReapply: {
+                        viewModel.rejectedLocker = nil
+                        isApplying = true
+                    }
+                )
+                .padding(.horizontal, Spacing.md)
+            }
+        } else if isGuidePresented {
             ZStack {
                 Color.dimOverlayStrong
                     .ignoresSafeArea()

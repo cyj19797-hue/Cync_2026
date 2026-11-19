@@ -21,8 +21,12 @@
 //  - 배치도: the shared locker map, fed `mapStatuses` (from `lockers`) so
 //    it never fetches on its own. A tapped cell opens the action card for
 //    `selectedMapLockerNumber`; 고장 처리 / 복구하기 are immediate.
-//  - 학기 말 전체 반납 isn't built: `isBulkReturnAvailable` is false and
-//    the button only says it's coming.
+//  - 학기 말 전체 반납: the button asks the server for a preview
+//    (`confirm=false`, changes nothing) and opens `AdminReturnAllDialog`
+//    with that count; "승인 대기 신청도 함께 취소" re-asks with
+//    `includePending`. Only the dialog's red button executes
+//    (`confirm=true`). Afterwards — success or not — the list reloads, so
+//    the summary, tabs and map show what the server really did.
 //
 
 import Combine
@@ -93,8 +97,10 @@ final class AdminLockerManageViewModel: ObservableObject {
     /// Room filter — `nil` is 전체 구역.
     @Published var inUseZoneFilter: String?
     @Published private(set) var visiblePasswordIDs: Set<Int> = []
-    /// 학기 말 전체 반납 — not built yet; the button stays disabled.
-    let isBulkReturnAvailable = false
+    /// 학기 말 전체 반납: fetching the first preview (the button spins).
+    @Published private(set) var isPreparingReturnAll = false
+    /// 학기 말 전체 반납's confirm dialog, while it's open.
+    @Published private(set) var returnAllDialog: AdminReturnAllDialogState?
 
     // 배치도
     /// The cell whose action card is open (outlined on the map).
@@ -353,9 +359,66 @@ final class AdminLockerManageViewModel: ObservableObject {
         }
     }
 
-    /// 학기 말 전체 반납 — only says it's coming; sends nothing.
-    func bulkReturnTapped() {
-        toastMessage = String(appLocalized: .adminLockerReturnAllComingSoon)
+    // MARK: - 학기 말 전체 반납
+
+    /// The button: preview first (nothing changes), then the dialog.
+    func startReturnAll() async {
+        guard !isPreparingReturnAll, returnAllDialog == nil else { return }
+        isPreparingReturnAll = true
+        defer { isPreparingReturnAll = false }
+        do {
+            let preview = try await CyncAPI.previewReturnAll(includePending: false)
+            returnAllDialog = AdminReturnAllDialogState(preview: preview)
+        } catch {
+            errorMessage = String(appLocalized: .adminLockerActionFailed(error.localizedDescription))
+        }
+    }
+
+    /// "승인 대기 신청도 함께 취소" — re-asks the preview for the new count.
+    func setReturnAllIncludesPending(_ includePending: Bool) async {
+        guard var dialog = returnAllDialog, !dialog.isExecuting else { return }
+        dialog.includePending = includePending
+        dialog.isLoadingPreview = true
+        returnAllDialog = dialog
+        do {
+            let preview = try await CyncAPI.previewReturnAll(includePending: includePending)
+            // A later toggle wins.
+            guard returnAllDialog?.includePending == includePending else { return }
+            returnAllDialog?.preview = preview
+            returnAllDialog?.isLoadingPreview = false
+        } catch {
+            returnAllDialog = nil
+            errorMessage = String(appLocalized: .adminLockerActionFailed(error.localizedDescription))
+        }
+    }
+
+    /// 취소 / backdrop — not while it's running.
+    func cancelReturnAll() {
+        guard returnAllDialog?.isExecuting != true else { return }
+        returnAllDialog = nil
+    }
+
+    /// The red "n개 반납": can't be undone.
+    func executeReturnAll() async {
+        guard var dialog = returnAllDialog, !dialog.isBusy, dialog.count > 0 else { return }
+        dialog.isExecuting = true
+        returnAllDialog = dialog
+        do {
+            let result = try await CyncAPI.executeReturnAll(includePending: dialog.includePending)
+            returnAllDialog = nil
+            if result.executed {
+                toastMessage = String(appLocalized: .adminLockerReturnAllDone(result.count))
+            } else {
+                errorMessage = String(appLocalized: .adminLockerReturnAllNotExecuted)
+            }
+        } catch {
+            returnAllDialog = nil
+            errorMessage = String(appLocalized: .adminLockerActionFailed(error.localizedDescription))
+        }
+        // Whatever happened, show the server's actual state.
+        hideAllPasswords()
+        selectedIDs.removeAll()
+        await load()
     }
 
     // MARK: - Helpers

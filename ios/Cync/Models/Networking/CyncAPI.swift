@@ -433,8 +433,13 @@ enum CyncAPI {
 
     // MARK: - 4. 사물함
 
+    /// Every locker. `mine` marks the caller's own; `currentUserId` comes
+    /// only for an admin or for that own locker.
     static func fetchAllLockers() async throws -> [Locker] {
-        try await send(authorizedRequest(path: "/api/lockers", method: "GET"))
+        #if DEBUG
+        if let mock = MockServer.lockerResponse(path: "/api/lockers") { return mock }
+        #endif
+        return try await send(authorizedRequest(path: "/api/lockers", method: "GET"))
     }
 
     static func fetchAvailableLockers() async throws -> [Locker] {
@@ -447,7 +452,43 @@ enum CyncAPI {
 
     /// ADMIN only — every locker waiting for approval (`PENDING`).
     static func fetchPendingLockers() async throws -> [Locker] {
-        try await send(authorizedRequest(path: "/api/lockers/pending", method: "GET"))
+        #if DEBUG
+        if let mock = MockServer.lockerResponse(path: "/api/lockers/pending") { return mock }
+        #endif
+        return try await send(authorizedRequest(path: "/api/lockers/pending", method: "GET"))
+    }
+
+    /// ADMIN only — every `IN_USE` locker (학번, 비밀번호, 배정일), by number.
+    /// Not used by the admin screen yet: its 사용 중 tab filters the full
+    /// list so the summary, tabs and map share one source.
+    static func fetchInUseLockers() async throws -> [Locker] {
+        #if DEBUG
+        if let mock = MockServer.lockerResponse(path: "/api/lockers/in-use") { return mock }
+        #endif
+        return try await send(authorizedRequest(path: "/api/lockers/in-use", method: "GET"))
+    }
+
+    /// ADMIN only — 학기 말 전체 반납 preview (`confirm=false`): how many
+    /// lockers it would touch. Changes nothing.
+    static func previewReturnAll(includePending: Bool) async throws -> ReturnAllResult {
+        try await returnAll(confirm: false, includePending: includePending)
+    }
+
+    /// ADMIN only — returns every `IN_USE` locker (and, with
+    /// `includePending`, cancels every `PENDING` request). Can't be undone.
+    static func executeReturnAll(includePending: Bool) async throws -> ReturnAllResult {
+        try await returnAll(confirm: true, includePending: includePending)
+    }
+
+    private static func returnAll(confirm: Bool, includePending: Bool) async throws -> ReturnAllResult {
+        #if DEBUG
+        if let mock = MockServer.returnAllResponse(confirm: confirm, includePending: includePending) { return mock }
+        #endif
+        return try await send(authorizedRequest(
+            path: "/api/lockers/return-all",
+            method: "POST",
+            query: ["confirm": String(confirm), "includePending": String(includePending)]
+        ))
     }
 
     /// ADMIN only — `PENDING` → `IN_USE`; the student can now see the

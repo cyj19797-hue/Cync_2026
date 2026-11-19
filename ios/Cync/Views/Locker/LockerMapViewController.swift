@@ -93,6 +93,24 @@ final class LockerMapViewController: UIViewController {
     /// Set *before* the view loads.
     var warpStyle: WarpStyle = .zoomToZone
 
+    /// How the student can move the canvas.
+    enum Interaction {
+        /// Pan both ways, pinch to zoom, pull to refresh — the default.
+        case free
+        /// The initial fit's scale is locked (no pinch) and the vertical
+        /// position never changes (no vertical scroll or bounce): only
+        /// left/right swipes. `warp(to:)` and `resetView()` only move
+        /// sideways, keeping `warpStyle`'s zoom out of it. No pull to
+        /// refresh — it's a vertical drag. Used by LockerView's map and
+        /// the 전체 사물함 크게 보기 screen (pair with `.fitHeight`).
+        case horizontalOnly
+    }
+
+    /// Set *before* the view loads.
+    var interaction: Interaction = .free
+    /// `.horizontalOnly`: the vertical offset every scroll is held at.
+    private var lockedOffsetY: CGFloat?
+
     /// The room the map is currently "on" — the one just warped to, or,
     /// after the student scrolls/zooms by hand, the most visible one
     /// (ties go to the top-left). Its title is tinted, and every change is
@@ -241,9 +259,14 @@ final class LockerMapViewController: UIViewController {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.delegate = self
 
-        let refreshControl = UIRefreshControl()
-        refreshControl.addTarget(self, action: #selector(handlePullToRefresh), for: .valueChanged)
-        scrollView.refreshControl = refreshControl
+        if interaction == .horizontalOnly {
+            scrollView.alwaysBounceVertical = false
+            scrollView.showsVerticalScrollIndicator = false
+        } else {
+            let refreshControl = UIRefreshControl()
+            refreshControl.addTarget(self, action: #selector(handlePullToRefresh), for: .valueChanged)
+            scrollView.refreshControl = refreshControl
+        }
 
         view.addSubview(scrollView)
 
@@ -396,12 +419,61 @@ final class LockerMapViewController: UIViewController {
             // padding wouldn't show until the user scrolled up to it.
             scrollView.contentOffset = CGPoint(x: 0, y: -padding)
         }
+
+        if interaction == .horizontalOnly {
+            // Locked scale; sideways margin so a room can sit on the host's
+            // content edge (`fitMargin`), as with `.fitWithNeighbors`.
+            scrollView.maximumZoomScale = fitScale
+            scrollView.pinchGestureRecognizer?.isEnabled = false
+            scrollView.contentInset.left = Self.fitMargin
+            scrollView.contentInset.right = Self.fitMargin
+            lockedOffsetY = scrollView.contentOffset.y
+            if let firstZoneId = Self.zoneRows.first?.first {
+                scrollHorizontally(to: firstZoneId, animated: false)
+            }
+        }
+    }
+
+    /// `.horizontalOnly` warp: only `contentOffset.x` moves, so the zone
+    /// and the other-row rooms starting under/above it (as in
+    /// `.fitWithNeighbors`) begin at `fitMargin` from the left edge.
+    private func scrollHorizontally(to zoneId: String, animated: Bool) {
+        guard let frame = zoneFrames[zoneId] else { return }
+        let union = neighborFrames(of: frame).reduce(frame) { $0.union($1) }
+        let scale = scrollView.zoomScale
+        let insets = scrollView.contentInset
+        let maxX = max(scrollView.contentSize.width - scrollView.bounds.width + insets.right, -insets.left)
+        let x = min(max(union.minX * scale - Self.fitMargin, -insets.left), maxX)
+        let target = CGPoint(x: x, y: lockedOffsetY ?? scrollView.contentOffset.y)
+        if animated {
+            UIView.animate(withDuration: 0.3, animations: {
+                self.scrollView.contentOffset = target
+            }, completion: { _ in self.updateDisplaced() })
+        } else {
+            scrollView.contentOffset = target
+            updateDisplaced()
+        }
+    }
+
+    /// Other-row zones sitting mostly (≥ half their width) within `frame`'s
+    /// horizontal span — the rooms above/below it.
+    private func neighborFrames(of frame: CGRect) -> [CGRect] {
+        zoneFrames.values.filter { other in
+            guard other.minY != frame.minY else { return false }
+            let overlap = min(other.maxX, frame.maxX) - max(other.minX, frame.minX)
+            return overlap >= other.width / 2
+        }
     }
 
     /// Animates the canvas to bring `zoneId` into view, zooming in on it.
     /// No-op if `zoneId` isn't a known zone (e.g. data failed to load).
     func warp(to zoneId: String, animated: Bool = true) {
         guard let frame = zoneFrames[zoneId] else { return }
+        if interaction == .horizontalOnly {
+            scrollHorizontally(to: zoneId, animated: animated)
+            setFocusedZone(zoneId)
+            return
+        }
         switch warpStyle {
         case .zoomToZone:
             let target = frame.insetBy(dx: -Self.warpPadding, dy: -Self.warpPadding)
@@ -453,12 +525,7 @@ final class LockerMapViewController: UIViewController {
     /// (`fitMargin`) so the room's left edge lines up with the host
     /// screen's content edge (LockerView: `Spacing.md` inside the card).
     private func warpFittingNeighbors(of frame: CGRect, animated: Bool) {
-        let neighbors = zoneFrames.values.filter { other in
-            guard other.minY != frame.minY else { return false }
-            let overlap = min(other.maxX, frame.maxX) - max(other.minX, frame.minX)
-            return overlap >= other.width / 2
-        }
-        let union = neighbors.reduce(frame) { $0.union($1) }
+        let union = neighborFrames(of: frame).reduce(frame) { $0.union($1) }
         let margin = Self.fitMargin
 
         // Side insets equal to the margin let the pinned offset go that far
@@ -576,7 +643,15 @@ final class LockerMapViewController: UIViewController {
 
 extension LockerMapViewController: UIScrollViewDelegate {
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+        // Also in `.horizontalOnly` — the scale is set through zooming;
+        // it's locked by min = max and the disabled pinch instead.
         contentView
+    }
+
+    /// `.horizontalOnly`: hold the vertical position (no drift, no bounce).
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard let lockedOffsetY, abs(scrollView.contentOffset.y - lockedOffsetY) > 0.1 else { return }
+        scrollView.contentOffset.y = lockedOffsetY
     }
 
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
@@ -735,6 +810,8 @@ struct LockerMapScreenView: UIViewControllerRepresentable {
     var focusLockerNumber: Int?
     /// See `LockerMapViewController.warpStyle`.
     var warpStyle: LockerMapViewController.WarpStyle = .zoomToZone
+    /// See `LockerMapViewController.interaction`.
+    var interaction: LockerMapViewController.Interaction = .free
     /// See `LockerMapViewController.onFocusedZoneChange`. Delivered on the
     /// next main-queue turn so a SwiftUI host can update state from it.
     var onFocusedZoneChange: ((String) -> Void)?
@@ -766,6 +843,7 @@ struct LockerMapScreenView: UIViewControllerRepresentable {
         controller.showsLegend = showsLegend
         controller.focusLockerNumber = focusLockerNumber
         controller.warpStyle = warpStyle
+        controller.interaction = interaction
         if let onFocusedZoneChange {
             controller.onFocusedZoneChange = { zoneId in
                 DispatchQueue.main.async { onFocusedZoneChange(zoneId) }

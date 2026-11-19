@@ -111,18 +111,36 @@ struct LockerResetViewButton: View {
     let action: () -> Void
 
     var body: some View {
+        LockerCircleIconButton(systemImage: "scope", labelKey: .lockerResetView, action: action)
+    }
+}
+
+/// The map controls' round icon button — a 28pt circle with a gray
+/// outline ("◎" reset, "⤢" 크게 보기). Drawn at 28pt, tappable at 44pt
+/// (the extra area doesn't take layout space).
+struct LockerCircleIconButton: View {
+    let systemImage: String
+    let labelKey: LocalizedStringResource
+    let action: () -> Void
+
+    private static let size: CGFloat = 28
+    private static let touchExtension = (44 - size) / 2
+
+    var body: some View {
         Button(action: action) {
-            Image(systemName: "scope")
+            Image(systemName: systemImage)
                 .font(.lockerZoneButton)
                 .foregroundStyle(Color.textPrimary)
-                .frame(width: 28, height: 28)
+                .frame(width: Self.size, height: Self.size)
                 .overlay {
                     Circle().strokeBorder(Color.gray400)
                 }
-                .contentShape(Circle())
+                .padding(Self.touchExtension)
+                .contentShape(Rectangle())
+                .padding(-Self.touchExtension)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Text(.lockerResetView))
+        .accessibilityLabel(Text(labelKey))
     }
 }
 

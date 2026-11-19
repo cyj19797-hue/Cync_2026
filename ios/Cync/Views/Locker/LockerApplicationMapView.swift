@@ -21,6 +21,12 @@
 //  "B201 ⌄" room button + "◎" reset (`LockerZonePicker.swift`) in place of
 //  the old system "이동" `Menu`.
 //
+//  `mode: .viewOnly` is LockerView's "전체 사물함 크게 보기": the same
+//  layout titled "전체 사물함", browse only (taps do nothing, nothing to
+//  load), opening on "내 사물함"'s room, and the map moves sideways only
+//  (`LockerMapViewController.Interaction.horizontalOnly`). `.apply` (the
+//  default) is unchanged.
+//
 
 import SwiftUI
 
@@ -45,6 +51,14 @@ private final class LockerMapCoordinator: LockerMapViewControllerDelegate {
 }
 
 struct LockerApplicationMapView: View {
+    enum Mode {
+        /// 사물함 신청 — tapping an empty cell starts the apply popups.
+        case apply
+        /// 전체 사물함 크게 보기 — browse only, starting on this locker's
+        /// room (painted "내 사물함" once it's in use).
+        case viewOnly(focusLockerNumber: Int?)
+    }
+
     @StateObject private var viewModel = LockerApplicationViewModel()
     @State private var coordinator = LockerMapCoordinator()
     @State private var dialogStage: LockerApplicationDialogStage?
@@ -59,6 +73,8 @@ struct LockerApplicationMapView: View {
     @State private var isMapDisplaced = false
     @Environment(\.dismiss) private var dismiss
 
+    var mode: Mode = .apply
+
     /// Called once the user finishes both popups — lets `LockerView`
     /// promote the applied `Locker` to "내 사물함" and pop back to itself,
     /// same contract as `LockerApplicationView.onApplicationComplete`.
@@ -66,7 +82,7 @@ struct LockerApplicationMapView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScreenNavigationBar(titleKey: .lockerApply, onBack: { dismiss() }) {
+            ScreenNavigationBar(titleKey: isViewOnly ? .lockerAll : .lockerApply, onBack: { dismiss() }) {
                 HStack(spacing: Spacing.xs) {
                     if isMapDisplaced {
                         LockerResetViewButton {
@@ -86,8 +102,10 @@ struct LockerApplicationMapView: View {
                 .padding(.bottom, Spacing.xs)
 
             LockerMapScreenView(
-                delegate: coordinator,
+                delegate: isViewOnly ? nil : coordinator,
                 initialZoomFit: .fitHeight(padding: Spacing.sm),
+                focusLockerNumber: focusLockerNumber,
+                interaction: isViewOnly ? .horizontalOnly : .free,
                 onFocusedZoneChange: { zoneId in
                     mapFocusedZoneId = zoneId
                     // A manual scroll overrides the last dropdown pick.
@@ -114,6 +132,7 @@ struct LockerApplicationMapView: View {
             }
         )
         .task {
+            guard !isViewOnly else { return }
             await viewModel.load()
             coordinator.onSelect = handleCellTap
         }
@@ -128,6 +147,16 @@ struct LockerApplicationMapView: View {
         } message: {
             Text(applyErrorMessage ?? "")
         }
+    }
+
+    private var isViewOnly: Bool {
+        if case .viewOnly = mode { return true }
+        return false
+    }
+
+    private var focusLockerNumber: Int? {
+        if case let .viewOnly(number) = mode { return number }
+        return nil
     }
 
     /// Room the map is on — the one just picked, else wherever the map
@@ -147,8 +176,14 @@ struct LockerApplicationMapView: View {
     }
 }
 
-#Preview {
+#Preview("신청") {
     NavigationStack {
         LockerApplicationMapView()
+    }
+}
+
+#Preview("전체 사물함 크게 보기") {
+    NavigationStack {
+        LockerApplicationMapView(mode: .viewOnly(focusLockerNumber: nil))
     }
 }

@@ -27,10 +27,11 @@
 //
 //  사용 중: 학번/번호 search + room filter (`LockerZoneButton` `.field` +
 //  "전체 구역" row) → "사용 중 n개 / 번호순" → in-use rows (비밀번호 보기,
-//  반납 after a confirm) → "학기 말 전체 반납", which isn't built yet: it's
-//  drawn disabled with a "준비 중인 기능이에요" line, and tapping it only
-//  shows that toast — no confirm, no request. Its label has no count, so it
-//  doesn't look like it would do something.
+//  반납 after a confirm) → "학기 말 전체 반납" (white, red border and
+//  label). It first asks the server for a preview (nothing changes, the
+//  button spins), then opens `AdminReturnAllDialog` with that count; only
+//  its red "n개 반납" executes. While that runs the dialog can't be closed;
+//  afterwards a toast reports the count and everything reloads.
 //
 //  Deviations from Figma, kept for consistency with the rest of the app:
 //  the shared `ScreenNavigationBar` (dark chevron, 17pt title vs. Figma's
@@ -133,8 +134,14 @@ struct AdminLockerManageView: View {
         .animation(.easeOut(duration: 0.2), value: rejectTarget?.id)
         .animation(.easeOut(duration: 0.2), value: returnTarget?.id)
         .animation(.easeOut(duration: 0.2), value: viewModel.errorMessage)
+        .animation(.easeOut(duration: 0.2), value: viewModel.returnAllDialog == nil)
         .animation(.easeOut(duration: 0.2), value: viewModel.isSelecting)
-        .task { await viewModel.load() }
+        .task {
+            await viewModel.load()
+            #if DEBUG
+            await runDebugReturnAll()
+            #endif
+        }
         // Passwords never stay revealed once the admin leaves.
         .onDisappear { viewModel.hideAllPasswords() }
     }
@@ -425,35 +432,26 @@ struct AdminLockerManageView: View {
         )
     }
 
-    /// "학기 말 전체 반납" — a placeholder until bulk return is built.
-    /// Disabled-looking; a tap only shows the "준비 중" toast (the disabled
-    /// button itself takes no taps, so a clear layer on top catches them).
+    /// "학기 말 전체 반납" — destructive, so outlined in red rather than
+    /// filled. Spins while the preview loads; the dialog does the rest.
     private var bulkReturnButton: some View {
-        VStack(spacing: Spacing.xs) {
-            PrimaryActionButton(
-                titleKey: .adminLockerReturnAll,
-                isEnabled: viewModel.isBulkReturnAvailable
-            ) {}
-            .overlay {
-                if !viewModel.isBulkReturnAvailable {
-                    Color.clear
-                        .contentShape(Rectangle())
-                        .onTapGesture { viewModel.bulkReturnTapped() }
-                        .accessibilityElement()
-                        .accessibilityLabel(Text(.adminLockerReturnAll))
-                        .accessibilityHint(Text(.adminLockerReturnAllComingSoon))
-                        .accessibilityAddTraits(.isButton)
-                }
-            }
-
-            if !viewModel.isBulkReturnAvailable {
-                Text(.adminLockerReturnAllComingSoon)
-                    .font(.adminFootnote).tracking(Tracking.adminFootnote)
-                    .foregroundStyle(Color.gray400)
-                    .frame(maxWidth: .infinity)
-                    .accessibilityHidden(true)
+        PrimaryActionButton(
+            titleKey: .adminLockerReturnAll,
+            tint: .appBackground,
+            labelColor: .adminDanger,
+            borderColor: .adminDanger
+        ) {
+            Task { await viewModel.startReturnAll() }
+        }
+        .opacity(viewModel.isPreparingReturnAll ? 0.6 : 1)
+        .overlay {
+            if viewModel.isPreparingReturnAll {
+                ProgressView()
+                    .controlSize(.small)
+                    .tint(Color.adminDanger)
             }
         }
+        .disabled(viewModel.isPreparingReturnAll)
         .padding(.top, Spacing.xs)
     }
 
@@ -480,11 +478,28 @@ struct AdminLockerManageView: View {
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
+    #if DEBUG
+    /// `-debugAdminLocker` / `-debugReturnAll…` (MockServer.swift).
+    private func runDebugReturnAll() async {
+        guard MockServer.opensAdminLocker else { return }
+        viewModel.selectedTab = .inUse
+        guard MockServer.tapsReturnAll else { return }
+        await viewModel.startReturnAll()
+        if MockServer.returnAllIncludesPending {
+            await viewModel.setReturnAllIncludesPending(true)
+        }
+        guard MockServer.executesReturnAll else { return }
+        try? await Task.sleep(for: .seconds(3))
+        await viewModel.executeReturnAll()
+    }
+    #endif
+
     // MARK: - Dialogs
 
     @ViewBuilder
     private var dialogs: some View {
-        if rejectTarget != nil || returnTarget != nil || viewModel.errorMessage != nil {
+        if rejectTarget != nil || returnTarget != nil || viewModel.errorMessage != nil
+            || viewModel.returnAllDialog != nil {
             ZStack {
                 Color.dimOverlay
                     .ignoresSafeArea()
@@ -492,6 +507,8 @@ struct AdminLockerManageView: View {
                         rejectTarget = nil
                         returnTarget = nil
                         viewModel.errorMessage = nil
+                        // Ignored while it's running.
+                        viewModel.cancelReturnAll()
                     }
 
                 Group {
@@ -507,6 +524,15 @@ struct AdminLockerManageView: View {
                             rejectTarget = nil
                             Task { if await viewModel.reject(locker) { closeCard(ifShowing: locker) } }
                         }
+                    } else if let state = viewModel.returnAllDialog {
+                        AdminReturnAllDialog(
+                            state: state,
+                            onToggleIncludePending: { isOn in
+                                Task { await viewModel.setReturnAllIncludesPending(isOn) }
+                            },
+                            onCancel: viewModel.cancelReturnAll,
+                            onConfirm: { Task { await viewModel.executeReturnAll() } }
+                        )
                     } else if let locker = returnTarget {
                         AdminLockerConfirmDialog.return(
                             paddedNumber: AdminLockerManageViewModel.paddedNumber(locker.lockerNumber),

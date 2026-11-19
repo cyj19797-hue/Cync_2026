@@ -41,6 +41,21 @@
 //    (`[MockServer] POST /api/notices/council …`) and a fake notice comes
 //    back. Applies the server's date rules (end without start, or end
 //    before start → 400) so the "날짜를 다시 확인해 주세요" popup can be checked.
+//  - `-mockLockers`: the 사물함 endpoints (`/api/lockers`, `/pending`,
+//    `/in-use`, `/return-all`) answer from an in-memory list built from
+//    `lockers.json` instead of the server, and every call is printed
+//    (`[MockServer] POST /api/lockers/return-all confirm=false …`).
+//    The student's own locker (`mine`) is the first one in B203(1):
+//    `-mockMyLocker pending|inUse|none` (default pending).
+//  - `-mockLockerRejected` (with `-mockLockers`): that locker is back to
+//    AVAILABLE and not mine — as if the request had been turned down.
+//  - `-mockLockerRole student|admin`: overrides `isAdmin` on the 사물함 tab
+//    (the student card and the rejection popup only show for students).
+//  - `-debugAdminLocker`: opens 관리자 사물함 관리 on the 사용 중 tab once
+//    the 사물함 tab loads; `-debugReturnAll` then taps 학기 말 전체 반납,
+//    `-debugReturnAllIncludePending` ticks "승인 대기 신청도 함께 취소",
+//    and `-debugReturnAllExecute` presses the red button 3s later.
+//  - `-debugLockerExpand`: pushes the 전체 사물함 크게 보기 screen.
 //  - `-mockPopupOpenDetail`: opens the first card's 자세히 보기 detail screen
 //    right after loading — to check that screen without tapping.
 //
@@ -136,6 +151,85 @@ enum MockServer {
             eventStartDate: start,
             eventEndDate: start == nil ? nil : (end ?? start)
         )
+    }
+
+    // MARK: - 사물함 (`-mockLockers`)
+
+    static var mocksLockers: Bool { arguments.contains("-mockLockers") }
+    static var lockerRole: String? { value(after: "-mockLockerRole") }
+    static var opensAdminLocker: Bool { arguments.contains("-debugAdminLocker") }
+    static var tapsReturnAll: Bool { arguments.contains("-debugReturnAll") }
+    static var returnAllIncludesPending: Bool { arguments.contains("-debugReturnAllIncludePending") }
+    static var executesReturnAll: Bool { arguments.contains("-debugReturnAllExecute") }
+    static var opensLockerExpand: Bool { arguments.contains("-debugLockerExpand") }
+
+    /// The mock's current lockers — changed by return-all.
+    private static var mockLockers: [Locker] = makeMockLockers()
+
+    private static func makeMockLockers() -> [Locker] {
+        let zoneByNumber = LockerDataLoader.zoneIdByLockerNumber()
+        let numbers = zoneByNumber.keys.sorted()
+        let myNumber = numbers.first { zoneByNumber[$0] == "B203(1)" }
+        let myState = value(after: "-mockMyLocker") ?? "pending"
+        let rejected = arguments.contains("-mockLockerRejected")
+        return numbers.map { number in
+            if number == myNumber, myState != "none", !rejected {
+                let inUse = myState == "inUse"
+                return Locker(
+                    id: number, lockerNumber: number, location: nil,
+                    status: inUse ? .inUse : .pending, currentUserId: "20231234",
+                    assignedAt: inUse ? "2026-09-08T10:00:00" : nil, dueDate: nil,
+                    password: inUse ? "3847" : nil, mine: true
+                )
+            }
+            let status: LockerStatus
+            switch number % 10 {
+            case 0: status = .broken
+            case 3: status = .pending
+            case 1, 4, 6, 8: status = .inUse
+            default: status = .available
+            }
+            return Locker(
+                id: number, lockerNumber: number, location: nil, status: status,
+                currentUserId: status == .inUse || status == .pending ? String(format: "2201%04d", number) : nil,
+                assignedAt: status == .inUse ? "2026-09-10T09:30:00" : nil, dueDate: nil,
+                password: status == .inUse ? String(format: "%04d", number * 37 % 10000) : nil
+            )
+        }
+    }
+
+    /// `nil` unless `-mockLockers`.
+    static func lockerResponse(path: String) -> [Locker]? {
+        guard mocksLockers else { return nil }
+        print("[MockServer] GET \(path)")
+        switch path {
+        case "/api/lockers/pending": return mockLockers.filter { $0.status == .pending }
+        case "/api/lockers/in-use": return mockLockers.filter { $0.status == .inUse }
+        default: return mockLockers
+        }
+    }
+
+    /// `nil` unless `-mockLockers`. `confirm=false` only counts.
+    static func returnAllResponse(confirm: Bool, includePending: Bool) -> ReturnAllResult? {
+        guard mocksLockers else { return nil }
+        print("[MockServer] POST /api/lockers/return-all confirm=\(confirm) includePending=\(includePending)")
+        let targets = mockLockers.filter { $0.status == .inUse || (includePending && $0.status == .pending) }
+        let numbers = targets.map(\.lockerNumber).sorted()
+        if confirm {
+            let ids = Set(targets.map(\.id))
+            mockLockers = mockLockers.map { locker in
+                guard ids.contains(locker.id) else { return locker }
+                var returned = locker
+                returned.status = .available
+                returned.currentUserId = nil
+                returned.password = nil
+                returned.assignedAt = nil
+                returned.mine = false
+                return returned
+            }
+        }
+        print("[MockServer] → executed=\(confirm) count=\(numbers.count)")
+        return ReturnAllResult(executed: confirm, count: numbers.count, lockerNumbers: numbers)
     }
 
     /// `nil` unless launched with `-mockPopupNotices`.

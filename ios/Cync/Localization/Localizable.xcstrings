@@ -4,6 +4,142 @@
     "" : {
 
     },
+    "admin.locker.returnAll.confirm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Return %lld"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld개 반납"
+          }
+        }
+      }
+    },
+    "admin.locker.returnAll.done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Returned %lld lockers"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld개 사물함을 반납 처리했어요"
+          }
+        }
+      }
+    },
+    "admin.locker.returnAll.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There are no lockers to return."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "반납할 사물함이 없어요."
+          }
+        }
+      }
+    },
+    "admin.locker.returnAll.inProgress" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Returning lockers"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "반납 처리 중"
+          }
+        }
+      }
+    },
+    "admin.locker.returnAll.includePending" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Also cancel pending requests"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "승인 대기 신청도 함께 취소"
+          }
+        }
+      }
+    },
+    "admin.locker.returnAll.message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Return all %lld lockers in use? This can't be undone."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용 중인 사물함 %lld개를 모두 반납 처리할까요? 되돌릴 수 없어요."
+          }
+        }
+      }
+    },
+    "admin.locker.returnAll.messageWithPending" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Return or cancel all %lld lockers, including pending requests? This can't be undone."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "승인 대기 포함 %lld개를 모두 반납·취소 처리할까요? 되돌릴 수 없어요."
+          }
+        }
+      }
+    },
+    "admin.locker.returnAll.notExecuted" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The return wasn't carried out. Please check the list again."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "반납이 처리되지 않았어요. 목록을 다시 확인해 주세요."
+          }
+        }
+      }
+    },
     "admin.locker.title" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -697,23 +833,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "학기 말 전체 반납"
-          }
-        }
-      }
-    },
-    "admin.locker.returnAll.comingSoon" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This feature is coming soon"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "준비 중인 기능이에요"
           }
         }
       }
@@ -3015,6 +3134,23 @@
         }
       }
     },
+    "locker.all.expand" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View all lockers full screen"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체 사물함 크게 보기"
+          }
+        }
+      }
+    },
     "locker.appliedNotice" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3606,6 +3742,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사물함 비밀번호 등록"
+          }
+        }
+      }
+    },
+    "locker.rejected.message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your request for locker %2$lld in %1$@ was rejected or cancelled. Please check your payment and apply again."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$lld번 사물함 신청이 거절되었거나 취소되었어요. 입금 내역을 확인한 뒤 다시 신청해 주세요."
+          }
+        }
+      }
+    },
+    "locker.rejected.reapply" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply again"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다시 신청하기"
+          }
+        }
+      }
+    },
+    "locker.rejected.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your locker request wasn't approved"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사물함 신청이 승인되지 않았어요"
           }
         }
       }
