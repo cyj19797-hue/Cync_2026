@@ -8,7 +8,7 @@
 //
 //  `Kind` is the component's 상태 property — one enum, two variants:
 //    - 승인 대기: title + 학번, 거부 / 승인.
-//    - 사용 중: title + "사용중" badge, 학번, "비밀번호 •••• 보기 · 9월
+//    - 사용 중: title (no "사용중" badge — the tab says it), 학번, "비밀번호 •••• 보기 · 9월
 //      10일부터 사용", and 반납. The password stays masked as a fixed
 //      "••••" (never hinting at its length) until 보기 is tapped.
 //
@@ -68,15 +68,11 @@ struct AdminLockerRow: View {
             }
 
             VStack(alignment: .leading, spacing: Spacing.xxs) {
-                HStack(spacing: Spacing.xs) {
-                    Text(title)
-                        .font(.adminLockerRowTitle).tracking(Tracking.adminLockerRowTitle)
-                        .foregroundStyle(Color.textPrimary)
-                    if case .inUse = kind {
-                        LockerStatusBadge.inUse
-                            .foregroundStyle(Color.textPrimary)
-                    }
-                }
+                // No "사용중" badge on 사용 중 rows: every row on that tab is
+                // in use, and the badge outweighed the locker number.
+                Text(title)
+                    .font(.adminLockerRowTitle).tracking(Tracking.adminLockerRowTitle)
+                    .foregroundStyle(Color.textPrimary)
                 Text(subtitle)
                     .font(.adminLockerRowSubtitle).tracking(Tracking.adminLockerRowSubtitle)
                     .foregroundStyle(Color.textSecondary)
@@ -148,6 +144,8 @@ struct AdminLockerRow: View {
         .font(.adminLockerRowSubtitle).tracking(Tracking.adminLockerRowSubtitle)
     }
 
+    /// 15pt, about 32pt tall to look at (under the 16pt title), 44pt
+    /// tall to tap — the extra area doesn't take layout space.
     private func actionButton(
         _ titleKey: LocalizedStringResource,
         fill: Color,
@@ -156,17 +154,23 @@ struct AdminLockerRow: View {
     ) -> some View {
         Button(action: action) {
             Text(titleKey)
-                .font(.adminLockerRowAction).tracking(Tracking.adminLockerRowAction)
+                .font(.adminLockerRowCompactAction).tracking(Tracking.adminLockerRowCompactAction)
                 .foregroundStyle(label)
-                .padding(Spacing.compactButton)
+                .padding(.horizontal, Self.actionHorizontalPadding)
+                .padding(.vertical, Spacing.xs)
                 .background {
                     RoundedRectangle(cornerRadius: Radius.chipSelected)
                         .fill(fill)
                 }
+                .padding(.vertical, Self.actionTouchExtension)
                 .contentShape(Rectangle())
+                .padding(.vertical, -Self.actionTouchExtension)
         }
         .buttonStyle(.plain)
     }
+
+    private static let actionHorizontalPadding: CGFloat = 14
+    private static let actionTouchExtension: CGFloat = 6
 }
 
 #Preview {

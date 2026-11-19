@@ -372,6 +372,9 @@ extension Font {
     static var adminLockerRowSubtitle: Font { .appDefault(.regular, size: 14, relativeTo: .subheadline) }
     /// Row "거부"/"승인" buttons — SF Pro Medium 16.
     static var adminLockerRowAction: Font { .appDefault(.medium, size: 16, relativeTo: .body) }
+    /// 사물함 관리 list rows' 반납 / 거부 / 승인 — a notch under the 16pt
+    /// row title so the button doesn't outweigh it.
+    static var adminLockerRowCompactAction: Font { .appDefault(.medium, size: 15, relativeTo: .subheadline) }
     /// Summary card numbers — SF Pro Bold 20.
     static var adminSummaryValue: Font { .appDefault(.bold, size: 20, relativeTo: .title3) }
     /// Summary card labels — SF Pro Regular 13.

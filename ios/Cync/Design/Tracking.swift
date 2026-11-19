@@ -117,6 +117,7 @@ enum Tracking {
     static let adminLockerRowTitle: CGFloat = standard
     static let adminLockerRowSubtitle: CGFloat = standard
     static let adminLockerRowAction: CGFloat = standard
+    static let adminLockerRowCompactAction: CGFloat = standard
     static let adminSummaryValue: CGFloat = standard
     static let adminSummaryLabel: CGFloat = standard
     static let adminTabChipSelected: CGFloat = standard
