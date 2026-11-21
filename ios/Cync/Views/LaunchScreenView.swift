@@ -12,80 +12,81 @@
 //  as the app icon). It used to be a separate vertically-stacked mark +
 //  wordmark lockup (`CyncLogoLockup`), which has since been dropped.
 //
-//  Figma centers the whole (logo + tagline) block vertically on screen while
-//  keeping it left-aligned horizontally (not centered) — `Spacer`s above/
-//  below reproduce the vertical centering, `.leading` alignment reproduces
-//  the horizontal placement.
+//  Layout: the logo itself sits at the exact center of the screen (not
+//  Figma's left alignment), with the tagline hanging below it. The logo
+//  is the one thing to look at here, so it's what's centered — the
+//  tagline doesn't pull it up. A hidden copy of the tagline above the
+//  logo balances the stack so the logo lands dead center — of the whole
+//  screen, not the safe area.
 //
-//  Reveal animation: a radial "pop" — the logo grows out from its own blue
-//  dot (not the block's center) via a `Circle` mask animated from near-zero
-//  to full `scaleEffect`, `anchor`ed at the dot's actual position in the
-//  artwork (measured directly off the source asset's pixels, not eyeballed).
-//  Pure SwiftUI: `Circle()` inside `.mask` already lays out as the full
-//  ellipse inscribed in the masked view's own frame, so animating its scale
-//  from ~0 up to 1 traces that same frame exactly — no oversize fudge factor
-//  needed regardless of the anchor point. No UIKit/Core Animation required;
-//  `CAShapeLayer.strokeEnd` would only be needed for a stroke-drawn outline
-//  effect, which needs vector path data this raster logo doesn't have.
-//  The tagline fades in afterward, once the logo's own reveal has landed.
+//  Reveal animation: the block fills in from top to bottom, like ink
+//  poured in — a mask over the whole block (logo, then tagline) grows
+//  downward from its top edge, with a short soft fade at the leading edge
+//  so the fill has a gentle front instead of a hard line. Pure SwiftUI
+//  (`.mask` + `scaleEffect(y:anchor: .top)`). With Reduce Motion the block
+//  just appears.
 //
 
 import SwiftUI
 
 struct LaunchScreenView: View {
-    /// Where the logo's blue dot actually sits, as a fraction of the
-    /// `Image` asset's own frame — measured off the source PNG's pixels
-    /// (centroid of its blue pixels), not guessed. The reveal circle is
-    /// anchored here so the logo appears to "pop" out from the dot.
-    private static let dotAnchor = UnitPoint(x: 0.548, y: 0.5)
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isRevealed = false
 
-    /// `Circle()` inscribed in the square frame only touches the *midpoint*
-    /// of each edge, not the corners — so scaling it up to exactly `1` (its
-    /// own natural, un-scaled size) leaves the frame's corners masked out.
-    /// Solved for the anchor above: scale `1.45` is the smallest value whose
-    /// circle covers every corner; this adds a safety margin over that.
-    private static let fullRevealScale: CGFloat = 1.6
-
-    @State private var isLogoRevealed = false
-    @State private var isTaglineVisible = false
+    /// Height of the soft band at the fill's leading (bottom) edge.
+    private static let featherHeight: CGFloat = 24
 
     var body: some View {
-        Color.appBackground
-            .ignoresSafeArea()
-            .overlay {
-                VStack(alignment: .leading, spacing: 0) {
-                    Spacer(minLength: 0)
+        // One ZStack ignoring the safe area as a whole, so the logo is
+        // centered on the physical screen (an overlay on a safe-area-
+        // ignoring background would still be laid out in the safe area,
+        // whose taller top inset pushes it ~14pt low).
+        ZStack {
+            Color.appBackground
+            VStack(spacing: Spacing.xs) {
+                // Balances the tagline below so the logo is centered.
+                tagline.hidden()
 
-                    VStack(alignment: .leading, spacing: Spacing.xs) {
-                        Image("Image")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 100, height: 100)
-                            .mask {
-                                Circle()
-                                    .scaleEffect(isLogoRevealed ? Self.fullRevealScale : 0.0001, anchor: Self.dotAnchor)
-                            }
-
-                        // Brand slogan — identical in every language, so not localized.
-                        Text(verbatim: "Campus, in Cync")
-                            .font(.launchTagline).tracking(Tracking.launchTagline)
-                            .foregroundStyle(Color.textPrimary)
-                            .opacity(isTaglineVisible ? 1 : 0)
-                    }
-
-                    Spacer(minLength: 0)
+                VStack(spacing: Spacing.xs) {
+                    Image("Image")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 100, height: 100)
+                    tagline
                 }
-                .padding(.leading, Spacing.cardInset)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .mask(alignment: .top) { fillMask }
             }
-            .onAppear {
-                withAnimation(.easeOut(duration: 0.7)) {
-                    isLogoRevealed = true
-                }
-                withAnimation(.easeOut(duration: 0.4).delay(0.55)) {
-                    isTaglineVisible = true
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            if reduceMotion {
+                isRevealed = true
+            } else {
+                withAnimation(.easeInOut(duration: 0.8)) {
+                    isRevealed = true
                 }
             }
+        }
+    }
+
+    // Brand slogan — identical in every language, so not localized.
+    private var tagline: some View {
+        Text(verbatim: "Campus, in Cync")
+            .font(.launchTagline).tracking(Tracking.launchTagline)
+            .foregroundStyle(Color.textPrimary)
+    }
+
+    /// Solid from the top, with a soft fade at its bottom edge that hangs
+    /// past the block (negative padding), so at full size the whole block
+    /// is solid; grows downward from the block's top edge.
+    private var fillMask: some View {
+        VStack(spacing: 0) {
+            Rectangle()
+            LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
+                .frame(height: Self.featherHeight)
+        }
+        .padding(.bottom, -Self.featherHeight)
+        .scaleEffect(y: isRevealed ? 1 : 0.0001, anchor: .top)
     }
 }
 
